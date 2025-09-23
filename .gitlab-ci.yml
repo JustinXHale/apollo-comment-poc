@@ -1,0 +1,52 @@
+# GitLab Pages for Node.js Web App
+# Configured to deploy from 'gitlab-pages' branch to keep main branch clean
+image: registry.redhat.io/ubi8/nodejs-18:latest
+
+stages:
+  - build
+  - deploy
+
+variables:
+  NODE_ENV: production
+
+# Default settings for all jobs
+default:
+  tags:
+    - shared-podman
+
+# Cache disabled due to S3 upload timeouts in Red Hat GitLab environment
+# cache:
+#   key: ${CI_COMMIT_REF_SLUG}
+#   paths:
+#     - .npm/
+#   policy: pull-push
+
+build:
+  stage: build
+  script:
+    - echo "Installing dependencies (including devDependencies for build tools)..."
+    - npm ci --include=dev
+    - echo "Setting up environment for build..."
+    - export PATH="$PWD/node_modules/.bin:$PATH"
+    - echo "Verifying build tools are available..."
+    - which tsc || echo "TypeScript compiler not found - will use npx fallback"
+    - echo "Running build process..."
+    - npm run build
+    - echo "Preparing files for GitLab Pages..."
+    # GitLab Pages expects files in a 'public' directory
+    - mv dist public
+  artifacts:
+    paths:
+      - public
+  only:
+    - rhoai-3.1
+
+pages:
+  stage: deploy
+  script:
+    - echo "Deploying to GitLab Pages..."
+  artifacts:
+    paths:
+      - public
+  only:
+    - rhoai-3.1
