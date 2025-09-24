@@ -47,6 +47,7 @@ https://www.figma.com/design/4qwoK0PhVEe7XYjQIozkTv/branch/mf2LFoMlAh7MMc0kw1nBJ
 -- Enabled
 -- Explore
 - Settings (with "fa-light fa-gear" icon)
+-- API keys
 -- Cluster settings
 --- General settings
 --- Storage classes
