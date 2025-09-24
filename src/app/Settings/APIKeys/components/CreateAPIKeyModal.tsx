@@ -165,7 +165,7 @@ const CreateAPIKeyModal: React.FunctionComponent<CreateAPIKeyModalProps> = ({ is
     };
     
     // Navigate to the new API key details page
-    navigate(`/settings/api-keys/${newAPIKey.id}`);
+    navigate(`/gen-ai-studio/api-keys/${newAPIKey.id}`);
     onClose();
   };
 

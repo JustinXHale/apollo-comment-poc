@@ -25,6 +25,7 @@ title: Notes - llm-d in RHOAI model deployment wizard
 
 2025-09-24
 - Created the first iteration of this design using the blank PatternFly starter codebase.
+- During the MaaS Stakeholder meeting we discussed whether API Keys should really be found within the Settings nav item, and folks wondered whether the "Gen AI Studio" as a whole should really even be in RHOAI to begin with. Andy moved API Keys into the Gen AI Studio section for now to see what people think of it there. Even though it can be used for Admin-ey actions, it can also be used by AIEs who want to easily find and manage their keys for their various apps and services. The ability to see what Assets are made available to a key, and easily accessing the endpoints for every Asset from within the Key Details page, also seems of value similar to competitors. This area feels worth moving outside of Settings for those reasons.
 
 ## Design
 

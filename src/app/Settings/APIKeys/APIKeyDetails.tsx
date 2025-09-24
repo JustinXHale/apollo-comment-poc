@@ -48,11 +48,11 @@ const APIKeyDetails: React.FunctionComponent = () => {
   ) => {
     const newTab = tabIndex as TabKey;
     setActiveTabKey(newTab);
-    navigate(`/settings/api-keys/${keyId}/${newTab}`, { replace: true });
+    navigate(`/gen-ai-studio/api-keys/${keyId}/${newTab}`, { replace: true });
   };
 
   const handleBackToList = () => {
-    navigate('/settings/api-keys');
+    navigate('/gen-ai-studio/api-keys');
   };
 
   if (!apiKey) {
@@ -72,7 +72,7 @@ const APIKeyDetails: React.FunctionComponent = () => {
   const breadcrumb = (
     <PageBreadcrumb>
       <Breadcrumb>
-        <BreadcrumbItem to="/settings/api-keys">API keys</BreadcrumbItem>
+        <BreadcrumbItem to="/gen-ai-studio/api-keys">API keys</BreadcrumbItem>
         <BreadcrumbItem isActive>{apiKey.name}</BreadcrumbItem>
       </Breadcrumb>
     </PageBreadcrumb>

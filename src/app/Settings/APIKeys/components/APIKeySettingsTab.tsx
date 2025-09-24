@@ -49,7 +49,7 @@ const APIKeySettingsTab: React.FunctionComponent<APIKeySettingsTabProps> = ({ ap
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     // Navigate back to API keys list
-    navigate('/settings/api-keys');
+    navigate('/gen-ai-studio/api-keys');
   };
 
   const isDeleteEnabled = deleteConfirmation === apiKey.name && !isDeleting;

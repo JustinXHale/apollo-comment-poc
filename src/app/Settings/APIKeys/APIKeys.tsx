@@ -81,7 +81,7 @@ const APIKeys: React.FunctionComponent = () => {
   const rowActions = (apiKey: APIKey): IAction[] => [
     {
       title: 'View details',
-      onClick: () => navigate(`/settings/api-keys/${apiKey.id}`),
+      onClick: () => navigate(`/gen-ai-studio/api-keys/${apiKey.id}`),
     },
     {
       title: 'Edit',
@@ -107,7 +107,7 @@ const APIKeys: React.FunctionComponent = () => {
   };
 
   const handleRowClick = (apiKey: APIKey) => {
-    navigate(`/settings/api-keys/${apiKey.id}`);
+    navigate(`/gen-ai-studio/api-keys/${apiKey.id}`);
   };
 
   return (
