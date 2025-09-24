@@ -7,7 +7,7 @@ import {
 
 const Experiments: React.FunctionComponent = () => (
   <PageSection>
-    <Content component={ContentVariants.h1}>Develop & Train - Experiments</Content>
+    <Content component={ContentVariants.h1}>Experiments</Content>
     <Content component={ContentVariants.p}>
       Design and manage machine learning experiments and trials.
     </Content>

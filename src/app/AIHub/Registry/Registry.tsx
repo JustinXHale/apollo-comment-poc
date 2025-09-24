@@ -7,7 +7,7 @@ import {
 
 const Registry: React.FunctionComponent = () => (
   <PageSection>
-    <Content component={ContentVariants.h1}>AI Hub - Registry</Content>
+    <Content component={ContentVariants.h1}>Registry</Content>
     <Content component={ContentVariants.p}>
       Manage your AI model registry and versions.
     </Content>

@@ -7,7 +7,7 @@ import {
 
 const Evaluations: React.FunctionComponent = () => (
   <PageSection>
-    <Content component={ContentVariants.h1}>Develop & Train - Evaluations</Content>
+    <Content component={ContentVariants.h1}>Evaluations</Content>
     <Content component={ContentVariants.p}>
       Evaluate and assess model performance and quality metrics.
     </Content>

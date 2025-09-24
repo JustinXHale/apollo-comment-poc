@@ -47,6 +47,7 @@ import { ServingRuntimes } from '@app/Settings/ModelResources/ServingRuntimes/Se
 import { ModelRegistrySettings } from '@app/Settings/ModelResources/ModelRegistrySettings/ModelRegistrySettings';
 import { UserManagement } from '@app/Settings/UserManagement/UserManagement';
 import { APIKeys } from '@app/Settings/APIKeys/APIKeys';
+import { APIKeyDetails } from '@app/Settings/APIKeys/APIKeyDetails';
 
 // Icons
 import { createFontAwesomeIcon } from '@app/utils/IconHelper';
@@ -314,6 +315,18 @@ const routes: AppRouteConfig[] = [
         label: 'API keys',
         path: '/settings/api-keys',
         title: 'RHOAI 3.1 Console | Settings - API Keys',
+      },
+      {
+        element: <APIKeyDetails />,
+        exact: true,
+        path: '/settings/api-keys/:keyId',
+        title: 'RHOAI 3.1 Console | Settings - API Key Details',
+      },
+      {
+        element: <APIKeyDetails />,
+        exact: true,
+        path: '/settings/api-keys/:keyId/:tab',
+        title: 'RHOAI 3.1 Console | Settings - API Key Details',
       },
       {
         label: 'Cluster settings',

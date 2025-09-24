@@ -7,7 +7,7 @@ import {
 
 const WorkloadMetrics: React.FunctionComponent = () => (
   <PageSection>
-    <Content component={ContentVariants.h1}>Observe & Monitor - Workload Metrics</Content>
+    <Content component={ContentVariants.h1}>Workload Metrics</Content>
     <Content component={ContentVariants.p}>
       Monitor workload performance and resource utilization metrics.
     </Content>
