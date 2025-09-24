@@ -9,14 +9,12 @@ import {
   TabTitleText,
   Breadcrumb,
   BreadcrumbItem,
-  Button,
   Flex,
   FlexItem,
   Alert,
   ClipboardCopy,
   PageBreadcrumb,
 } from '@patternfly/react-core';
-import { ArrowLeftIcon } from '@patternfly/react-icons';
 import { useDocumentTitle } from '@app/utils/useDocumentTitle';
 import { getAPIKeyById } from './mockData';
 import { APIKeyDetailsTab } from './components/APIKeyDetailsTab';
@@ -51,9 +49,6 @@ const APIKeyDetails: React.FunctionComponent = () => {
     navigate(`/gen-ai-studio/api-keys/${keyId}/${newTab}`, { replace: true });
   };
 
-  const handleBackToList = () => {
-    navigate('/gen-ai-studio/api-keys');
-  };
 
   if (!apiKey) {
     return (
@@ -82,29 +77,15 @@ const APIKeyDetails: React.FunctionComponent = () => {
     <>
       {breadcrumb}
       <PageSection>
-        <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsMd' }}>
-          <FlexItem>
-            <Button
-              variant="link"
-              icon={<ArrowLeftIcon />}
-              onClick={handleBackToList}
-              isInline
-            >
-              Back to API keys
-            </Button>
-          </FlexItem>
-          <FlexItem>
-            <Content component={ContentVariants.h1}>{apiKey.name}</Content>
-            <ClipboardCopy
-              hoverTip="Copy"
-              clickTip="Copied"
-              variant="inline-compact"
-              isReadOnly
-            >
-              {formatAPIKey(apiKey.apiKey)}
-            </ClipboardCopy>
-          </FlexItem>
-        </Flex>
+        <Content component={ContentVariants.h1}>{apiKey.name}</Content>
+        <ClipboardCopy
+          hoverTip="Copy"
+          clickTip="Copied"
+          variant="inline-compact"
+          isReadOnly
+        >
+          {formatAPIKey(apiKey.apiKey)}
+        </ClipboardCopy>
       </PageSection>
 
       <PageSection type="tabs">
