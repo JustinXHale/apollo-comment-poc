@@ -122,7 +122,7 @@ const APIKeyAssetsTab: React.FunctionComponent<APIKeyAssetsTabProps> = ({ apiKey
                       <Tr>
                         <Th>Name</Th>
                         <Th>ID</Th>
-                        <Th>Endpoint</Th>
+                        <Th>Endpoint URL</Th>
                         <Th></Th>
                       </Tr>
                     </Thead>
