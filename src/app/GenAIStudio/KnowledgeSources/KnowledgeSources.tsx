@@ -1,0 +1,17 @@
+import * as React from 'react';
+import {
+  PageSection,
+  Content,
+  ContentVariants,
+} from '@patternfly/react-core';
+
+const KnowledgeSources: React.FunctionComponent = () => (
+  <PageSection>
+    <Content component={ContentVariants.h1}>Gen AI Studio - Knowledge Sources</Content>
+    <Content component={ContentVariants.p}>
+      Manage knowledge bases and data sources for your AI applications.
+    </Content>
+  </PageSection>
+);
+
+export { KnowledgeSources };
