@@ -7,7 +7,7 @@ import {
 
 const Workbenches: React.FunctionComponent = () => (
   <PageSection>
-    <Content component={ContentVariants.h1}>Develop & Train - Workbenches</Content>
+    <Content component={ContentVariants.h1}>Workbenches</Content>
     <Content component={ContentVariants.p}>
       Create and manage development workbenches for data science projects.
     </Content>

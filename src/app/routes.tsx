@@ -47,6 +47,7 @@ import { ServingRuntimes } from '@app/Settings/ModelResources/ServingRuntimes/Se
 import { ModelRegistrySettings } from '@app/Settings/ModelResources/ModelRegistrySettings/ModelRegistrySettings';
 import { UserManagement } from '@app/Settings/UserManagement/UserManagement';
 import { APIKeys } from '@app/Settings/APIKeys/APIKeys';
+import { APIKeyDetails } from '@app/Settings/APIKeys/APIKeyDetails';
 
 // Icons
 import { createFontAwesomeIcon } from '@app/utils/IconHelper';
@@ -139,6 +140,25 @@ const routes: AppRouteConfig[] = [
         label: 'Knowledge sources',
         path: '/gen-ai-studio/knowledge-sources',
         title: 'RHOAI 3.1 Console | Gen AI Studio - Knowledge Sources',
+      },
+      {
+        element: <APIKeys />,
+        exact: true,
+        label: 'API keys',
+        path: '/gen-ai-studio/api-keys',
+        title: 'RHOAI 3.1 Console | Gen AI Studio - API Keys',
+      },
+      {
+        element: <APIKeyDetails />,
+        exact: true,
+        path: '/gen-ai-studio/api-keys/:keyId',
+        title: 'RHOAI 3.1 Console | Gen AI Studio - API Key Details',
+      },
+      {
+        element: <APIKeyDetails />,
+        exact: true,
+        path: '/gen-ai-studio/api-keys/:keyId/:tab',
+        title: 'RHOAI 3.1 Console | Gen AI Studio - API Key Details',
       },
     ],
   },
@@ -308,13 +328,6 @@ const routes: AppRouteConfig[] = [
     label: 'Settings',
     icon: createFontAwesomeIcon('fa-light fa-gear'),
     routes: [
-      {
-        element: <APIKeys />,
-        exact: true,
-        label: 'API keys',
-        path: '/settings/api-keys',
-        title: 'RHOAI 3.1 Console | Settings - API Keys',
-      },
       {
         label: 'Cluster settings',
         routes: [

@@ -7,7 +7,7 @@ import {
 
 const Catalog: React.FunctionComponent = () => (
   <PageSection>
-    <Content component={ContentVariants.h1}>AI Hub - Catalog</Content>
+    <Content component={ContentVariants.h1}>Catalog</Content>
     <Content component={ContentVariants.p}>
       Browse and discover AI models, datasets, and other resources.
     </Content>

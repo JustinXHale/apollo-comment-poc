@@ -1,11 +1,11 @@
-# MaaS
+# Models-as-a-Service (MaaS)
 
 Target version: 3.1
 UXD Orientation doc: https://docs.google.com/document/d/10IIWRpETdRIDzQiPIvHSzCBj3bwq02fE0mGOEtVwjBw/edit?tab=t.0
 NotebookLM: https://notebooklm.google.com/notebook/7c5d493a-85b8-438d-b1d9-aeab507c63a7
 Journey map: https://miro.com/app/board/uXjVIgQDVWw=/
 
-## Context Sources
+## Context
 
 ### Docs
 
@@ -20,6 +20,12 @@ title: AI Available Assets - LLS Deployed Models, MCP Servers (via ConfigMap) - 
 
 link: https://docs.google.com/document/d/12oZzzPyfrxiajvgfUsc4xPMwZFckGwC9Qqoi7u4DKK8/edit?tab=t.0#heading=h.djbgpzpj5t69
 title: Notes - llm-d in RHOAI model deployment wizard
+
+## History
+
+2025-09-24
+- Created the first iteration of this design using the blank PatternFly starter codebase.
+- During the MaaS Stakeholder meeting we discussed whether API Keys should really be found within the Settings nav item, and folks wondered whether the "Gen AI Studio" as a whole should really even be in RHOAI to begin with. Andy moved API Keys into the Gen AI Studio section for now to see what people think of it there. Even though keys can be used for Admin-ey actions, they can also be used by AIEs who want to easily find and manage their keys for their various apps and services. The ability to see which Assets are available to a key, and easily accessing the endpoints for every Asset from within the Key Details page, also seems to be valuable and what alternatives like LiteLLM focus on. This area feels worth moving outside of Settings for those reasons.
 
 ## Design
 
@@ -76,7 +82,7 @@ The Assets tab includes collapsible sections for the AI Assets that the API key 
 * Vector Databases (with columns for Name and Size)
 * Agents (with columns for Name and Endpoint)
 
-For the models list, include examples like gpt-oss-20b and grante-3.1b.
+For the models list, include examples like gpt-oss-20b and granite-3.1b.
 
 For the MCP servers list, include examples like OpenShift, RHEL, Ansible.
 
@@ -103,3 +109,26 @@ It includes a table with the Names, IDs, and Descriptions of policies that have 
 ### Settings
 
 This tab includes a "Danger Zone" card with a red action button to permanently delete the API key. If a user clicks the delete button a modal should appear to confirm that they want to delete the key, with a text field to type in the key's name manually and then "Confirm" to delete the key.
+
+## Implementation Details
+
+### Routing
+- API Keys list page: `/settings/api-keys`
+- API Key details page: `/settings/api-keys/:keyId`
+- API Key details with tab: `/settings/api-keys/:keyId/:tab` (optional, defaults to Details tab)
+
+### Data Management
+- Use mock/dummy data for prototype
+- Use appropriate local state management (React hooks/context as needed)
+- No external API integration required
+
+### User Experience
+- After creating an API key, navigate user to the newly created key details page
+- Delete confirmation modal should show the exact key name in plain text above the input field for easy copy/paste
+- Use PatternFly Victory charts for the Metrics tab visualizations
+
+### Mock Data Requirements
+- Create realistic sample data for models (include examples like gpt-oss-20b, granite-3.1b)
+- Create realistic sample data for MCP servers (include examples like OpenShift, RHEL, Ansible)
+- Create realistic mock policy data for API gateway/MaaS policies in the Policies tab
+- Include appropriate sample metrics data for charts and statistics
