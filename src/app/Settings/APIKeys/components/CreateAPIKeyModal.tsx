@@ -13,7 +13,6 @@ import {
   ExpandableSection,
   DatePicker,
   NumberInput,
-  Checkbox,
   Flex,
   FlexItem,
   FormHelperText,
@@ -29,6 +28,7 @@ import {
   mockAgents,
   mockAPIKeys 
 } from '../mockData';
+import { AIAssetSelect, AssetOption } from './AIAssetSelect';
 
 interface CreateAPIKeyModalProps {
   isOpen: boolean;
@@ -57,10 +57,6 @@ const CreateAPIKeyModal: React.FunctionComponent<CreateAPIKeyModalProps> = ({ is
   const [isOwnerTypeOpen, setIsOwnerTypeOpen] = React.useState(false);
   const [isOwnerNameOpen, setIsOwnerNameOpen] = React.useState(false);
   const [isLimitsExpanded, setIsLimitsExpanded] = React.useState(false);
-  const [isModelsOpen, setIsModelsOpen] = React.useState(false);
-  const [isMCPServersOpen, setIsMCPServersOpen] = React.useState(false);
-  const [isVectorDBsOpen, setIsVectorDBsOpen] = React.useState(false);
-  const [isAgentsOpen, setIsAgentsOpen] = React.useState(false);
 
   // Mock owner names based on type
   const getOwnerNames = (type: string): string[] => {
@@ -122,16 +118,13 @@ const CreateAPIKeyModal: React.FunctionComponent<CreateAPIKeyModalProps> = ({ is
 
   const handleAssetSelect = (
     assetType: 'modelEndpoints' | 'mcpServers' | 'vectorDatabases' | 'agents',
-    assetId: string,
-    isSelected: boolean
+    selectedIds: string[]
   ) => {
     setFormData(prev => ({
       ...prev,
       assets: {
         ...prev.assets,
-        [assetType]: isSelected
-          ? [...prev.assets[assetType], assetId]
-          : prev.assets[assetType].filter(id => id !== assetId),
+        [assetType]: selectedIds,
       },
     }));
   };
@@ -194,6 +187,30 @@ const CreateAPIKeyModal: React.FunctionComponent<CreateAPIKeyModalProps> = ({ is
   };
 
   const ownerNames = getOwnerNames(formData.owner.type);
+
+  // Prepare asset options for the select components
+  const modelOptions: AssetOption[] = mockModels.map(model => ({
+    id: model.id,
+    name: model.name,
+    description: model.id
+  }));
+
+  const mcpServerOptions: AssetOption[] = mockMCPServers.map(server => ({
+    id: server.id,
+    name: server.name,
+    description: server.tools.join(', ')
+  }));
+
+  const vectorDbOptions: AssetOption[] = mockVectorDatabases.map(db => ({
+    id: db.id,
+    name: db.name,
+    description: db.size
+  }));
+
+  const agentOptions: AssetOption[] = mockAgents.map(agent => ({
+    id: agent.id,
+    name: agent.name
+  }));
 
     return (
       <Modal
@@ -392,70 +409,54 @@ const CreateAPIKeyModal: React.FunctionComponent<CreateAPIKeyModalProps> = ({ is
 
         {/* Model Endpoints */}
         <FormGroup label="Model Endpoints">
-          <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsSm' }}>
-            {mockModels.map(model => (
-              <FlexItem key={model.id}>
-                <Checkbox
-                  id={`model-${model.id}`}
-                  label={`${model.name} (${model.id})`}
-                  isChecked={formData.assets.modelEndpoints.includes(model.id)}
-                  onChange={(_event, checked) => handleAssetSelect('modelEndpoints', model.id, checked)}
-                  isDisabled={isSubmitting}
-                />
-              </FlexItem>
-            ))}
-          </Flex>
+          <AIAssetSelect
+            options={modelOptions}
+            selected={formData.assets.modelEndpoints}
+            onSelect={(selectedIds) => handleAssetSelect('modelEndpoints', selectedIds)}
+            placeholder="Select model endpoints"
+            ariaLabel="Model endpoints selection"
+            id="model-endpoints-select"
+            isDisabled={isSubmitting}
+          />
         </FormGroup>
 
         {/* MCP Servers */}
         <FormGroup label="MCP Servers & tools">
-          <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsSm' }}>
-            {mockMCPServers.map(server => (
-              <FlexItem key={server.id}>
-                <Checkbox
-                  id={`mcp-${server.id}`}
-                  label={`${server.name} (${server.tools.join(', ')})`}
-                  isChecked={formData.assets.mcpServers.includes(server.id)}
-                  onChange={(_event, checked) => handleAssetSelect('mcpServers', server.id, checked)}
-                  isDisabled={isSubmitting}
-                />
-              </FlexItem>
-            ))}
-          </Flex>
+          <AIAssetSelect
+            options={mcpServerOptions}
+            selected={formData.assets.mcpServers}
+            onSelect={(selectedIds) => handleAssetSelect('mcpServers', selectedIds)}
+            placeholder="Select MCP servers"
+            ariaLabel="MCP servers selection"
+            id="mcp-servers-select"
+            isDisabled={isSubmitting}
+          />
         </FormGroup>
 
         {/* Vector Databases */}
         <FormGroup label="Vector Databases">
-          <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsSm' }}>
-            {mockVectorDatabases.map(db => (
-              <FlexItem key={db.id}>
-                <Checkbox
-                  id={`vdb-${db.id}`}
-                  label={`${db.name} (${db.size})`}
-                  isChecked={formData.assets.vectorDatabases.includes(db.id)}
-                  onChange={(_event, checked) => handleAssetSelect('vectorDatabases', db.id, checked)}
-                  isDisabled={isSubmitting}
-                />
-              </FlexItem>
-            ))}
-          </Flex>
+          <AIAssetSelect
+            options={vectorDbOptions}
+            selected={formData.assets.vectorDatabases}
+            onSelect={(selectedIds) => handleAssetSelect('vectorDatabases', selectedIds)}
+            placeholder="Select vector databases"
+            ariaLabel="Vector databases selection"
+            id="vector-databases-select"
+            isDisabled={isSubmitting}
+          />
         </FormGroup>
 
         {/* Agents */}
         <FormGroup label="Agents">
-          <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsSm' }}>
-            {mockAgents.map(agent => (
-              <FlexItem key={agent.id}>
-                <Checkbox
-                  id={`agent-${agent.id}`}
-                  label={agent.name}
-                  isChecked={formData.assets.agents.includes(agent.id)}
-                  onChange={(_event, checked) => handleAssetSelect('agents', agent.id, checked)}
-                  isDisabled={isSubmitting}
-                />
-              </FlexItem>
-            ))}
-          </Flex>
+          <AIAssetSelect
+            options={agentOptions}
+            selected={formData.assets.agents}
+            onSelect={(selectedIds) => handleAssetSelect('agents', selectedIds)}
+            placeholder="Select agents"
+            ariaLabel="Agents selection"
+            id="agents-select"
+            isDisabled={isSubmitting}
+          />
         </FormGroup>
 
           </Form>
