@@ -46,6 +46,7 @@ import { ModelResources } from '@app/Settings/ModelResources/ModelResources';
 import { ServingRuntimes } from '@app/Settings/ModelResources/ServingRuntimes/ServingRuntimes';
 import { ModelRegistrySettings } from '@app/Settings/ModelResources/ModelRegistrySettings/ModelRegistrySettings';
 import { UserManagement } from '@app/Settings/UserManagement/UserManagement';
+import { APIKeys } from '@app/Settings/APIKeys/APIKeys';
 
 // Icons
 import { createFontAwesomeIcon } from '@app/utils/IconHelper';
@@ -307,6 +308,13 @@ const routes: AppRouteConfig[] = [
     label: 'Settings',
     icon: createFontAwesomeIcon('fa-light fa-gear'),
     routes: [
+      {
+        element: <APIKeys />,
+        exact: true,
+        label: 'API keys',
+        path: '/settings/api-keys',
+        title: 'RHOAI 3.1 Console | Settings - API Keys',
+      },
       {
         label: 'Cluster settings',
         routes: [
