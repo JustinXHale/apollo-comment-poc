@@ -15,6 +15,8 @@ import {
   Tr,
   Th,
   Td,
+  ActionsColumn,
+  IAction,
 } from '@patternfly/react-table';
 import { APIKey } from '../types';
 import { 
@@ -43,6 +45,65 @@ const APIKeyAssetsTab: React.FunctionComponent<APIKeyAssetsTabProps> = ({ apiKey
     }));
   };
 
+  // Action handlers for different asset types
+  const handleViewDetails = (assetType: string, assetId: string) => {
+    // TODO: Navigate to asset details page
+    console.log(`View details for ${assetType}:`, assetId);
+  };
+
+  const handleTryInPlayground = (assetType: string, assetId: string) => {
+    // TODO: Navigate to playground with asset preloaded
+    console.log(`Try in playground for ${assetType}:`, assetId);
+  };
+
+  // Action items for models
+  const getModelActions = (modelId: string): IAction[] => [
+    {
+      title: 'View details',
+      onClick: () => handleViewDetails('model', modelId),
+    },
+    {
+      title: 'Try in Playground',
+      onClick: () => handleTryInPlayground('model', modelId),
+    },
+  ];
+
+  // Action items for MCP servers
+  const getMCPServerActions = (serverId: string): IAction[] => [
+    {
+      title: 'View details',
+      onClick: () => handleViewDetails('mcp-server', serverId),
+    },
+    {
+      title: 'Try in Playground',
+      onClick: () => handleTryInPlayground('mcp-server', serverId),
+    },
+  ];
+
+  // Action items for vector databases
+  const getVectorDatabaseActions = (dbId: string): IAction[] => [
+    {
+      title: 'View details',
+      onClick: () => handleViewDetails('vector-database', dbId),
+    },
+    {
+      title: 'Try in Playground',
+      onClick: () => handleTryInPlayground('vector-database', dbId),
+    },
+  ];
+
+  // Action items for agents
+  const getAgentActions = (agentId: string): IAction[] => [
+    {
+      title: 'View details',
+      onClick: () => handleViewDetails('agent', agentId),
+    },
+    {
+      title: 'Try in Playground',
+      onClick: () => handleTryInPlayground('agent', agentId),
+    },
+  ];
+
   return (
     <PageSection>
       <Card>
@@ -62,6 +123,7 @@ const APIKeyAssetsTab: React.FunctionComponent<APIKeyAssetsTabProps> = ({ apiKey
                         <Th>Name</Th>
                         <Th>ID</Th>
                         <Th>Endpoint</Th>
+                        <Th></Th>
                       </Tr>
                     </Thead>
                     <Tbody>
@@ -75,6 +137,9 @@ const APIKeyAssetsTab: React.FunctionComponent<APIKeyAssetsTabProps> = ({ apiKey
                             </Td>
                             <Td dataLabel="Endpoint">
                               <code>{model.endpoint}</code>
+                            </Td>
+                            <Td isActionCell>
+                              <ActionsColumn items={getModelActions(model.id)} />
                             </Td>
                           </Tr>
                         ) : null;
@@ -101,6 +166,7 @@ const APIKeyAssetsTab: React.FunctionComponent<APIKeyAssetsTabProps> = ({ apiKey
                         <Th>Name</Th>
                         <Th>Tools</Th>
                         <Th>Endpoint</Th>
+                        <Th></Th>
                       </Tr>
                     </Thead>
                     <Tbody>
@@ -120,6 +186,9 @@ const APIKeyAssetsTab: React.FunctionComponent<APIKeyAssetsTabProps> = ({ apiKey
                             </Td>
                             <Td dataLabel="Endpoint">
                               <code>{server.endpoint}</code>
+                            </Td>
+                            <Td isActionCell>
+                              <ActionsColumn items={getMCPServerActions(server.id)} />
                             </Td>
                           </Tr>
                         ) : null;
@@ -145,6 +214,7 @@ const APIKeyAssetsTab: React.FunctionComponent<APIKeyAssetsTabProps> = ({ apiKey
                       <Tr>
                         <Th>Name</Th>
                         <Th>Size</Th>
+                        <Th></Th>
                       </Tr>
                     </Thead>
                     <Tbody>
@@ -154,6 +224,9 @@ const APIKeyAssetsTab: React.FunctionComponent<APIKeyAssetsTabProps> = ({ apiKey
                           <Tr key={db.id}>
                             <Td dataLabel="Name">{db.name}</Td>
                             <Td dataLabel="Size">{db.size}</Td>
+                            <Td isActionCell>
+                              <ActionsColumn items={getVectorDatabaseActions(db.id)} />
+                            </Td>
                           </Tr>
                         ) : null;
                       })}
@@ -178,6 +251,7 @@ const APIKeyAssetsTab: React.FunctionComponent<APIKeyAssetsTabProps> = ({ apiKey
                       <Tr>
                         <Th>Name</Th>
                         <Th>Endpoint</Th>
+                        <Th></Th>
                       </Tr>
                     </Thead>
                     <Tbody>
@@ -188,6 +262,9 @@ const APIKeyAssetsTab: React.FunctionComponent<APIKeyAssetsTabProps> = ({ apiKey
                             <Td dataLabel="Name">{agent.name}</Td>
                             <Td dataLabel="Endpoint">
                               <code>{agent.endpoint}</code>
+                            </Td>
+                            <Td isActionCell>
+                              <ActionsColumn items={getAgentActions(agent.id)} />
                             </Td>
                           </Tr>
                         ) : null;
