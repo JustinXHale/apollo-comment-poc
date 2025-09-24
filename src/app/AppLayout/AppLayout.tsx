@@ -2,6 +2,7 @@ import * as React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   Button,
+  Icon,
   Masthead,
   MastheadBrand,
   MastheadLogo,
@@ -16,7 +17,7 @@ import {
   PageSidebarBody,
   SkipToContent,
 } from '@patternfly/react-core';
-import { IAppRoute, IAppRouteGroup, routes } from '@app/routes';
+import { IAppRoute, IAppRouteGroup, routes, AppRouteConfig } from '@app/routes';
 import { BarsIcon } from '@patternfly/react-icons';
 
 interface IAppLayout {
@@ -88,33 +89,79 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
 
   const location = useLocation();
 
+  // Helper function to check if any nested route is active
+  const isGroupActive = (routes: AppRouteConfig[]): boolean => {
+    return routes.some((route) => {
+      if ('routes' in route && route.routes) {
+        return isGroupActive(route.routes);
+      } else if ('path' in route) {
+        return route.path === location.pathname;
+      }
+      return false;
+    });
+  };
+
   const renderNavItem = (route: IAppRoute, index: number) => (
     <NavItem key={`${route.label}-${index}`} id={`${route.label}-${index}`} isActive={route.path === location.pathname}>
-      <NavLink
-        to={route.path}
-      >
+      <NavLink to={route.path}>
+        {route.icon && (
+          <>
+            <Icon size="md">
+              <route.icon />
+            </Icon>{' '}
+          </>
+        )}
         {route.label}
       </NavLink>
     </NavItem>
   );
 
-  const renderNavGroup = (group: IAppRouteGroup, groupIndex: number) => (
+  const renderNavGroup = (group: IAppRouteGroup, groupIndex: number): React.ReactElement => (
     <NavExpandable
       key={`${group.label}-${groupIndex}`}
       id={`${group.label}-${groupIndex}`}
-      title={group.label}
-      isActive={group.routes.some((route) => route.path === location.pathname)}
+      title={
+        <>
+          {group.icon && (
+            <>
+              <Icon size="md">
+                <group.icon />
+              </Icon>{' '}
+            </>
+          )}
+          {group.label}
+        </>
+      }
+      isActive={isGroupActive(group.routes)}
     >
-      {group.routes.map((route, idx) => route.label && renderNavItem(route, idx))}
+      {group.routes.map((route, idx) => {
+        if ('routes' in route) {
+          // This is a nested group
+          return renderNavGroup(route as IAppRouteGroup, idx);
+        } else {
+          // This is a route
+          return route.label ? renderNavItem(route as IAppRoute, idx) : null;
+        }
+      })}
     </NavExpandable>
   );
+
+  const renderNavigationItem = (route: AppRouteConfig, idx: number) => {
+    if (!('label' in route) || !route.label) {
+      return null;
+    }
+
+    if ('routes' in route) {
+      return renderNavGroup(route as IAppRouteGroup, idx);
+    } else {
+      return renderNavItem(route as IAppRoute, idx);
+    }
+  };
 
   const Navigation = (
     <Nav id="nav-primary-simple">
       <NavList id="nav-list-simple">
-        {routes.map(
-          (route, idx) => route.label && (!route.routes ? renderNavItem(route, idx) : renderNavGroup(route, idx)),
-        )}
+        {routes.map((route, idx) => renderNavigationItem(route, idx))}
       </NavList>
     </Nav>
   );
