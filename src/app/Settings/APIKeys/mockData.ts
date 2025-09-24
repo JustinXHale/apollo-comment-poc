@@ -71,12 +71,13 @@ export const mockAPIKeys: APIKey[] = [
     description: 'Main API key for the development team to access models and tools',
     apiKey: 'sk-1234567890abcdef1234567890abcdef',
     owner: { type: 'Group', name: 'dev-team' },
-    dateCreated: new Date('2024-01-15T10:30:00Z'),
-    dateLastUsed: new Date('2024-01-20T15:45:00Z'),
+    dateCreated: new Date('2025-01-15T10:30:00Z'),
+    dateLastUsed: new Date('2025-01-20T15:45:00Z'),
     limits: {
       tokenRateLimit: 50000,
       requestRateLimit: 1000,
       budgetLimit: 500,
+      expirationDate: new Date('2026-01-15T10:30:00Z'),
     },
     assets: {
       modelEndpoints: ['gpt-oss-20b', 'granite-3.1b', 'llama-7b'],
@@ -91,12 +92,13 @@ export const mockAPIKeys: APIKey[] = [
     description: 'High-throughput key for production applications',
     apiKey: 'sk-abcdef1234567890abcdef1234567890',
     owner: { type: 'Service Account', name: 'prod-service-account' },
-    dateCreated: new Date('2024-01-10T08:15:00Z'),
-    dateLastUsed: new Date('2024-01-20T16:22:00Z'),
+    dateCreated: new Date('2025-01-10T08:15:00Z'),
+    dateLastUsed: new Date('2025-01-20T16:22:00Z'),
     limits: {
       tokenRateLimit: 500000,
       requestRateLimit: 10000,
       budgetLimit: 2000,
+      expirationDate: new Date('2026-01-10T08:15:00Z'),
     },
     assets: {
       modelEndpoints: ['gpt-oss-20b', 'granite-3.1b', 'mistral-7b'],
@@ -111,13 +113,13 @@ export const mockAPIKeys: APIKey[] = [
     description: 'API key for ML research experiments',
     apiKey: 'sk-fedcba0987654321fedcba0987654321',
     owner: { type: 'User', name: 'john.doe' },
-    dateCreated: new Date('2024-01-18T14:20:00Z'),
-    dateLastUsed: new Date('2024-01-19T11:10:00Z'),
+    dateCreated: new Date('2025-01-18T14:20:00Z'),
+    dateLastUsed: new Date('2025-01-19T11:10:00Z'),
     limits: {
       tokenRateLimit: 25000,
       requestRateLimit: 500,
       budgetLimit: 200,
-      expirationDate: new Date('2024-07-18T14:20:00Z'),
+      expirationDate: new Date('2026-01-18T14:20:00Z'),
     },
     assets: {
       modelEndpoints: ['codellama-13b', 'mistral-7b'],
