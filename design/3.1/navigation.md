@@ -25,6 +25,13 @@ https://www.figma.com/design/4qwoK0PhVEe7XYjQIozkTv/branch/mf2LFoMlAh7MMc0kw1nBJ
 - Develop & train (with "fa-light fa-flask" icon)
 -- Workbenches
 -- Feature store
+--- Overview
+--- Entities
+--- Data sources
+--- Data sets
+--- Features
+--- Feature views
+--- Feature services
 -- Pipelines
 --- Pipeline definitions
 --- Runs
@@ -37,6 +44,8 @@ https://www.figma.com/design/4qwoK0PhVEe7XYjQIozkTv/branch/mf2LFoMlAh7MMc0kw1nBJ
 -- Training jobs
 - Learning resources (with "fa-light fa-book" icon)
 - Applications (with "fa-light fa-code" icon)
+-- Enabled
+-- Explore
 - Settings (with "fa-light fa-gear" icon)
 -- Cluster settings
 --- General settings

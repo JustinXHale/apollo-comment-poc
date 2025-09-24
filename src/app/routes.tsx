@@ -17,6 +17,13 @@ import { Playground } from '@app/GenAIStudio/Playground/Playground';
 import { KnowledgeSources } from '@app/GenAIStudio/KnowledgeSources/KnowledgeSources';
 import { Workbenches } from '@app/DevelopTrain/Workbenches/Workbenches';
 import { FeatureStore } from '@app/DevelopTrain/FeatureStore/FeatureStore';
+import { Overview } from '@app/DevelopTrain/FeatureStore/Overview/Overview';
+import { Entities } from '@app/DevelopTrain/FeatureStore/Entities/Entities';
+import { DataSources } from '@app/DevelopTrain/FeatureStore/DataSources/DataSources';
+import { DataSets } from '@app/DevelopTrain/FeatureStore/DataSets/DataSets';
+import { Features } from '@app/DevelopTrain/FeatureStore/Features/Features';
+import { FeatureViews } from '@app/DevelopTrain/FeatureStore/FeatureViews/FeatureViews';
+import { FeatureServices } from '@app/DevelopTrain/FeatureStore/FeatureServices/FeatureServices';
 import { PipelineDefinitions } from '@app/DevelopTrain/Pipelines/PipelineDefinitions/PipelineDefinitions';
 import { Runs } from '@app/DevelopTrain/Pipelines/Runs/Runs';
 import { Artifacts } from '@app/DevelopTrain/Pipelines/Artifacts/Artifacts';
@@ -27,6 +34,8 @@ import { WorkloadMetrics } from '@app/ObserveMonitor/WorkloadMetrics/WorkloadMet
 import { TrainingJobs } from '@app/ObserveMonitor/TrainingJobs/TrainingJobs';
 import { LearningResources } from '@app/LearningResources/LearningResources';
 import { Applications } from '@app/Applications/Applications';
+import { Enabled } from '@app/Applications/Enabled/Enabled';
+import { Explore } from '@app/Applications/Explore/Explore';
 import { ClusterSettings } from '@app/Settings/ClusterSettings/ClusterSettings';
 import { StorageClasses } from '@app/Settings/ClusterSettings/StorageClasses/StorageClasses';
 import { EnvironmentSetup } from '@app/Settings/EnvironmentSetup/EnvironmentSetup';
@@ -144,11 +153,58 @@ const routes: AppRouteConfig[] = [
         title: 'RHOAI 3.1 Console | Develop & Train - Workbenches',
       },
       {
-        element: <FeatureStore />,
-        exact: true,
         label: 'Feature store',
-        path: '/develop-train/feature-store',
-        title: 'RHOAI 3.1 Console | Develop & Train - Feature Store',
+        routes: [
+          {
+            element: <Overview />,
+            exact: true,
+            label: 'Overview',
+            path: '/develop-train/feature-store/overview',
+            title: 'RHOAI 3.1 Console | Feature Store - Overview',
+          },
+          {
+            element: <Entities />,
+            exact: true,
+            label: 'Entities',
+            path: '/develop-train/feature-store/entities',
+            title: 'RHOAI 3.1 Console | Feature Store - Entities',
+          },
+          {
+            element: <DataSources />,
+            exact: true,
+            label: 'Data sources',
+            path: '/develop-train/feature-store/data-sources',
+            title: 'RHOAI 3.1 Console | Feature Store - Data Sources',
+          },
+          {
+            element: <DataSets />,
+            exact: true,
+            label: 'Data sets',
+            path: '/develop-train/feature-store/data-sets',
+            title: 'RHOAI 3.1 Console | Feature Store - Data Sets',
+          },
+          {
+            element: <Features />,
+            exact: true,
+            label: 'Features',
+            path: '/develop-train/feature-store/features',
+            title: 'RHOAI 3.1 Console | Feature Store - Features',
+          },
+          {
+            element: <FeatureViews />,
+            exact: true,
+            label: 'Feature views',
+            path: '/develop-train/feature-store/feature-views',
+            title: 'RHOAI 3.1 Console | Feature Store - Feature Views',
+          },
+          {
+            element: <FeatureServices />,
+            exact: true,
+            label: 'Feature services',
+            path: '/develop-train/feature-store/feature-services',
+            title: 'RHOAI 3.1 Console | Feature Store - Feature Services',
+          },
+        ],
       },
       {
         label: 'Pipelines',
@@ -228,12 +284,24 @@ const routes: AppRouteConfig[] = [
     icon: createFontAwesomeIcon('fa-light fa-book'),
   },
   {
-    element: <Applications />,
-    exact: true,
     label: 'Applications',
-    path: '/applications',
-    title: 'RHOAI 3.1 Console | Applications',
     icon: createFontAwesomeIcon('fa-light fa-code'),
+    routes: [
+      {
+        element: <Enabled />,
+        exact: true,
+        label: 'Enabled',
+        path: '/applications/enabled',
+        title: 'RHOAI 3.1 Console | Applications - Enabled',
+      },
+      {
+        element: <Explore />,
+        exact: true,
+        label: 'Explore',
+        path: '/applications/explore',
+        title: 'RHOAI 3.1 Console | Applications - Explore',
+      },
+    ],
   },
   {
     label: 'Settings',
