@@ -39,7 +39,7 @@ import { ModelRegistrySettings } from '@app/Settings/ModelResources/ModelRegistr
 import { UserManagement } from '@app/Settings/UserManagement/UserManagement';
 
 // Icons
-import { HomeIcon, FolderIcon, CatalogIcon, CogIcon } from '@patternfly/react-icons';
+import { createFontAwesomeIcon } from '@app/utils/IconHelper';
 
 export interface IAppRoute {
   label?: string; // Excluding the label will exclude the route from the nav sidebar in AppLayout
@@ -68,7 +68,7 @@ const routes: AppRouteConfig[] = [
     label: 'Home',
     path: '/',
     title: 'RHOAI 3.1 Console | Home',
-    icon: HomeIcon,
+    icon: createFontAwesomeIcon('fa-light fa-house'),
   },
   {
     element: <Projects />,
@@ -76,10 +76,11 @@ const routes: AppRouteConfig[] = [
     label: 'Projects',
     path: '/projects',
     title: 'RHOAI 3.1 Console | Projects',
-    icon: FolderIcon,
+    icon: createFontAwesomeIcon('fa-light fa-folder'),
   },
   {
     label: 'AI hub',
+    icon: createFontAwesomeIcon('fa-light fa-brain'),
     routes: [
       {
         element: <Catalog />,
@@ -106,6 +107,7 @@ const routes: AppRouteConfig[] = [
   },
   {
     label: 'Gen AI studio',
+    icon: createFontAwesomeIcon('fa-light fa-brain'),
     routes: [
       {
         element: <AssetEndpoints />,
@@ -132,6 +134,7 @@ const routes: AppRouteConfig[] = [
   },
   {
     label: 'Develop & train',
+    icon: createFontAwesomeIcon('fa-light fa-flask'),
     routes: [
       {
         element: <Workbenches />,
@@ -198,6 +201,7 @@ const routes: AppRouteConfig[] = [
   },
   {
     label: 'Observe & monitor',
+    icon: createFontAwesomeIcon('fa-light fa-magnifying-glass'),
     routes: [
       {
         element: <WorkloadMetrics />,
@@ -221,7 +225,7 @@ const routes: AppRouteConfig[] = [
     label: 'Learning resources',
     path: '/learning-resources',
     title: 'RHOAI 3.1 Console | Learning Resources',
-    icon: CatalogIcon,
+    icon: createFontAwesomeIcon('fa-light fa-book'),
   },
   {
     element: <Applications />,
@@ -229,10 +233,11 @@ const routes: AppRouteConfig[] = [
     label: 'Applications',
     path: '/applications',
     title: 'RHOAI 3.1 Console | Applications',
+    icon: createFontAwesomeIcon('fa-light fa-code'),
   },
   {
     label: 'Settings',
-    icon: CogIcon,
+    icon: createFontAwesomeIcon('fa-light fa-gear'),
     routes: [
       {
         label: 'Cluster settings',
