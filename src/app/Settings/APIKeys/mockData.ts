@@ -2,11 +2,11 @@ import { APIKey, Model, MCPServer, VectorDatabase, Agent, Policy, APIKeyMetrics 
 
 // Available models
 export const mockModels: Model[] = [
-  { id: 'gpt-oss-20b', name: 'GPT-OSS 20B', endpoint: 'https://api.example.com/models/gpt-oss-20b' },
-  { id: 'granite-3.1b', name: 'Granite 3.1B', endpoint: 'https://api.example.com/models/granite-3.1b' },
-  { id: 'llama-7b', name: 'Llama 7B', endpoint: 'https://api.example.com/models/llama-7b' },
-  { id: 'codellama-13b', name: 'CodeLlama 13B', endpoint: 'https://api.example.com/models/codellama-13b' },
-  { id: 'mistral-7b', name: 'Mistral 7B', endpoint: 'https://api.example.com/models/mistral-7b' },
+  { id: 'gpt-oss-20b', name: 'GPT-OSS 20B', endpoint: 'https://api.example.com/models/gpt-oss-20b/v1' },
+  { id: 'granite-3.1b', name: 'Granite 3.1B', endpoint: 'https://api.example.com/models/granite-3.1b/v1' },
+  { id: 'llama-7b', name: 'Llama 7B', endpoint: 'https://api.example.com/models/llama-7b/v1' },
+  { id: 'codellama-13b', name: 'CodeLlama 13B', endpoint: 'https://api.example.com/models/codellama-13b/v1' },
+  { id: 'mistral-7b', name: 'Mistral 7B', endpoint: 'https://api.example.com/models/mistral-7b/v1' },
 ];
 
 // Available MCP servers
