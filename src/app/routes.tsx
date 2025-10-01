@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { Route, Routes } from 'react-router-dom';
-import { Dashboard } from '@app/Dashboard/Dashboard';
 import { Support } from '@app/Support/Support';
 import { GeneralSettings } from '@app/Settings/General/GeneralSettings';
 import { ProfileSettings } from '@app/Settings/Profile/ProfileSettings';
@@ -30,6 +29,7 @@ import { Artifacts } from '@app/DevelopTrain/Pipelines/Artifacts/Artifacts';
 import { Executions } from '@app/DevelopTrain/Pipelines/Executions/Executions';
 import { Evaluations } from '@app/DevelopTrain/Evaluations/Evaluations';
 import { Experiments } from '@app/DevelopTrain/Experiments/Experiments';
+import { Dashboard } from '@app/ObserveMonitor/Dashboard/Dashboard';
 import { WorkloadMetrics } from '@app/ObserveMonitor/WorkloadMetrics/WorkloadMetrics';
 import { TrainingJobs } from '@app/ObserveMonitor/TrainingJobs/TrainingJobs';
 import { LearningResources } from '@app/LearningResources/LearningResources';
@@ -280,6 +280,13 @@ const routes: AppRouteConfig[] = [
     label: 'Observe & monitor',
     icon: createFontAwesomeIcon('fa-light fa-magnifying-glass'),
     routes: [
+      {
+        element: <Dashboard />,
+        exact: true,
+        label: 'Dashboard',
+        path: '/observe-monitor/dashboard',
+        title: 'RHOAI 3.1 Console | Observe & Monitor - Dashboard',
+      },
       {
         element: <WorkloadMetrics />,
         exact: true,
