@@ -507,7 +507,7 @@ const Dashboard: React.FunctionComponent = () => {
             color: '#ffffff',
             border: '1px solid #3e8635'
           }}>
-            <CheckCircleIcon size="xs" />
+            <CheckCircleIcon size={16} />
             Running
           </span>
         );
@@ -519,7 +519,7 @@ const Dashboard: React.FunctionComponent = () => {
             color: '#151515',
             border: '1px solid #f0ad00'
           }}>
-            <ExclamationTriangleIcon size="xs" />
+            <ExclamationTriangleIcon size={16} />
             Scaling
           </span>
         );
@@ -531,7 +531,7 @@ const Dashboard: React.FunctionComponent = () => {
             color: '#ffffff',
             border: '1px solid #c9190b'
           }}>
-            <ExclamationCircleIcon size="xs" />
+            <ExclamationCircleIcon size={16} />
             Failed
           </span>
         );
@@ -543,7 +543,7 @@ const Dashboard: React.FunctionComponent = () => {
             color: '#ffffff',
             border: '1px solid #c9190b'
           }}>
-            <ExclamationCircleIcon size="xs" />
+            <ExclamationCircleIcon size={16} />
             Degraded
           </span>
         );
@@ -758,7 +758,7 @@ const Dashboard: React.FunctionComponent = () => {
 
             {/* Performance Charts */}
             <FlexItem>
-              <Grid hasGutter gutter="lg">
+              <Grid hasGutter>
                 {/* Token throughput chart */}
                 <GridItem span={6}>
                   <Card isFullHeight>
@@ -1034,7 +1034,7 @@ const Dashboard: React.FunctionComponent = () => {
 
         {/* Charts Section - Side by Side */}
         <FlexItem>
-          <Grid hasGutter gutter="lg">
+          <Grid hasGutter>
             {/* Usage per Group Chart */}
             <GridItem span={6}>
               <Card isFullHeight>

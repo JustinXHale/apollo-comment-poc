@@ -7,9 +7,8 @@ import {
   CardTitle,
   Grid,
   GridItem,
-  Text,
-  TextContent,
-  TextVariants,
+  Content,
+  ContentVariants,
   Flex,
   FlexItem,
   Badge,
@@ -127,11 +126,9 @@ const Dashboard: React.FunctionComponent = () => {
               <Badge>Dashboard</Badge>
             </FlexItem>
           </Flex>
-          <TextContent>
-            <Text component={TextVariants.p}>
-              Monitor the health and performance of your AI workloads and infrastructure
-            </Text>
-          </TextContent>
+          <Content component={ContentVariants.p}>
+            Monitor the health and performance of your AI workloads and infrastructure
+          </Content>
         </FlexItem>
 
         {/* Overview Section */}
@@ -145,7 +142,7 @@ const Dashboard: React.FunctionComponent = () => {
                 <GridItem span={2}>
                   <Flex direction={{ default: 'column' }}>
                     <FlexItem>
-                      <Text component={TextVariants.small}>Active nodes</Text>
+                      <Content component={ContentVariants.small}>Active nodes</Content>
                     </FlexItem>
                     <FlexItem>
                       <Title headingLevel="h3" size="xl">{overviewMetrics.activeNodes}</Title>
@@ -155,7 +152,7 @@ const Dashboard: React.FunctionComponent = () => {
                 <GridItem span={2}>
                   <Flex direction={{ default: 'column' }}>
                     <FlexItem>
-                      <Text component={TextVariants.small}>Active models</Text>
+                      <Content component={ContentVariants.small}>Active models</Content>
                     </FlexItem>
                     <FlexItem>
                       <Title headingLevel="h3" size="xl">{overviewMetrics.activeModels}</Title>
@@ -165,7 +162,7 @@ const Dashboard: React.FunctionComponent = () => {
                 <GridItem span={2}>
                   <Flex direction={{ default: 'column' }}>
                     <FlexItem>
-                      <Text component={TextVariants.small}>CPU cores</Text>
+                      <Content component={ContentVariants.small}>CPU cores</Content>
                     </FlexItem>
                     <FlexItem>
                       <Title headingLevel="h3" size="xl">{overviewMetrics.cpuCores}</Title>
@@ -175,7 +172,7 @@ const Dashboard: React.FunctionComponent = () => {
                 <GridItem span={2}>
                   <Flex direction={{ default: 'column' }}>
                     <FlexItem>
-                      <Text component={TextVariants.small}>Active GPUs</Text>
+                      <Content component={ContentVariants.small}>Active GPUs</Content>
                     </FlexItem>
                     <FlexItem>
                       <Title headingLevel="h3" size="xl">{overviewMetrics.activeGPUs}</Title>
@@ -185,7 +182,7 @@ const Dashboard: React.FunctionComponent = () => {
                 <GridItem span={2}>
                   <Flex direction={{ default: 'column' }}>
                     <FlexItem>
-                      <Text component={TextVariants.small}>Memory</Text>
+                      <Content component={ContentVariants.small}>Memory</Content>
                     </FlexItem>
                     <FlexItem>
                       <Title headingLevel="h3" size="xl">{overviewMetrics.memory}</Title>
@@ -195,7 +192,7 @@ const Dashboard: React.FunctionComponent = () => {
                 <GridItem span={2}>
                   <Flex direction={{ default: 'column' }}>
                     <FlexItem>
-                      <Text component={TextVariants.small}>Network Rx/Tx</Text>
+                      <Content component={ContentVariants.small}>Network Rx/Tx</Content>
                     </FlexItem>
                     <FlexItem>
                       <Title headingLevel="h3" size="xl">{overviewMetrics.networkRxTx}</Title>
@@ -273,7 +270,7 @@ const Dashboard: React.FunctionComponent = () => {
                 <GridItem span={2}>
                   <Flex direction={{ default: 'column' }}>
                     <FlexItem>
-                      <Text component={TextVariants.small}>Total requests</Text>
+                      <Content component={ContentVariants.small}>Total requests</Content>
                     </FlexItem>
                     <FlexItem>
                       <Title headingLevel="h4" size="xl">{usageMetrics.totalRequests}</Title>
@@ -283,7 +280,7 @@ const Dashboard: React.FunctionComponent = () => {
                 <GridItem span={2}>
                   <Flex direction={{ default: 'column' }}>
                     <FlexItem>
-                      <Text component={TextVariants.small}>Error Rate</Text>
+                      <Content component={ContentVariants.small}>Error Rate</Content>
                     </FlexItem>
                     <FlexItem>
                       <Title headingLevel="h4" size="xl">{usageMetrics.errorRate}</Title>
@@ -293,7 +290,7 @@ const Dashboard: React.FunctionComponent = () => {
                 <GridItem span={3}>
                   <Flex direction={{ default: 'column' }}>
                     <FlexItem>
-                      <Text component={TextVariants.small}>Avg. Latency</Text>
+                      <Content component={ContentVariants.small}>Avg. Latency</Content>
                     </FlexItem>
                     <FlexItem>
                       <Title headingLevel="h4" size="xl">{usageMetrics.avgLatency}</Title>
@@ -303,7 +300,7 @@ const Dashboard: React.FunctionComponent = () => {
                 <GridItem span={2}>
                   <Flex direction={{ default: 'column' }}>
                     <FlexItem>
-                      <Text component={TextVariants.small}>Total Cost</Text>
+                      <Content component={ContentVariants.small}>Total Cost</Content>
                     </FlexItem>
                     <FlexItem>
                       <Title headingLevel="h4" size="xl">{usageMetrics.totalCost}</Title>
@@ -313,7 +310,7 @@ const Dashboard: React.FunctionComponent = () => {
                 <GridItem span={3}>
                   <Flex direction={{ default: 'column' }}>
                     <FlexItem>
-                      <Text component={TextVariants.small}>Total Token</Text>
+                      <Content component={ContentVariants.small}>Total Token</Content>
                     </FlexItem>
                     <FlexItem>
                       <Title headingLevel="h4" size="xl">{usageMetrics.totalToken}</Title>
@@ -423,7 +420,7 @@ const Dashboard: React.FunctionComponent = () => {
                       }}></div>
                     </FlexItem>
                     <FlexItem>
-                      <Text component={TextVariants.small}>llm-7b-chat</Text>
+                      <Content component={ContentVariants.small}>llm-7b-chat</Content>
                     </FlexItem>
                   </Flex>
                 </FlexItem>
@@ -438,7 +435,7 @@ const Dashboard: React.FunctionComponent = () => {
                       }}></div>
                     </FlexItem>
                     <FlexItem>
-                      <Text component={TextVariants.small}>mistral-7b-instruct-v2</Text>
+                      <Content component={ContentVariants.small}>mistral-7b-instruct-v2</Content>
                     </FlexItem>
                   </Flex>
                 </FlexItem>
@@ -453,7 +450,7 @@ const Dashboard: React.FunctionComponent = () => {
                       }}></div>
                     </FlexItem>
                     <FlexItem>
-                      <Text component={TextVariants.small}>stable-diffusion-xl-beta</Text>
+                      <Content component={ContentVariants.small}>stable-diffusion-xl-beta</Content>
                     </FlexItem>
                   </Flex>
                 </FlexItem>
@@ -532,7 +529,7 @@ const Dashboard: React.FunctionComponent = () => {
                       }}></div>
                     </FlexItem>
                     <FlexItem>
-                      <Text component={TextVariants.small}>llm-7b-chat</Text>
+                      <Content component={ContentVariants.small}>llm-7b-chat</Content>
                     </FlexItem>
                   </Flex>
                 </FlexItem>
@@ -547,7 +544,7 @@ const Dashboard: React.FunctionComponent = () => {
                       }}></div>
                     </FlexItem>
                     <FlexItem>
-                      <Text component={TextVariants.small}>mistral-7b-instruct-v2</Text>
+                      <Content component={ContentVariants.small}>mistral-7b-instruct-v2</Content>
                     </FlexItem>
                   </Flex>
                 </FlexItem>
@@ -562,7 +559,7 @@ const Dashboard: React.FunctionComponent = () => {
                       }}></div>
                     </FlexItem>
                     <FlexItem>
-                      <Text component={TextVariants.small}>stable-diffusion-xl-beta</Text>
+                      <Content component={ContentVariants.small}>stable-diffusion-xl-beta</Content>
                     </FlexItem>
                   </Flex>
                 </FlexItem>
