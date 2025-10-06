@@ -24,7 +24,7 @@ import {
   SkipToContent,
   Tooltip
 } from '@patternfly/react-core';
-import { IAppRoute, IAppRouteGroup, routes, AppRouteConfig } from '@app/routes';
+import { IAppRoute, IAppRouteGroup, useRoutes } from '@app/routes';
 import { BarsIcon, BellIcon, CaretDownIcon, CogIcon, FlagIcon, InfoCircleIcon, MoonIcon, SignOutAltIcon, SunIcon, TrashIcon, UserIcon } from '@patternfly/react-icons';
 import { useTheme } from '@app/utils/ThemeContext';
 import { useUserProfile } from '@app/utils/UserProfileContext';
@@ -45,7 +45,7 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
   const { theme, toggleTheme } = useTheme();
   const { logout } = useAuth();
   const { flags } = useFeatureFlags();
-  const navigate = useNavigate();
+  
   
   // Clear local storage handler
   const handleClearLocalStorage = () => {
@@ -64,6 +64,8 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
     // Reload the page to reset the state
     window.location.reload();
   };
+  const routes = useRoutes();
+  const navigate = useNavigate();
 
   // Theme-aware logo selection
   const logoSrc = theme === 'light' ? LightLogo : DarkLogo;
@@ -234,7 +236,7 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
 
   const renderNavItem = (route: IAppRoute, index: number) => (
     <NavItem key={`${route.label}-${index}`} id={`${route.label}-${index}`} isActive={route.path === location.pathname}>
-      {(route as any).disabled ? (
+      {route.disabled ? (
         <div
           style={{ 
             display: 'flex', 
@@ -247,7 +249,7 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
           }}
         >
           <span>{route.label}</span>
-          {(route as any).techPreview && (
+          {route.techPreview && (
             <Label 
               variant="outline" 
               color="orange" 
@@ -264,7 +266,7 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
         >
           <span>{route.label}</span>
-          {(route as any).techPreview && (
+          {route.techPreview && (
             <Label 
               variant="outline" 
               color="orange" 
@@ -284,33 +286,23 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
       key={`${group.label}-${groupIndex}`}
       id={`${group.label}-${groupIndex}`}
       title={group.label}
-      isActive={group.routes.some((route) => 'path' in route && route.path === location.pathname)}
-      style={(group as any).disabled ? { 
+      isActive={group.routes.some((route) => route.path === location.pathname)}
+      style={group.disabled ? { 
         color: '#6a6e73', 
         opacity: 0.5, 
         cursor: 'not-allowed' 
       } : undefined}
     >
-      {group.routes.map((route, idx) => route.label && renderNavItem(route as IAppRoute, idx))}
+      {group.routes.map((route, idx) => route.label && renderNavItem(route, idx))}
     </NavExpandable>
   );
-
-  const renderNavigationItem = (route: AppRouteConfig, idx: number) => {
-    if (!('label' in route) || !route.label) {
-      return null;
-    }
-
-    if ('routes' in route) {
-      return renderNavGroup(route as IAppRouteGroup, idx);
-    } else {
-      return renderNavItem(route as IAppRoute, idx);
-    }
-  };
 
   const Navigation = (
     <Nav id="nav-primary-simple">
       <NavList id="nav-list-simple">
-        {routes.map((route, idx) => renderNavigationItem(route, idx))}
+        {routes.map(
+          (route, idx) => route.label && (!route.routes ? renderNavItem(route, idx) : renderNavGroup(route, idx)),
+        )}
       </NavList>
     </Nav>
   );
@@ -335,6 +327,7 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
       Skip to Content
     </SkipToContent>
   );
+  
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* UXD Prototype Banner */}

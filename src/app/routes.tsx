@@ -35,6 +35,10 @@ import { KnowledgeSources } from '@app/GenAIStudio/KnowledgeSources/KnowledgeSou
 import { Tracing } from '@app/Observability/Tracing/Tracing';
 import { RAG } from '@app/Observability/RAG/RAG';
 import { Evaluations as ObservabilityEvaluations } from '@app/Observability/Evaluations/Evaluations';
+
+// FeatureFlags - imported from migrated src-3.0
+import { FeatureFlags } from '@app/FeatureFlags/FeatureFlags';
+
 import { Workbenches } from '@app/DevelopTrain/Workbenches/Workbenches';
 import { FeatureStore } from '@app/DevelopTrain/FeatureStore/FeatureStore';
 import { Overview } from '@app/DevelopTrain/FeatureStore/Overview/Overview';
@@ -522,6 +526,12 @@ const routes: AppRouteConfig[] = [
     exact: true,
     path: '/observability/evaluations',
     title: 'RHOAI 3.1 Console | Observability - Evaluations',
+  },
+  {
+    element: <FeatureFlags />,
+    exact: true,
+    path: '/feature-flags',
+    title: 'RHOAI 3.1 Console | Feature Flags',
   },
 ];
 
