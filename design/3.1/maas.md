@@ -257,11 +257,29 @@ This tab includes a "Danger Zone" card with a red action button to permanently d
 
 ### Policies page
 
-Located at:
+The Policies list/table page should be located in "Settings" in the left nav, below "User management." It should be a table page similar to the others, with columns for Name, Description, Status (Active or Inactive), Targets (e.g. Group names) and Rules (e.g. Token limit, Rate limit, Time limit).
+
+### Create policy
+
+A primary button to "Create policy" should be available on the Policies list page. Clicking it should display a PatternFly 6 modal similar to the others.
+
+The modal should include fields for Name (required) and Description (optional).
+
+Then a section heading for "Available assets" should have dropdowns similar to the ones from the "Create API key" modal for "Models" and "MCP Servers & tools". By default both dropdowns should be set to "All" (meaning they aren't restricting anything).
+
+Then a section heading for "Limits" should display fields for
+
+- Token limit (i.e. # tokens per # [time range like minute, hour, day]
+- Rate limit (i.e. # requests per # [time range like minute, hour, day])
+- Time limit (i.e. None or Start & End time controls)
+
+Then a section heading for "Targets" that has multi-select dropdowns for "Groups" and "Users" and "Service Accounts" with some options in each.
+
+The descriptive text for the Groups dropdown should say "This policy will apply to all users in these groups."
 
 #### Policy Details page
 
-
+The Policy Details page should have a tab for Details, which displays all of the details that were captured in the "Create policy" modal.
 
 
 
