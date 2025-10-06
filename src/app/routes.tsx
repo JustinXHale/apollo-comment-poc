@@ -8,12 +8,33 @@ import { NotFound } from '@app/NotFound/NotFound';
 // New components
 import { Home } from '@app/Home/Home';
 import { Projects } from '@app/Projects/Projects';
-import { Catalog } from '@app/AIHub/Catalog/Catalog';
-import { Registry } from '@app/AIHub/Registry/Registry';
-import { Deployments } from '@app/AIHub/Deployments/Deployments';
-import { AssetEndpoints } from '@app/GenAIStudio/AssetEndpoints/AssetEndpoints';
-import { Playground } from '@app/GenAIStudio/Playground/Playground';
+
+// AIAssets - imported from migrated src-3.0
+import { Models } from '@app/AIAssets/Models/Models';
+import { ModelCatalog } from '@app/AIAssets/Models/ModelCatalog';
+import { ModelRegistry } from '@app/AIAssets/Models/ModelRegistry';
+import RegisterModel from '@app/AIAssets/Models/RegisterModel';
+import ModelDetails from '@app/AIAssets/Models/ModelDetails';
+import { Deployments } from '@app/AIAssets/Deployments/Deployments';
+import { DeployModelWizard } from '@app/AIAssets/Deployments/DeployModelWizard';
+import { MVPServers } from '@app/AIAssets/MVPServers/MVPServers';
+import { MCPServerDetails } from '@app/AIAssets/MVPServers/MCPServerDetails';
+import { SearchResults } from '@app/AIAssets/MVPServers/SearchResults';
+import { CreateGuardrail } from '@app/AIAssets/Guardrails/CreateGuardrail';
+import { Guardrails } from '@app/AIAssets/Guardrails/Guardrails';
+import AvailableAIAssets from '@app/AIAssets/AvailableAIAssets/AvailableAIAssets';
+
+// GenAIStudio - imported from migrated src-3.0
+import { AgentBuilder } from '@app/GenAIStudio/AgentBuilder/AgentBuilder';
+import { ModelPlayground } from '@app/GenAIStudio/ModelPlayground/ModelPlayground';
+import { MyAgents } from '@app/GenAIStudio/MyAgents/MyAgents';
+import { PromptEngineering } from '@app/GenAIStudio/PromptEngineering/PromptEngineering';
 import { KnowledgeSources } from '@app/GenAIStudio/KnowledgeSources/KnowledgeSources';
+
+// Observability - imported from migrated src-3.0
+import { Tracing } from '@app/Observability/Tracing/Tracing';
+import { RAG } from '@app/Observability/RAG/RAG';
+import { Evaluations as ObservabilityEvaluations } from '@app/Observability/Evaluations/Evaluations';
 import { Workbenches } from '@app/DevelopTrain/Workbenches/Workbenches';
 import { FeatureStore } from '@app/DevelopTrain/FeatureStore/FeatureStore';
 import { Overview } from '@app/DevelopTrain/FeatureStore/Overview/Overview';
@@ -94,14 +115,14 @@ const routes: AppRouteConfig[] = [
     icon: createFontAwesomeIcon('fa-light fa-brain'),
     routes: [
       {
-        element: <Catalog />,
+        element: <ModelCatalog />,
         exact: true,
         label: 'Catalog',
         path: '/ai-hub/catalog',
         title: 'RHOAI 3.1 Console | AI Hub - Catalog',
       },
       {
-        element: <Registry />,
+        element: <ModelRegistry />,
         exact: true,
         label: 'Registry',
         path: '/ai-hub/registry',
@@ -121,18 +142,39 @@ const routes: AppRouteConfig[] = [
     icon: createFontAwesomeIcon('fa-light fa-brain'),
     routes: [
       {
-        element: <AssetEndpoints />,
+        element: <AvailableAIAssets />,
         exact: true,
         label: 'AI asset endpoints',
         path: '/gen-ai-studio/asset-endpoints',
         title: 'RHOAI 3.1 Console | Gen AI Studio - AI Asset Endpoints',
       },
       {
-        element: <Playground />,
+        element: <AgentBuilder />,
         exact: true,
         label: 'Playground',
         path: '/gen-ai-studio/playground',
         title: 'RHOAI 3.1 Console | Gen AI Studio - Playground',
+      },
+      {
+        element: <ModelPlayground />,
+        exact: true,
+        label: 'Model playground',
+        path: '/gen-ai-studio/model-playground',
+        title: 'RHOAI 3.1 Console | Gen AI Studio - Model Playground',
+      },
+      {
+        element: <MyAgents />,
+        exact: true,
+        label: 'My agents',
+        path: '/gen-ai-studio/my-agents',
+        title: 'RHOAI 3.1 Console | Gen AI Studio - My Agents',
+      },
+      {
+        element: <PromptEngineering />,
+        exact: true,
+        label: 'Prompt engineering',
+        path: '/gen-ai-studio/prompt-engineering',
+        title: 'RHOAI 3.1 Console | Gen AI Studio - Prompt Engineering',
       },
       {
         element: <KnowledgeSources />,
@@ -407,6 +449,79 @@ const routes: AppRouteConfig[] = [
         title: 'RHOAI 3.1 Console | Settings - User Management',
       },
     ],
+  },
+  // Additional routes not in navigation
+  {
+    element: <DeployModelWizard />,
+    exact: true,
+    path: '/ai-hub/deployments/deploy',
+    title: 'RHOAI 3.1 Console | Deploy Model',
+  },
+  {
+    element: <RegisterModel />,
+    exact: true,
+    path: '/ai-hub/registry/new-model',
+    title: 'RHOAI 3.1 Console | Register Model',
+  },
+  {
+    element: <ModelDetails />,
+    exact: true,
+    path: '/ai-assets/models/:modelSlug',
+    title: 'RHOAI 3.1 Console | Model Details',
+  },
+  {
+    element: <Models />,
+    exact: true,
+    path: '/ai-assets/models',
+    title: 'RHOAI 3.1 Console | Models',
+  },
+  {
+    element: <MVPServers />,
+    exact: true,
+    path: '/ai-assets/mvp-servers',
+    title: 'RHOAI 3.1 Console | MCP Servers',
+  },
+  {
+    element: <MCPServerDetails />,
+    exact: true,
+    path: '/ai-assets/mvp-servers/:serverSlug',
+    title: 'RHOAI 3.1 Console | MCP Server Details',
+  },
+  {
+    element: <SearchResults />,
+    exact: true,
+    path: '/ai-assets/mvp-servers/search',
+    title: 'RHOAI 3.1 Console | Search Results',
+  },
+  {
+    element: <CreateGuardrail />,
+    exact: true,
+    path: '/ai-assets/guardrails/create',
+    title: 'RHOAI 3.1 Console | Create Guardrail',
+  },
+  {
+    element: <Guardrails />,
+    exact: true,
+    path: '/ai-assets/guardrails',
+    title: 'RHOAI 3.1 Console | Guardrails',
+  },
+  {
+    element: <Tracing />,
+    exact: true,
+    path: '/observability/tracing',
+    title: 'RHOAI 3.1 Console | Observability - Tracing',
+  },
+  {
+    element: <RAG />,
+    exact: true,
+    path: '/observability/rag',
+    title: 'RHOAI 3.1 Console | Observability - RAG',
+  },
+  {
+    element: <ObservabilityEvaluations />,
+    exact: true,
+    path: '/observability/evaluations',
+    title: 'RHOAI 3.1 Console | Observability - Evaluations',
   },
 ];
 

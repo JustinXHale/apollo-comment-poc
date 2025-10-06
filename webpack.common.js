@@ -40,15 +40,6 @@ module.exports = (env) => {
           test: /\.svg$/,
           type: 'asset/inline',
           include: (input) => input.indexOf('background-filter.svg') > 1,
-          use: [
-            {
-              options: {
-                limit: 5000,
-                outputPath: 'svgs',
-                name: '[name].[ext]',
-              },
-            },
-          ],
         },
         {
           test: /\.svg$/,
@@ -93,15 +84,6 @@ module.exports = (env) => {
             ),
           ],
           type: 'asset/inline',
-          use: [
-            {
-              options: {
-                limit: 5000,
-                outputPath: 'images',
-                name: '[name].[ext]',
-              },
-            },
-          ],
         },
       ],
     },

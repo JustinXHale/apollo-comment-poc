@@ -1,15 +1,16 @@
 import * as React from 'react';
-import {
+import { 
   Button,
   Flex,
   FlexItem,
-  PageSection
+  PageSection,
+  Title
 } from '@patternfly/react-core';
 import { useNavigate } from 'react-router-dom';
 import { useDocumentTitle } from '@app/utils/useDocumentTitle';
 
-const Dashboard: React.FunctionComponent = () => {
-  useDocumentTitle("Dashboard");
+const Models: React.FunctionComponent = () => {
+  useDocumentTitle("Models");
   const navigate = useNavigate();
 
   return (
@@ -24,14 +25,16 @@ const Dashboard: React.FunctionComponent = () => {
       >
         <FlexItem>
           <div>
-            <p style={{ 
-              fontSize: '1.125rem', 
-              color: '#6a6e73',
-              maxWidth: '600px',
-              lineHeight: '1.6',
-              marginBottom: '1rem'
-            }}>
-              The focus of this prototype is{' '}
+            <Title headingLevel="h1" size="2xl" style={{ marginBottom: '1rem', color: '#6a6e73' }}>
+              Models Page
+            </Title>
+                         <p style={{ 
+               fontSize: '1.125rem', 
+               color: '#6a6e73',
+               maxWidth: '600px',
+               lineHeight: '1.6'
+             }}>
+               The focus of this prototype is{' '}
                <Button
                  variant="link"
                  isInline
@@ -49,8 +52,8 @@ const Dashboard: React.FunctionComponent = () => {
                >
                  Generative AI Studio
                </Button>
-              .
-            </p>
+               .
+             </p>
           </div>
         </FlexItem>
       </Flex>
@@ -58,4 +61,4 @@ const Dashboard: React.FunctionComponent = () => {
   );
 };
 
-export { Dashboard };
+export { Models }; 
