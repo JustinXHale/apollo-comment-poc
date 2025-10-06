@@ -25,6 +25,7 @@ This rule applies to all code generation, refactoring, and review tasks involvin
 - **Reference official PatternFly components and avoid custom solutions unless explicitly allowed.**
 - **If a question arises, search these docs first before using external sources.**
 - **Always add unique ID attributes to PatternFly components that you add**
+- **DO NOT add additional custom CSS to PatternFly components**
 
 ## Example Prompt
 > "When generating PatternFly code, use the guidelines and examples from all README and markdown files in this repository, especially those referenced in documentation/README.md. Follow the documented best practices for styling, accessibility, and component usage."

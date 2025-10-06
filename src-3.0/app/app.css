@@ -1,0 +1,178 @@
+.pf-chatbot__message-bar {
+  border: var(--pf-t--global--border--color--default) 1px solid;
+}
+
+/* Force chatbot background to be white */
+.pf-chatbot,
+.pf-chatbot__main,
+.pf-chatbot__main-container,
+.pf-chatbot__message-box,
+.pf-chatbot__footer,
+.pf-chatbot__message-bar {
+  background-color: white !important;
+}
+
+/* Add border to separate footer from chat area */
+.pf-chatbot__footer {
+  border-top: 1px solid #e5e7eb !important;
+  padding-top: 1rem !important;
+}
+
+/* Let PatternFly handle page layout naturally */
+
+/* Hide step labels from sliders in the playground */
+.pf-v6-c-slider__step-label {
+  display: none !important;
+}
+
+/* Remove gray background from open accordions in playground */
+.pf-v6-c-accordion__expanded-content,
+.pf-v6-c-accordion__expanded-content-body,
+.pf-v6-c-accordion__content,
+.pf-v6-c-accordion__content-body,
+.pf-v6-c-accordion .pf-v6-c-accordion__content,
+.pf-v6-c-accordion .pf-v6-c-accordion__content-body {
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+}
+
+/* Also target any accordion items that might have gray backgrounds */
+.pf-v6-c-accordion__item.pf-m-expanded,
+.pf-v6-c-accordion__item.pf-m-expanded .pf-v6-c-accordion__content {
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+}
+
+/* Try using a very light cream color to bypass any white-to-gray conversion */
+.pf-v6-c-accordion__expanded-content,
+.pf-v6-c-accordion__expanded-content-body,
+.pf-v6-c-accordion__content,
+.pf-v6-c-accordion__content-body {
+  background-color: #fafafa !important;
+  background: #fafafa !important;
+}
+
+/* Override any CSS custom properties that might be causing the issue */
+.pf-v6-c-accordion {
+  --pf-v6-c-accordion__content--BackgroundColor: #fafafa !important;
+  --pf-v6-c-accordion__expanded-content--BackgroundColor: #fafafa !important;
+}
+
+/* Also try targeting the accordion directly with a more specific selector */
+.pf-v6-c-accordion__item[aria-expanded="true"] .pf-v6-c-accordion__content {
+  background-color: #fafafa !important;
+  background: #fafafa !important;
+}
+
+/* Remove margins from accordion content to eliminate gray background showing through */
+.pf-v6-c-accordion__content,
+.pf-v6-c-accordion__content-body,
+.pf-v6-c-accordion__expanded-content,
+.pf-v6-c-accordion__expanded-content-body,
+.pf-v6-c-accordion__expandable-content {
+  margin: 0 !important;
+  padding: 1rem !important;
+}
+
+/* Change accordion control/header background to white */
+.pf-v6-c-accordion__toggle,
+.pf-v6-c-accordion__toggle-text,
+.pf-v6-c-accordion__item,
+.pf-v6-c-accordion__item .pf-v6-c-accordion__toggle {
+  background-color: white !important;
+  background: white !important;
+}
+
+/* Make accordion control labels bold even when closed */
+.pf-v6-c-accordion__toggle,
+.pf-v6-c-accordion__toggle-text,
+.pf-v6-c-accordion__toggle-text > *,
+.pf-v6-c-accordion__item .pf-v6-c-accordion__toggle {
+  font-weight: bold !important;
+}
+
+/* Reduce vertical space between accordion items */
+.pf-v6-c-accordion__item {
+  margin-bottom: 0.5rem !important;
+}
+
+.pf-v6-c-accordion__item:last-child {
+  margin-bottom: 0 !important;
+}
+
+/* Adjust use case column padding - only for model deployment tables with 'Use Case' column */
+.pf-v6-c-table tbody tr td:nth-child(4)[data-label="Use Case"] {
+  padding-top: 1.5rem !important;
+}
+
+/* Slightly expand model name column to show full MaaS label - only for main AI Assets table, not modal */
+.pf-v6-c-page-section .pf-v6-c-table thead tr th:first-child,
+.pf-v6-c-page-section .pf-v6-c-table tbody tr td:first-child {
+  min-width: 520px !important;
+}
+
+/* Ensure MaaS labels don't get truncated */
+.pf-v6-c-table .pf-v6-c-label {
+  flex-shrink: 0 !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+}
+
+/* Ensure model name container has enough space */
+.pf-v6-c-table tbody tr td:first-child > div {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+  gap: 0.5rem !important;
+}
+
+/* Make Configure playground modal table more compact */
+.pf-v6-c-modal .pf-v6-c-table tbody tr td {
+  padding: 0.5rem !important;
+  vertical-align: middle !important;
+  line-height: 1.4 !important;
+}
+
+.pf-v6-c-modal .pf-v6-c-table thead tr th {
+  padding: 0.5rem !important;
+  vertical-align: middle !important;
+}
+
+/* Make description text more compact in modal */
+.pf-v6-c-modal .pf-v6-c-table tbody tr td div[style*="webkit-line-clamp"] {
+  line-height: 1.3 !important;
+  margin: 0 !important;
+}
+
+/* Fix checkbox alignment in modal table */
+.pf-v6-c-modal .pf-v6-c-table tbody tr td:first-child {
+  text-align: center !important;
+  padding: 0.5rem !important;
+}
+
+/* Ensure consistent row height in modal table */
+.pf-v6-c-modal .pf-v6-c-table tbody tr {
+  height: auto !important;
+}
+
+/* Remove extra margins from labels in modal table */
+.pf-v6-c-modal .pf-v6-c-table .pf-v6-c-label {
+  margin: 0 !important;
+}
+
+/* Low fidelity mode styling */
+body.fidelity-low {
+  /* Apply Comic Sans font family */
+  font-family: "Comic Sans MS", "Comic Sans", cursive !important;
+  
+  /* Grayscale filter */
+  filter: grayscale(100%);
+}
+
+body.fidelity-low * {
+  /* Apply Comic Sans to all elements */
+  font-family: "Comic Sans MS", "Comic Sans", cursive !important;
+}
+
+
+

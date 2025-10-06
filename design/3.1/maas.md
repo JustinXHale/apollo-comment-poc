@@ -245,15 +245,28 @@ Below those controls are cards (in a flexbox row) for:
 
 Below these cards is a fulldwidth card with a graph showing the "Total Requests."
 
-### Policies
+#### Policies tab
 
 This tab includes all policies, limits, controls, and constraints that are imposed on the API key.
 
 It includes a table with the Names, IDs, and Descriptions of policies that have been applied by the Platform team. Policy IDs should be all lowercase with dashes for spaces like "devs-rate-limit-standard" and "devs-budget-standard."
 
-### Settings
+#### Settings tab
 
 This tab includes a "Danger Zone" card with a red action button to permanently delete the API key. If a user clicks the delete button a modal should appear to confirm that they want to delete the key, with a text field to type in the key's name manually and then "Confirm" to delete the key.
+
+### Policies page
+
+Located at:
+
+#### Policy Details page
+
+
+
+
+
+
+
 
 ## Implementation Details
 
