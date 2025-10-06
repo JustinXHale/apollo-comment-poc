@@ -9,7 +9,7 @@ const Home: React.FunctionComponent = () => (
   <PageSection>
     <Content component={ContentVariants.h1}>Home</Content>
     <Content component={ContentVariants.p}>
-      Welcome to the RHOAI 3.x Dashboard home page.
+      Welcome to the RHOAI 3.2 Dashboard home page.
     </Content>
   </PageSection>
 );
