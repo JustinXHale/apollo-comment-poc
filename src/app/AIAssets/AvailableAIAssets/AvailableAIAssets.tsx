@@ -19,8 +19,13 @@ import {
   EmptyStateFooter,
   Flex,
   FlexItem,
+  Form,
+  FormGroup,
+  FormHelperText,
   Grid,
   GridItem,
+  HelperText,
+  HelperTextItem,
   InputGroup,
   InputGroupItem,
   Label,
@@ -43,6 +48,7 @@ import {
   Tab,
   TabTitleText,
   Tabs,
+  TextArea,
   TextInput,
   Title,
   Toolbar,
@@ -682,6 +688,21 @@ const AvailableAIAssets: React.FunctionComponent = () => {
   const [mcpCurrentPage, setMcpCurrentPage] = React.useState(1);
   const [mcpPerPage, setMcpPerPage] = React.useState(10);
   const [isProjectSelectOpen, setIsProjectSelectOpen] = React.useState(false);
+  
+  // Add Asset modal state
+  type AssetType = 'Model' | 'MCP Server' | '';
+  const [isAddAssetModalOpen, setIsAddAssetModalOpen] = React.useState(false);
+  const [assetType, setAssetType] = React.useState<AssetType>('');
+  const [isAssetTypeOpen, setIsAssetTypeOpen] = React.useState(false);
+  const [project, setProject] = React.useState('');
+  const [isAddAssetProjectOpen, setIsAddAssetProjectOpen] = React.useState(false);
+  const [modelDeployment, setModelDeployment] = React.useState('');
+  const [isModelDeploymentOpen, setIsModelDeploymentOpen] = React.useState(false);
+  const [mcpServer, setMcpServer] = React.useState('');
+  const [isMcpServerOpen, setIsMcpServerOpen] = React.useState(false);
+  const [tools, setTools] = React.useState('');
+  const [isToolsOpen, setIsToolsOpen] = React.useState(false);
+  const [assetDescription, setAssetDescription] = React.useState('');
 
   // Initialize state from localStorage
   React.useEffect(() => {
@@ -1100,6 +1121,41 @@ const AvailableAIAssets: React.FunctionComponent = () => {
   const handleCancelCreateEndpoint = () => {
     setIsCreateEndpointModalOpen(false);
     setSelectedModelForEndpoint({id: '', name: ''});
+  };
+
+  const handleOpenAddAssetModal = () => {
+    setIsAddAssetModalOpen(true);
+  };
+
+  const handleCloseAddAssetModal = () => {
+    setIsAddAssetModalOpen(false);
+    // Reset form
+    setAssetType('');
+    setProject('');
+    setModelDeployment('');
+    setMcpServer('');
+    setTools('');
+    setAssetDescription('');
+  };
+
+  const handleAddAsset = () => {
+    // Handle adding the asset here
+    console.log('Adding asset:', { assetType, project, modelDeployment, mcpServer, tools, assetDescription });
+    handleCloseAddAssetModal();
+  };
+
+  const isAddAssetFormValid = () => {
+    if (!assetType || !assetDescription.trim()) return false;
+    
+    if (assetType === 'Model') {
+      return project && modelDeployment;
+    }
+    
+    if (assetType === 'MCP Server') {
+      return mcpServer && tools;
+    }
+    
+    return false;
   };
 
   const handleGenerateToken = async (modelId: string) => {
@@ -2392,53 +2448,16 @@ const AvailableAIAssets: React.FunctionComponent = () => {
         </div>
       </PageSection>
 
-      {/* Project Selector */}
-      {flags.showProjectWorkspaceDropdowns && (
-        <PageSection style={{ paddingTop: '0.5rem', paddingBottom: '0.25rem' }}>
-          <Toolbar>
-            <ToolbarContent>
-              <ToolbarGroup>
-                <ToolbarItem>
-                  <InputGroup>
-                    <InputGroupItem>
-                      <div className="pf-v6-c-input-group__text">
-                        <OutlinedFolderIcon /> Project
-                      </div>
-                    </InputGroupItem>
-                    <InputGroupItem>
-                      <Select
-                        isOpen={isProjectSelectOpen}
-                        selected={selectedProject}
-                        onSelect={(_event, value) => {
-                          setSelectedProject(value as string);
-                          setIsProjectSelectOpen(false);
-                        }}
-                        onOpenChange={(isOpen) => setIsProjectSelectOpen(isOpen)}
-                        toggle={(toggleRef) => (
-                          <MenuToggle
-                            ref={toggleRef}
-                            onClick={() => setIsProjectSelectOpen(!isProjectSelectOpen)}
-                            isExpanded={isProjectSelectOpen}
-                            style={{ width: '200px' }}
-                          >
-                            {selectedProject}
-                          </MenuToggle>
-                        )}
-                        shouldFocusToggleOnSelect
-                      >
-                        <SelectList>
-                          <SelectOption value="Project X">Project X</SelectOption>
-                          <SelectOption value="Project Y">Project Y</SelectOption>
-                        </SelectList>
-                      </Select>
-                    </InputGroupItem>
-                  </InputGroup>
-                </ToolbarItem>
-              </ToolbarGroup>
-            </ToolbarContent>
-          </Toolbar>
-        </PageSection>
-      )}
+      {/* Add Asset Button */}
+      <PageSection style={{ paddingTop: '0.5rem', paddingBottom: '0.5rem' }}>
+        <Button 
+          variant="primary" 
+          onClick={handleOpenAddAssetModal}
+          id="add-asset-button"
+        >
+          Add asset
+        </Button>
+      </PageSection>
 
       <PageSection style={{ paddingTop: '0.5rem' }}>
         {/* Tabs */}
@@ -3590,6 +3609,274 @@ const AvailableAIAssets: React.FunctionComponent = () => {
         </ModalFooter>
       </Modal>
 
+      {/* Add Asset Modal */}
+      <Modal
+        isOpen={isAddAssetModalOpen}
+        onClose={handleCloseAddAssetModal}
+        aria-labelledby="add-asset-modal-title"
+        aria-describedby="add-asset-modal-body"
+        ouiaId="AddAssetModal"
+        className="pf-m-md"
+        appendTo={document.body}
+      >
+        <ModalHeader 
+          title="Add asset" 
+          labelId="add-asset-modal-title"
+        />
+        <ModalBody id="add-asset-modal-body">
+          <Form>
+            <FormGroup 
+              label="Asset type" 
+              fieldId="asset-type-select"
+              isRequired
+            >
+              <Select
+                id="asset-type-select"
+                isOpen={isAssetTypeOpen}
+                selected={assetType}
+                onSelect={(_event, value) => {
+                  setAssetType(value as AssetType);
+                  setIsAssetTypeOpen(false);
+                  // Reset conditional fields when asset type changes
+                  setProject('');
+                  setModelDeployment('');
+                  setMcpServer('');
+                  setTools('');
+                }}
+                onOpenChange={(isOpen) => setIsAssetTypeOpen(isOpen)}
+                toggle={(toggleRef) => (
+                  <MenuToggle
+                    ref={toggleRef}
+                    onClick={() => setIsAssetTypeOpen(!isAssetTypeOpen)}
+                    isExpanded={isAssetTypeOpen}
+                    style={{ width: '100%' }}
+                    id="asset-type-toggle"
+                  >
+                    {assetType || 'Select asset type'}
+                  </MenuToggle>
+                )}
+              >
+                <SelectList>
+                  <SelectOption value="Model" id="asset-type-model">
+                    Model
+                  </SelectOption>
+                  <SelectOption value="MCP Server" id="asset-type-mcp-server">
+                    MCP Server
+                  </SelectOption>
+                </SelectList>
+              </Select>
+            </FormGroup>
+
+            {assetType === 'Model' && (
+              <>
+                <FormGroup 
+                  label="Project" 
+                  fieldId="add-asset-project-select"
+                  isRequired
+                >
+                  <Select
+                    id="add-asset-project-select"
+                    isOpen={isAddAssetProjectOpen}
+                    selected={project}
+                    onSelect={(_event, value) => {
+                      setProject(value as string);
+                      setIsAddAssetProjectOpen(false);
+                    }}
+                    onOpenChange={(isOpen) => setIsAddAssetProjectOpen(isOpen)}
+                    toggle={(toggleRef) => (
+                      <MenuToggle
+                        ref={toggleRef}
+                        onClick={() => setIsAddAssetProjectOpen(!isAddAssetProjectOpen)}
+                        isExpanded={isAddAssetProjectOpen}
+                        style={{ width: '100%' }}
+                        id="add-asset-project-toggle"
+                      >
+                        {project || 'Select project'}
+                      </MenuToggle>
+                    )}
+                  >
+                    <SelectList>
+                      <SelectOption value="Project 1" id="add-asset-project-1">
+                        Project 1
+                      </SelectOption>
+                      <SelectOption value="Project 2" id="add-asset-project-2">
+                        Project 2
+                      </SelectOption>
+                      <SelectOption value="Project 3" id="add-asset-project-3">
+                        Project 3
+                      </SelectOption>
+                    </SelectList>
+                  </Select>
+                </FormGroup>
+
+                <FormGroup 
+                  label="Model deployment" 
+                  fieldId="add-asset-model-deployment-select"
+                  isRequired
+                >
+                  <Select
+                    id="add-asset-model-deployment-select"
+                    isOpen={isModelDeploymentOpen}
+                    selected={modelDeployment}
+                    onSelect={(_event, value) => {
+                      setModelDeployment(value as string);
+                      setIsModelDeploymentOpen(false);
+                    }}
+                    onOpenChange={(isOpen) => setIsModelDeploymentOpen(isOpen)}
+                    toggle={(toggleRef) => (
+                      <MenuToggle
+                        ref={toggleRef}
+                        onClick={() => setIsModelDeploymentOpen(!isModelDeploymentOpen)}
+                        isExpanded={isModelDeploymentOpen}
+                        style={{ width: '100%' }}
+                        id="add-asset-model-deployment-toggle"
+                      >
+                        {modelDeployment || 'Select model deployment'}
+                      </MenuToggle>
+                    )}
+                  >
+                    <SelectList>
+                      <SelectOption value="Model Deployment 1" id="add-asset-deployment-1">
+                        Model Deployment 1
+                      </SelectOption>
+                      <SelectOption value="Model Deployment 2" id="add-asset-deployment-2">
+                        Model Deployment 2
+                      </SelectOption>
+                      <SelectOption value="Model Deployment 3" id="add-asset-deployment-3">
+                        Model Deployment 3
+                      </SelectOption>
+                    </SelectList>
+                  </Select>
+                  <FormHelperText>
+                    <HelperText>
+                      <HelperTextItem>
+                        Adding this as an AI asset will make it available to other users outside of the namespace/project.
+                      </HelperTextItem>
+                    </HelperText>
+                  </FormHelperText>
+                </FormGroup>
+              </>
+            )}
+
+            {assetType === 'MCP Server' && (
+              <>
+                <FormGroup 
+                  label="MCP Server" 
+                  fieldId="add-asset-mcp-server-select"
+                  isRequired
+                >
+                  <Select
+                    id="add-asset-mcp-server-select"
+                    isOpen={isMcpServerOpen}
+                    selected={mcpServer}
+                    onSelect={(_event, value) => {
+                      setMcpServer(value as string);
+                      setIsMcpServerOpen(false);
+                    }}
+                    onOpenChange={(isOpen) => setIsMcpServerOpen(isOpen)}
+                    toggle={(toggleRef) => (
+                      <MenuToggle
+                        ref={toggleRef}
+                        onClick={() => setIsMcpServerOpen(!isMcpServerOpen)}
+                        isExpanded={isMcpServerOpen}
+                        style={{ width: '100%' }}
+                        id="add-asset-mcp-server-toggle"
+                      >
+                        {mcpServer || 'Select MCP server'}
+                      </MenuToggle>
+                    )}
+                  >
+                    <SelectList>
+                      <SelectOption value="MCP Server 1" id="add-asset-mcp-server-1">
+                        MCP Server 1
+                      </SelectOption>
+                      <SelectOption value="MCP Server 2" id="add-asset-mcp-server-2">
+                        MCP Server 2
+                      </SelectOption>
+                      <SelectOption value="MCP Server 3" id="add-asset-mcp-server-3">
+                        MCP Server 3
+                      </SelectOption>
+                    </SelectList>
+                  </Select>
+                </FormGroup>
+
+                <FormGroup 
+                  label="Tools" 
+                  fieldId="add-asset-tools-select"
+                  isRequired
+                >
+                  <Select
+                    id="add-asset-tools-select"
+                    isOpen={isToolsOpen}
+                    selected={tools}
+                    onSelect={(_event, value) => {
+                      setTools(value as string);
+                      setIsToolsOpen(false);
+                    }}
+                    onOpenChange={(isOpen) => setIsToolsOpen(isOpen)}
+                    toggle={(toggleRef) => (
+                      <MenuToggle
+                        ref={toggleRef}
+                        onClick={() => setIsToolsOpen(!isToolsOpen)}
+                        isExpanded={isToolsOpen}
+                        style={{ width: '100%' }}
+                        id="add-asset-tools-toggle"
+                      >
+                        {tools || 'Select tools'}
+                      </MenuToggle>
+                    )}
+                  >
+                    <SelectList>
+                      <SelectOption value="Tool 1" id="add-asset-tool-1">
+                        Tool 1
+                      </SelectOption>
+                      <SelectOption value="Tool 2" id="add-asset-tool-2">
+                        Tool 2
+                      </SelectOption>
+                      <SelectOption value="Tool 3" id="add-asset-tool-3">
+                        Tool 3
+                      </SelectOption>
+                    </SelectList>
+                  </Select>
+                </FormGroup>
+              </>
+            )}
+
+            <FormGroup 
+              label="Description" 
+              fieldId="add-asset-description-input"
+              isRequired
+            >
+              <TextArea
+                id="add-asset-description-input"
+                value={assetDescription}
+                onChange={(_event, value) => setAssetDescription(value)}
+                placeholder="Provide details about the asset, relevant settings, quality of service details, contact information, etc."
+                rows={4}
+              />
+            </FormGroup>
+          </Form>
+        </ModalBody>
+        <ModalFooter>
+          <Button
+            key="add"
+            variant="primary"
+            onClick={handleAddAsset}
+            isDisabled={!isAddAssetFormValid()}
+            id="add-asset-submit-button"
+          >
+            Add AI asset
+          </Button>
+          <Button
+            key="cancel"
+            variant="link"
+            onClick={handleCloseAddAssetModal}
+            id="add-asset-cancel-button"
+          >
+            Cancel
+          </Button>
+        </ModalFooter>
+      </Modal>
 
     </>
   );
