@@ -1,9 +1,10 @@
 import * as React from 'react';
-import { Route, Routes } from 'react-router-dom';
+import { Route, Routes, Navigate } from 'react-router-dom';
 import { Support } from '@app/Support/Support';
 import { GeneralSettings } from '@app/Settings/General/GeneralSettings';
 import { ProfileSettings } from '@app/Settings/Profile/ProfileSettings';
 import { NotFound } from '@app/NotFound/NotFound';
+import { useFeatureFlags } from '@app/utils/FeatureFlagsContext';
 
 // New components
 import { Home } from '@app/Home/Home';
@@ -87,6 +88,7 @@ export interface IAppRoute {
   title: string;
   routes?: undefined;
   icon?: React.ComponentType;
+  featureFlag?: keyof import('@app/utils/FeatureFlagsContext').FeatureFlags;
 }
 
 export interface IAppRouteGroup {
@@ -165,6 +167,7 @@ const routes: AppRouteConfig[] = [
         label: 'Model playground',
         path: '/gen-ai-studio/model-playground',
         title: 'RHOAI 3.1 Console | Gen AI Studio - Model Playground',
+        featureFlag: 'enableModelPlaygroundPage',
       },
       {
         element: <MyAgents />,
@@ -172,6 +175,7 @@ const routes: AppRouteConfig[] = [
         label: 'My agents',
         path: '/gen-ai-studio/my-agents',
         title: 'RHOAI 3.1 Console | Gen AI Studio - My Agents',
+        featureFlag: 'enableMyAgentsPage',
       },
       {
         element: <PromptEngineering />,
@@ -179,6 +183,7 @@ const routes: AppRouteConfig[] = [
         label: 'Prompt engineering',
         path: '/gen-ai-studio/prompt-engineering',
         title: 'RHOAI 3.1 Console | Gen AI Studio - Prompt Engineering',
+        featureFlag: 'enablePromptEngineeringPage',
       },
       {
         element: <KnowledgeSources />,
@@ -186,6 +191,7 @@ const routes: AppRouteConfig[] = [
         label: 'Knowledge sources',
         path: '/gen-ai-studio/knowledge-sources',
         title: 'RHOAI 3.1 Console | Gen AI Studio - Knowledge Sources',
+        featureFlag: 'enableKnowledgeSourcesPage',
       },
       {
         element: <APIKeys />,
@@ -535,6 +541,27 @@ const routes: AppRouteConfig[] = [
   },
 ];
 
+const filterRoutesByFlags = (routes: AppRouteConfig[], flags: any): AppRouteConfig[] => {
+  return routes.map((route) => {
+    if ('routes' in route && route.routes) {
+      // This is a group, recursively filter its routes
+      const filteredSubRoutes = filterRoutesByFlags(route.routes, flags);
+      // Only include the group if it has at least one visible route
+      if (filteredSubRoutes.length > 0) {
+        return { ...route, routes: filteredSubRoutes };
+      }
+      return null;
+    } else if ('element' in route) {
+      // This is a route, check if it should be shown
+      if (route.featureFlag) {
+        return flags[route.featureFlag] ? route : null;
+      }
+      return route;
+    }
+    return route;
+  }).filter((route): route is AppRouteConfig => route !== null);
+};
+
 const flattenRoutes = (routes: AppRouteConfig[]): IAppRoute[] => {
   const flattened: IAppRoute[] = [];
   
@@ -553,13 +580,17 @@ const flattenRoutes = (routes: AppRouteConfig[]): IAppRoute[] => {
 
 const flattenedRoutes: IAppRoute[] = flattenRoutes(routes);
 
-const AppRoutes = (): React.ReactElement => (
-  <Routes>
-    {flattenedRoutes.map(({ path, element }, idx) => (
-      <Route path={path} element={element} key={idx} />
-    ))}
-    <Route element={<NotFound />} />
-  </Routes>
-);
+const AppRoutes = (): React.ReactElement => {
+  // This component doesn't use feature flags for routing - that's handled in AppLayout
+  // We keep all routes available so direct navigation works
+  return (
+    <Routes>
+      {flattenedRoutes.map(({ path, element }, idx) => (
+        <Route path={path} element={element} key={idx} />
+      ))}
+      <Route element={<NotFound />} />
+    </Routes>
+  );
+};
 
-export { AppRoutes, routes };
+export { AppRoutes, routes, filterRoutesByFlags };

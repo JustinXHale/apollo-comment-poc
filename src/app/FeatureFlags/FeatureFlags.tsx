@@ -186,6 +186,90 @@ const FeatureFlags: React.FunctionComponent = () => {
               <FlexItem>
                 <div>
                   <div style={{ fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                    Model Playground Page
+                  </div>
+                  <div style={{ fontSize: '0.875rem', color: 'var(--pf-v5-global--Color--200)' }}>
+                    Controls access to the Model Playground page in Gen AI Studio
+                  </div>
+                </div>
+              </FlexItem>
+              <FlexItem>
+                <Switch
+                  id="model-playground-page-toggle"
+                  isChecked={flags.enableModelPlaygroundPage}
+                  onChange={() => updateFlag('enableModelPlaygroundPage', !flags.enableModelPlaygroundPage)}
+                  aria-label="Toggle Model Playground page access"
+                />
+              </FlexItem>
+            </Flex>
+
+            <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }} style={{ marginBottom: '1rem' }}>
+              <FlexItem>
+                <div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                    My Agents Page
+                  </div>
+                  <div style={{ fontSize: '0.875rem', color: 'var(--pf-v5-global--Color--200)' }}>
+                    Controls access to the My Agents page in Gen AI Studio
+                  </div>
+                </div>
+              </FlexItem>
+              <FlexItem>
+                <Switch
+                  id="my-agents-page-toggle"
+                  isChecked={flags.enableMyAgentsPage}
+                  onChange={() => updateFlag('enableMyAgentsPage', !flags.enableMyAgentsPage)}
+                  aria-label="Toggle My Agents page access"
+                />
+              </FlexItem>
+            </Flex>
+
+            <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }} style={{ marginBottom: '1rem' }}>
+              <FlexItem>
+                <div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                    Prompt Engineering Page
+                  </div>
+                  <div style={{ fontSize: '0.875rem', color: 'var(--pf-v5-global--Color--200)' }}>
+                    Controls access to the Prompt Engineering page in Gen AI Studio
+                  </div>
+                </div>
+              </FlexItem>
+              <FlexItem>
+                <Switch
+                  id="prompt-engineering-page-toggle"
+                  isChecked={flags.enablePromptEngineeringPage}
+                  onChange={() => updateFlag('enablePromptEngineeringPage', !flags.enablePromptEngineeringPage)}
+                  aria-label="Toggle Prompt Engineering page access"
+                />
+              </FlexItem>
+            </Flex>
+
+            <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }} style={{ marginBottom: '1rem' }}>
+              <FlexItem>
+                <div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                    Knowledge Sources Page
+                  </div>
+                  <div style={{ fontSize: '0.875rem', color: 'var(--pf-v5-global--Color--200)' }}>
+                    Controls access to the Knowledge Sources page in Gen AI Studio
+                  </div>
+                </div>
+              </FlexItem>
+              <FlexItem>
+                <Switch
+                  id="knowledge-sources-page-toggle"
+                  isChecked={flags.enableKnowledgeSourcesPage}
+                  onChange={() => updateFlag('enableKnowledgeSourcesPage', !flags.enableKnowledgeSourcesPage)}
+                  aria-label="Toggle Knowledge Sources page access"
+                />
+              </FlexItem>
+            </Flex>
+
+            <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }} style={{ marginBottom: '1rem' }}>
+              <FlexItem>
+                <div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
                     Persist Data
                   </div>
                   <div style={{ fontSize: '0.875rem', color: 'var(--pf-v5-global--Color--200)' }}>

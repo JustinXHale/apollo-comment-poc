@@ -24,7 +24,7 @@ import {
   SkipToContent,
   Tooltip
 } from '@patternfly/react-core';
-import { IAppRoute, IAppRouteGroup, routes, AppRouteConfig } from '@app/routes';
+import { IAppRoute, IAppRouteGroup, routes, AppRouteConfig, filterRoutesByFlags } from '@app/routes';
 import { BarsIcon, BellIcon, CaretDownIcon, CogIcon, FlagIcon, InfoCircleIcon, MoonIcon, SunIcon, TrashIcon, UserIcon } from '@patternfly/react-icons';
 import { useTheme } from '@app/utils/ThemeContext';
 import { useUserProfile } from '@app/utils/UserProfileContext';
@@ -297,10 +297,12 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
     }
   };
 
+  const filteredRoutes = React.useMemo(() => filterRoutesByFlags(routes, flags), [flags]);
+
   const Navigation = (
     <Nav id="nav-primary-simple">
       <NavList id="nav-list-simple">
-        {routes.map((route, idx) => renderNavigationItem(route, idx))}
+        {filteredRoutes.map((route, idx) => renderNavigationItem(route, idx))}
       </NavList>
     </Nav>
   );

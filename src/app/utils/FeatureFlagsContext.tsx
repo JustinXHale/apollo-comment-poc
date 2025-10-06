@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-interface FeatureFlags {
+export interface FeatureFlags {
   showProjectWorkspaceDropdowns: boolean;
   agentBuilderMode: boolean;
   deploy: boolean;
@@ -60,6 +60,12 @@ interface FeatureFlags {
   
   // Display features
   displayMode: boolean;
+  
+  // Gen AI Studio page access
+  enableModelPlaygroundPage: boolean;
+  enableMyAgentsPage: boolean;
+  enablePromptEngineeringPage: boolean;
+  enableKnowledgeSourcesPage: boolean;
 }
 
 interface AgentBuilderState {
@@ -146,6 +152,12 @@ const defaultFlags: FeatureFlags = {
   
   // Display features - disabled by default
   displayMode: false,
+  
+  // Gen AI Studio page access - disabled by default
+  enableModelPlaygroundPage: false,
+  enableMyAgentsPage: false,
+  enablePromptEngineeringPage: false,
+  enableKnowledgeSourcesPage: false,
 };
 
 const defaultAgentBuilder: AgentBuilderState = {
