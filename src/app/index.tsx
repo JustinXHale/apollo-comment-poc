@@ -7,25 +7,20 @@ import { AppRoutes } from '@app/routes';
 import { ThemeProvider } from '@app/utils/ThemeContext';
 import { FeatureFlagsProvider } from '@app/utils/FeatureFlagsContext';
 import { UserProfileProvider } from '@app/utils/UserProfileContext';
-import { AuthGuard, AuthProvider } from '@app/components/AuthGuard';
 import '@app/app.css';
 
 const App: React.FunctionComponent = () => (
-  <AuthProvider>
-    <AuthGuard>
-      <FeatureFlagsProvider>
-        <UserProfileProvider>
-          <ThemeProvider>
-            <Router>
-              <AppLayout>
-                <AppRoutes />
-              </AppLayout>
-            </Router>
-          </ThemeProvider>
-        </UserProfileProvider>
-      </FeatureFlagsProvider>
-    </AuthGuard>
-  </AuthProvider>
+  <FeatureFlagsProvider>
+    <UserProfileProvider>
+      <ThemeProvider>
+        <Router>
+          <AppLayout>
+            <AppRoutes />
+          </AppLayout>
+        </Router>
+      </ThemeProvider>
+    </UserProfileProvider>
+  </FeatureFlagsProvider>
 );
 
 export default App;

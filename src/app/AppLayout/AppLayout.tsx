@@ -25,11 +25,10 @@ import {
   Tooltip
 } from '@patternfly/react-core';
 import { IAppRoute, IAppRouteGroup, routes, AppRouteConfig } from '@app/routes';
-import { BarsIcon, BellIcon, CaretDownIcon, CogIcon, FlagIcon, InfoCircleIcon, MoonIcon, SignOutAltIcon, SunIcon, TrashIcon, UserIcon } from '@patternfly/react-icons';
+import { BarsIcon, BellIcon, CaretDownIcon, CogIcon, FlagIcon, InfoCircleIcon, MoonIcon, SunIcon, TrashIcon, UserIcon } from '@patternfly/react-icons';
 import { useTheme } from '@app/utils/ThemeContext';
 import { useUserProfile } from '@app/utils/UserProfileContext';
 import { useFeatureFlags } from '@app/utils/FeatureFlagsContext';
-import { useAuth } from '@app/components/AuthGuard';
 // Import custom logos
 import LightLogo from '@app/bgimages/Product_Logos_Light.svg';
 import DarkLogo from '@app/bgimages/Product-Logos_Dark.svg';
@@ -43,7 +42,6 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
   const [userDropdownOpen, setUserDropdownOpen] = React.useState(false);
   const { userProfile, setUserProfile } = useUserProfile();
   const { theme, toggleTheme } = useTheme();
-  const { logout } = useAuth();
   const { flags } = useFeatureFlags();
   const navigate = useNavigate();
   
@@ -214,14 +212,6 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
                   onClick={handleClearLocalStorage}
                 >
                   Clear local storage
-                </DropdownItem>
-                <Divider component="li" />
-                <DropdownItem 
-                  key="logout"
-                  icon={<SignOutAltIcon />}
-                  onClick={logout}
-                >
-                  Logout
                 </DropdownItem>
               </DropdownList>
             </Dropdown>
