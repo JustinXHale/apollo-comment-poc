@@ -1619,8 +1619,8 @@ spec:
         minHeight: 0
       } as CSSProperties}>
         <Chatbot displayMode={ChatbotDisplayMode.embedded}>
-          <ChatbotContent style={{ backgroundColor: "white" } as CSSProperties}>
-            <MessageBox announcement={announcement} style={{ backgroundColor: "white" } as CSSProperties}>
+          <ChatbotContent>
+            <MessageBox announcement={announcement}>
               {chatHistory.length === 0 ? (
                 <div style={{ marginTop: 'auto' }}>
                 <ChatbotWelcomePrompt
@@ -1889,7 +1889,7 @@ spec:
               )}
             </MessageBox>
           </ChatbotContent>
-          <ChatbotFooter style={{ backgroundColor: "white" } as CSSProperties}>
+          <ChatbotFooter>
             <MessageBar
               onSendMessage={handleSendMessage}
               isSendButtonDisabled={isSendButtonDisabled || isTyping}
@@ -1961,6 +1961,8 @@ spec:
                   max={1}
                   step={0.01}
                   hasTooltipOverThumb
+                  showBoundaries={false}
+                  id="temperature-slider"
                 />
               </div>
               <div style={{ 
@@ -1990,6 +1992,8 @@ spec:
                   max={1}
                   step={0.01}
                   hasTooltipOverThumb
+                  showBoundaries={false}
+                  id="top-p-slider"
                 />
               </div>
               <div style={{ 
@@ -2019,6 +2023,8 @@ spec:
                   max={4000}
                   step={50}
                   hasTooltipOverThumb
+                  showBoundaries={false}
+                  id="max-token-slider"
                 />
               </div>
               <div style={{ 
@@ -2048,6 +2054,8 @@ spec:
                   max={2}
                   step={0.01}
                   hasTooltipOverThumb
+                  showBoundaries={false}
+                  id="repetition-slider"
                 />
               </div>
               <div style={{ 
@@ -2835,7 +2843,7 @@ spec:
             <DrawerPanelContent isResizable style={{ height: '100%' }}>
               <DrawerContentBody style={{ height: '100%', overflowY: 'auto' }}>
                 
-                <Accordion asDefinitionList={false}>
+                <Accordion asDefinitionList={false} displaySize="lg">
                   <AccordionItem isExpanded={expandedSections.includes('agent-info')}>
                   <AccordionToggle
                       onClick={() => onToggle('agent-info')}
