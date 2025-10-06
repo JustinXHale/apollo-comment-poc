@@ -74,6 +74,8 @@ import { ModelRegistrySettings } from '@app/Settings/ModelResources/ModelRegistr
 import { UserManagement } from '@app/Settings/UserManagement/UserManagement';
 import { APIKeys } from '@app/Settings/APIKeys/APIKeys';
 import { APIKeyDetails } from '@app/Settings/APIKeys/APIKeyDetails';
+import { Policies } from '@app/Settings/Policies/Policies';
+import { PolicyDetails } from '@app/Settings/Policies/PolicyDetails';
 
 // Icons
 import { createFontAwesomeIcon } from '@app/utils/IconHelper';
@@ -458,6 +460,13 @@ const routes: AppRouteConfig[] = [
         path: '/settings/user-management',
         title: 'RHOAI 3.1 Console | Settings - User Management',
       },
+      {
+        element: <Policies />,
+        exact: true,
+        label: 'Policies',
+        path: '/settings/policies',
+        title: 'RHOAI 3.1 Console | Settings - Policies',
+      },
     ],
   },
   // Additional routes not in navigation
@@ -538,6 +547,18 @@ const routes: AppRouteConfig[] = [
     exact: true,
     path: '/feature-flags',
     title: 'RHOAI 3.1 Console | Feature Flags',
+  },
+  {
+    element: <PolicyDetails />,
+    exact: true,
+    path: '/settings/policies/:policyId',
+    title: 'RHOAI 3.1 Console | Settings - Policy Details',
+  },
+  {
+    element: <PolicyDetails />,
+    exact: true,
+    path: '/settings/policies/:policyId/:tab',
+    title: 'RHOAI 3.1 Console | Settings - Policy Details',
   },
 ];
 
