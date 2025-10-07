@@ -49,6 +49,8 @@ source: https://issues.redhat.com/browse/RHAIRFE-608
 - title: AI Available Assets - MaaS Dev Preview Integration
 source: https://issues.redhat.com/browse/RHOAISTRAT-703
 - title: MaaS Offering Fast Follow
+source: https://issues.redhat.com/browse/RHAIRFE-244
+- title: API Keys UI - to enable API Endpoint consumption for Gen AI Studio components
 
 ### Other
 
@@ -169,9 +171,6 @@ In 3.2 we intend to make the Models tab only include endpoints that are "gated" 
 
 - New "Add Asset" button to add a model
 
-
-
-
 ## Design
 
 ### API Keys page
@@ -280,6 +279,13 @@ The descriptive text for the Groups dropdown should say "This policy will apply 
 #### Policy Details page
 
 The Policy Details page should have a tab for Details, which displays all of the details that were captured in the "Create policy" modal.
+
+## Remaining Design TODOS
+
+- Add the ability to Delete an API key
+
+
+
 
 
 

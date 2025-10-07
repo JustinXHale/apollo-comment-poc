@@ -222,68 +222,87 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
 
   const location = useLocation();
 
-  const renderNavItem = (route: IAppRoute, index: number) => (
-    <NavItem key={`${route.label}-${index}`} id={`${route.label}-${index}`} isActive={route.path === location.pathname}>
-      {(route as any).disabled ? (
-        <div
-          style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'space-between',
-            padding: '0.5rem 1rem',
-            color: '#6a6e73',
-            cursor: 'not-allowed',
-            opacity: 0.5
-          }}
-        >
-          <span>{route.label}</span>
-          {(route as any).techPreview && (
-            <Label 
-              variant="outline" 
-              color="orange" 
-              isCompact
-              style={{ fontSize: '10px' }}
-            >
-              Tech Preview
-            </Label>
-          )}
-        </div>
-      ) : (
-        <NavLink
-          to={route.path}
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-        >
-          <span>{route.label}</span>
-          {(route as any).techPreview && (
-            <Label 
-              variant="outline" 
-              color="orange" 
-              isCompact
-              style={{ fontSize: '10px' }}
-            >
-              Tech Preview
-            </Label>
-          )}
-        </NavLink>
-      )}
-    </NavItem>
-  );
+  const renderNavItem = (route: IAppRoute, index: number) => {
+    const IconComponent = route.icon;
+    
+    return (
+      <NavItem key={`${route.label}-${index}`} id={`${route.label}-${index}`} isActive={route.path === location.pathname}>
+        {(route as any).disabled ? (
+          <div
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between',
+              padding: '0.5rem 1rem',
+              color: '#6a6e73',
+              cursor: 'not-allowed',
+              opacity: 0.5
+            }}
+          >
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              {IconComponent && <IconComponent />}
+              {route.label}
+            </span>
+            {(route as any).techPreview && (
+              <Label 
+                variant="outline" 
+                color="orange" 
+                isCompact
+                style={{ fontSize: '10px' }}
+              >
+                Tech Preview
+              </Label>
+            )}
+          </div>
+        ) : (
+          <NavLink
+            to={route.path}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+          >
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              {IconComponent && <IconComponent />}
+              {route.label}
+            </span>
+            {(route as any).techPreview && (
+              <Label 
+                variant="outline" 
+                color="orange" 
+                isCompact
+                style={{ fontSize: '10px' }}
+              >
+                Tech Preview
+              </Label>
+            )}
+          </NavLink>
+        )}
+      </NavItem>
+    );
+  };
 
-  const renderNavGroup = (group: IAppRouteGroup, groupIndex: number) => (
-    <NavExpandable
-      key={`${group.label}-${groupIndex}`}
-      id={`${group.label}-${groupIndex}`}
-      title={group.label}
-      isActive={group.routes.some((route) => 'path' in route && route.path === location.pathname)}
-      style={(group as any).disabled ? { 
-        color: '#6a6e73', 
-        opacity: 0.5, 
-        cursor: 'not-allowed' 
-      } : undefined}
-    >
-      {group.routes.map((route, idx) => route.label && renderNavItem(route as IAppRoute, idx))}
-    </NavExpandable>
-  );
+  const renderNavGroup = (group: IAppRouteGroup, groupIndex: number) => {
+    const IconComponent = group.icon;
+    
+    return (
+      <NavExpandable
+        key={`${group.label}-${groupIndex}`}
+        id={`${group.label}-${groupIndex}`}
+        title={
+          <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            {IconComponent && <IconComponent />}
+            {group.label}
+          </span>
+        }
+        isActive={group.routes.some((route) => 'path' in route && route.path === location.pathname)}
+        style={(group as any).disabled ? { 
+          color: '#6a6e73', 
+          opacity: 0.5, 
+          cursor: 'not-allowed' 
+        } : undefined}
+      >
+        {group.routes.map((route, idx) => route.label && renderNavItem(route as IAppRoute, idx))}
+      </NavExpandable>
+    );
+  };
 
   const renderNavigationItem = (route: AppRouteConfig, idx: number) => {
     if (!('label' in route) || !route.label) {

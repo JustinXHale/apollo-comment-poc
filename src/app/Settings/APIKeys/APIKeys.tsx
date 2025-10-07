@@ -114,7 +114,7 @@ const APIKeys: React.FunctionComponent = () => {
     <PageSection>
       <Content component={ContentVariants.h1}>API keys</Content>
       <Content component={ContentVariants.p}>
-        Browse endpoints for available models and MCP servers.
+        Manage API keys that control access to AI asset endpoints.
       </Content>
       
       <Card>
