@@ -293,7 +293,7 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
     // Check if this group or any of its children are active
     const isGroupActive = (routes: AppRouteConfig[]): boolean => {
       return routes.some((route) => {
-        if ('routes' in route) {
+        if ('routes' in route && route.routes) {
           return isGroupActive(route.routes);
         }
         return 'path' in route && route.path === location.pathname;
