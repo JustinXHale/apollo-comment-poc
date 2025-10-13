@@ -55,12 +55,12 @@ export const mockAgents: Agent[] = [
 
 // Available policies
 export const mockPolicies: Policy[] = [
-  { id: 'devs-rate-limit-standard', name: 'Developer Rate Limit Standard', description: 'Standard rate limiting for development teams: 1000 requests/minute, 50K tokens/minute' },
-  { id: 'devs-budget-standard', name: 'Developer Budget Standard', description: 'Monthly budget cap of $500 for development API usage' },
-  { id: 'prod-rate-limit-high', name: 'Production Rate Limit High', description: 'High throughput for production workloads: 10K requests/minute, 500K tokens/minute' },
-  { id: 'security-data-classification', name: 'Security Data Classification', description: 'Restricts access to models based on data classification levels' },
-  { id: 'compliance-audit-logging', name: 'Compliance Audit Logging', description: 'Enhanced logging for compliance and audit requirements' },
-  { id: 'cost-optimization', name: 'Cost Optimization Policy', description: 'Automatic model selection based on cost-effectiveness for the task' },
+  { id: 'devs-rate-limit-standard', name: 'Developer Rate Limit Standard', description: 'Standard rate limiting for development teams: 1000 requests/minute, 50K tokens/minute', type: 'RateLimitPolicy' },
+  { id: 'devs-budget-standard', name: 'Developer Budget Standard', description: 'Monthly budget cap of $500 for development API usage', type: 'RateLimitPolicy' },
+  { id: 'prod-rate-limit-high', name: 'Production Rate Limit High', description: 'High throughput for production workloads: 10K requests/minute, 500K tokens/minute', type: 'RateLimitPolicy' },
+  { id: 'security-data-classification', name: 'Security Data Classification', description: 'Restricts access to models based on data classification levels', type: 'AuthPolicy' },
+  { id: 'compliance-audit-logging', name: 'Compliance Audit Logging', description: 'Enhanced logging for compliance and audit requirements', type: 'AuthPolicy' },
+  { id: 'cost-optimization', name: 'Cost Optimization Policy', description: 'Automatic model selection based on cost-effectiveness for the task', type: 'DNSPolicy' },
 ];
 
 // Mock API keys
@@ -70,9 +70,10 @@ export const mockAPIKeys: APIKey[] = [
     name: 'Development Team Key',
     description: 'Main API key for the development team to access models and tools',
     apiKey: 'sk-1234567890abcdef1234567890abcdef',
+    status: 'Active',
     owner: { type: 'Group', name: 'dev-team' },
-    dateCreated: new Date('2025-01-15T10:30:00Z'),
-    dateLastUsed: new Date('2025-01-20T15:45:00Z'),
+    dateCreated: new Date('2025-10-12T10:30:00Z'),
+    dateLastUsed: new Date('2025-10-12T10:30:00Z'),
     limits: {
       tokenRateLimit: 50000,
       requestRateLimit: 1000,
@@ -91,9 +92,10 @@ export const mockAPIKeys: APIKey[] = [
     name: 'Production Workload Key',
     description: 'High-throughput key for production applications',
     apiKey: 'sk-abcdef1234567890abcdef1234567890',
+    status: 'Active',
     owner: { type: 'Service Account', name: 'prod-service-account' },
-    dateCreated: new Date('2025-01-10T08:15:00Z'),
-    dateLastUsed: new Date('2025-01-20T16:22:00Z'),
+    dateCreated: new Date('2025-10-12T10:30:00Z'),
+    dateLastUsed: new Date('2025-10-12T10:30:00Z'),
     limits: {
       tokenRateLimit: 500000,
       requestRateLimit: 10000,
@@ -112,9 +114,10 @@ export const mockAPIKeys: APIKey[] = [
     name: 'Research Project Key',
     description: 'API key for ML research experiments',
     apiKey: 'sk-fedcba0987654321fedcba0987654321',
+    status: 'Disabled',
     owner: { type: 'User', name: 'john.doe' },
-    dateCreated: new Date('2025-01-18T14:20:00Z'),
-    dateLastUsed: new Date('2025-01-19T11:10:00Z'),
+    dateCreated: new Date('2025-10-12T10:30:00Z'),
+    dateLastUsed: new Date('2025-10-12T10:30:00Z'),
     limits: {
       tokenRateLimit: 25000,
       requestRateLimit: 500,
