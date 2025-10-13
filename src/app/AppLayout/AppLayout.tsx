@@ -222,11 +222,18 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
 
   const location = useLocation();
 
-  const renderNavItem = (route: IAppRoute, index: number) => {
+  const renderNavItem = (route: IAppRoute, index: number, groupId?: string) => {
     const IconComponent = route.icon;
+    const itemId = `${groupId ? `${groupId}_` : ''}${route.label}-${index}`;
     
     return (
-      <NavItem key={`${route.label}-${index}`} id={`${route.label}-${index}`} isActive={route.path === location.pathname}>
+      <NavItem 
+        key={itemId} 
+        id={itemId} 
+        itemId={itemId}
+        groupId={groupId}
+        isActive={route.path === location.pathname}
+      >
         {(route as any).disabled ? (
           <div
             style={{ 
@@ -279,27 +286,49 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
     );
   };
 
-  const renderNavGroup = (group: IAppRouteGroup, groupIndex: number) => {
+  const renderNavGroup = (group: IAppRouteGroup, groupIndex: number, parentGroupId?: string) => {
     const IconComponent = group.icon;
+    const groupId = `${parentGroupId ? `${parentGroupId}_` : ''}nav-group-${groupIndex}`;
+    
+    // Check if this group or any of its children are active
+    const isGroupActive = (routes: AppRouteConfig[]): boolean => {
+      return routes.some((route) => {
+        if ('routes' in route) {
+          return isGroupActive(route.routes);
+        }
+        return 'path' in route && route.path === location.pathname;
+      });
+    };
     
     return (
       <NavExpandable
-        key={`${group.label}-${groupIndex}`}
-        id={`${group.label}-${groupIndex}`}
+        key={groupId}
+        id={groupId}
+        groupId={groupId}
         title={
           <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             {IconComponent && <IconComponent />}
             {group.label}
           </span>
         }
-        isActive={group.routes.some((route) => 'path' in route && route.path === location.pathname)}
+        isActive={isGroupActive(group.routes)}
         style={(group as any).disabled ? { 
           color: '#6a6e73', 
           opacity: 0.5, 
           cursor: 'not-allowed' 
         } : undefined}
       >
-        {group.routes.map((route, idx) => route.label && renderNavItem(route as IAppRoute, idx))}
+        {group.routes.map((route, idx) => {
+          if (!route.label) return null;
+          
+          if ('routes' in route) {
+            // This is a nested group (third level)
+            return renderNavGroup(route as IAppRouteGroup, idx, groupId);
+          } else {
+            // This is a regular nav item
+            return renderNavItem(route as IAppRoute, idx, groupId);
+          }
+        })}
       </NavExpandable>
     );
   };
