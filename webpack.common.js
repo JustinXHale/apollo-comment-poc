@@ -96,6 +96,10 @@ module.exports = (env) => {
       new HtmlWebpackPlugin({
         template: path.resolve(__dirname, 'src', 'index.html'),
       }),
+      new HtmlWebpackPlugin({
+        template: path.resolve(__dirname, 'src', 'index.html'),
+        filename: '404.html',
+      }),
       new Dotenv({
         systemvars: true,
         silent: true,
