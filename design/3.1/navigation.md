@@ -21,6 +21,7 @@ https://www.figma.com/design/4qwoK0PhVEe7XYjQIozkTv/branch/mf2LFoMlAh7MMc0kw1nBJ
 - Gen AI studio (with "fa-light fa-brain" icon)
 -- AI asset endpoints
 -- Playground
+-- API keys
 -- Knowledge sources
 - Develop & train (with "fa-light fa-flask" icon)
 -- Workbenches
@@ -47,7 +48,6 @@ https://www.figma.com/design/4qwoK0PhVEe7XYjQIozkTv/branch/mf2LFoMlAh7MMc0kw1nBJ
 -- Enabled
 -- Explore
 - Settings (with "fa-light fa-gear" icon)
--- API keys
 -- Cluster settings
 --- General settings
 --- Storage classes

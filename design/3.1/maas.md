@@ -5,6 +5,15 @@ UXD Orientation doc: https://docs.google.com/document/d/10IIWRpETdRIDzQiPIvHSzCB
 NotebookLM: https://notebooklm.google.com/notebook/7c5d493a-85b8-438d-b1d9-aeab507c63a7
 Journey map: https://miro.com/app/board/uXjVIgQDVWw=/
 
+
+
+
+
+
+
+
+
+
 ## Sources
 
 ### Notebooks
@@ -31,6 +40,9 @@ source: https://docs.google.com/document/d/12oZzzPyfrxiajvgfUsc4xPMwZFckGwC9Qqoi
 source: https://docs.google.com/document/d/1ZZiSG58daRtUGcsofDU-Q5n8c-FzqxUXVx05Sil3p5M/edit?tab=t.0
 - title: MaaS Stakeholders Sync
 - description: Contains notes from our weekly MaaS Stakeholder meeting
+source: https://docs.google.com/document/d/1iXOtTwmXhm582L3nYpFdaMXyZN8EEL_xMmCcgwpkGxk/edit?tab=t.0
+- title: PRD Gen AI Studio - API Key UI
+- description: Includes problem statement, user narrative, and an outline of features for the API Key area of the UI
 
 ### Decks
 
@@ -41,6 +53,10 @@ source: https://docs.google.com/presentation/d/1ORtU9uYWKxlOngo1Xj7atkLPYdUMUTZr
 
 ### Jira
 
+source: https://issues.redhat.com/browse/RHOAISTRAT-638
+- title: MaaS UI for Admin
+source: https://issues.redhat.com/browse/RHOAIUX-996
+- title: User Experience For MaaS Admin
 source: https://issues.redhat.com/browse/RHOAISTRAT-639
 - title: Initial MaaS Offering (3.0)
 source: https://issues.redhat.com/browse/RHAIRFE-151
@@ -51,6 +67,8 @@ source: https://issues.redhat.com/browse/RHOAISTRAT-703
 - title: MaaS Offering Fast Follow
 source: https://issues.redhat.com/browse/RHAIRFE-244
 - title: API Keys UI - to enable API Endpoint consumption for Gen AI Studio components
+source: https://issues.redhat.com/browse/RHAIRFE-138
+- title: MaaS UI for Admin
 
 ### Other
 
@@ -65,6 +83,13 @@ source: https://litemaas-litemaas.apps.prod.rhoai.rh-aiservices-bu.com/home
 source: http://18.223.29.178:3000
 - description: MaaS demo UI for policy management and observability, created by Noy
 source: 
+
+
+
+
+
+
+
 
 
 ## Design Philosophy
@@ -282,11 +307,13 @@ The Policy Details page should have a tab for Details, which displays all of the
 
 ## Remaining Design TODOS
 
-- Add the ability to Delete an API key
-
-
-
-
+- Add the ability to Delete an API key with a caution that this is irreversible and make them type the name again
+- Add the ability to connect an external model provider's API endpoint as an AI Asset potentially
+- Column for "last used" in the API Keys list to show the last time it was used
+- Column for "status" of the key, whether it's active or revoked or suspended or throttled or whatever
+- Add a show/eye icon to reveal the API key, copy icon too
+- Integration of multiple API Keys in the AI Assets area
+- Tiers
 
 
 
