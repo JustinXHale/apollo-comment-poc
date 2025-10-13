@@ -1,8 +1,11 @@
+export type APIKeyStatus = 'Active' | 'Expired' | 'Disabled';
+
 export interface APIKey {
   id: string;
   name: string;
   description?: string;
   apiKey: string;
+  status: APIKeyStatus;
   owner: {
     type: 'User' | 'Group' | 'Service Account';
     name: string;
@@ -48,10 +51,13 @@ export interface Agent {
   endpoint: string;
 }
 
+export type PolicyType = 'AuthPolicy' | 'RateLimitPolicy' | 'TLSPolicy' | 'DNSPolicy';
+
 export interface Policy {
   id: string;
   name: string;
   description: string;
+  type: PolicyType;
 }
 
 export interface MetricData {

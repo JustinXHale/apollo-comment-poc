@@ -4,4 +4,5 @@ export { APIKeyMetricsTab } from './APIKeyMetricsTab';
 export { APIKeyPoliciesTab } from './APIKeyPoliciesTab';
 export { APIKeySettingsTab } from './APIKeySettingsTab';
 export { CreateAPIKeyModal } from './CreateAPIKeyModal';
+export { DeleteAPIKeyModal } from './DeleteAPIKeyModal';
 export { AIAssetSelect } from './AIAssetSelect';

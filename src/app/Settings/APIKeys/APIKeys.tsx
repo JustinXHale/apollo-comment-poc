@@ -13,6 +13,12 @@ import {
   Badge,
   Flex,
   FlexItem,
+  Label,
+  Dropdown,
+  DropdownList,
+  DropdownItem,
+  MenuToggle,
+  MenuToggleElement,
 } from '@patternfly/react-core';
 import {
   Table,
@@ -21,17 +27,18 @@ import {
   Tr,
   Th,
   Td,
-  ActionsColumn,
-  IAction,
 } from '@patternfly/react-table';
-import { PlusIcon } from '@patternfly/react-icons';
+import { PlusIcon, EllipsisVIcon } from '@patternfly/react-icons';
 import { mockAPIKeys, getModelById, getMCPServerById, getVectorDatabaseById, getAgentById } from './mockData';
-import { APIKey } from './types';
-import { CreateAPIKeyModal } from './components/CreateAPIKeyModal';
+import { APIKey, APIKeyStatus } from './types';
+import { CreateAPIKeyModal, DeleteAPIKeyModal } from './components';
 
 const APIKeys: React.FunctionComponent = () => {
   const navigate = useNavigate();
   const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
+  const [selectedAPIKey, setSelectedAPIKey] = React.useState<APIKey | null>(null);
+  const [openKebabMenus, setOpenKebabMenus] = React.useState<Set<string>>(new Set());
 
   const formatAPIKey = (apiKey: string): string => {
     return apiKey.substring(0, 9) + '...';
@@ -78,29 +85,64 @@ const APIKeys: React.FunctionComponent = () => {
     return `${owner.name} (${owner.type})`;
   };
 
-  const rowActions = (apiKey: APIKey): IAction[] => [
-    {
-      title: 'View details',
-      onClick: () => navigate(`/gen-ai-studio/api-keys/${apiKey.id}`),
-    },
-    {
-      title: 'Edit',
-      onClick: () => {
-        // TODO: Implement edit functionality
-        console.log('Edit', apiKey.id);
-      },
-    },
-    {
-      isSeparator: true,
-    },
-    {
-      title: 'Delete',
-      onClick: () => {
-        // TODO: Implement delete functionality
-        console.log('Delete', apiKey.id);
-      },
-    },
-  ];
+  const getStatusLabel = (status: APIKeyStatus) => {
+    const statusMap = {
+      Active: { color: 'green' as const, label: 'Active' },
+      Expired: { color: 'red' as const, label: 'Expired' },
+      Disabled: { color: 'grey' as const, label: 'Disabled' },
+    };
+    const { color, label } = statusMap[status];
+    return <Label id={`status-${status.toLowerCase()}`} color={color}>{label}</Label>;
+  };
+
+  const formatLastUsed = (date?: Date): string => {
+    if (!date) return 'Never';
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 60) return `${diffMins} minutes ago`;
+    if (diffHours < 24) return `${diffHours} hours ago`;
+    return `${diffDays} days ago`;
+  };
+
+  const formatExpirationDate = (date?: Date): string => {
+    if (!date) return 'Never';
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    });
+  };
+
+  const toggleKebabMenu = (apiKeyId: string) => {
+    setOpenKebabMenus(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(apiKeyId)) {
+        newSet.delete(apiKeyId);
+      } else {
+        newSet.add(apiKeyId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleViewDetails = (apiKey: APIKey) => {
+    navigate(`/gen-ai-studio/api-keys/${apiKey.id}`);
+  };
+
+  const handleDeleteAPIKey = (apiKey: APIKey) => {
+    setSelectedAPIKey(apiKey);
+    setIsDeleteModalOpen(true);
+    setOpenKebabMenus(new Set());
+  };
+
+  const handleDeleteConfirm = (apiKey: APIKey) => {
+    console.log('Deleting API key:', apiKey.id);
+    // TODO: Implement actual delete functionality
+  };
 
   const handleCreateAPIKey = () => {
     setIsCreateModalOpen(true);
@@ -137,9 +179,12 @@ const APIKeys: React.FunctionComponent = () => {
             <Thead>
               <Tr>
                 <Th>Name</Th>
+                <Th>Status</Th>
                 <Th>API Key</Th>
                 <Th>Assets</Th>
                 <Th>Owner</Th>
+                <Th>Last used</Th>
+                <Th>Expiration date</Th>
                 <Th></Th>
               </Tr>
             </Thead>
@@ -160,6 +205,9 @@ const APIKeys: React.FunctionComponent = () => {
                       )}
                     </div>
                   </Td>
+                  <Td dataLabel="Status">
+                    {getStatusLabel(apiKey.status)}
+                  </Td>
                   <Td dataLabel="API Key">
                     <code>{formatAPIKey(apiKey.apiKey)}</code>
                   </Td>
@@ -169,11 +217,60 @@ const APIKeys: React.FunctionComponent = () => {
                   <Td dataLabel="Owner">
                     {getOwnerDisplay(apiKey.owner)}
                   </Td>
-                  <Td isActionCell>
-                    <ActionsColumn 
-                      items={rowActions(apiKey)}
-                      onClick={(e) => e.stopPropagation()} // Prevent row click when clicking actions
-                    />
+                  <Td dataLabel="Last used">
+                    {formatLastUsed(apiKey.dateLastUsed)}
+                  </Td>
+                  <Td dataLabel="Expiration date">
+                    {formatExpirationDate(apiKey.limits?.expirationDate)}
+                  </Td>
+                  <Td 
+                    dataLabel="Actions" 
+                    style={{ textAlign: 'right', width: '60px' }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Dropdown
+                      id={`api-key-actions-${apiKey.id}`}
+                      isOpen={openKebabMenus.has(apiKey.id)}
+                      onOpenChange={(isOpen) => {
+                        if (!isOpen) {
+                          setOpenKebabMenus(prev => {
+                            const newSet = new Set(prev);
+                            newSet.delete(apiKey.id);
+                            return newSet;
+                          });
+                        }
+                      }}
+                      popperProps={{ position: 'right' }}
+                      toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                        <MenuToggle
+                          id={`api-key-menu-toggle-${apiKey.id}`}
+                          ref={toggleRef}
+                          onClick={() => toggleKebabMenu(apiKey.id)}
+                          variant="plain"
+                          aria-label={`Actions for ${apiKey.name}`}
+                          isExpanded={openKebabMenus.has(apiKey.id)}
+                        >
+                          <EllipsisVIcon />
+                        </MenuToggle>
+                      )}
+                    >
+                      <DropdownList>
+                        <DropdownItem
+                          id={`view-details-${apiKey.id}`}
+                          key="view-details"
+                          onClick={() => handleViewDetails(apiKey)}
+                        >
+                          View details
+                        </DropdownItem>
+                        <DropdownItem
+                          id={`delete-api-key-${apiKey.id}`}
+                          key="delete"
+                          onClick={() => handleDeleteAPIKey(apiKey)}
+                        >
+                          Delete API key
+                        </DropdownItem>
+                      </DropdownList>
+                    </Dropdown>
                   </Td>
                 </Tr>
               ))}
@@ -185,6 +282,13 @@ const APIKeys: React.FunctionComponent = () => {
       <CreateAPIKeyModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
+      />
+
+      <DeleteAPIKeyModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        apiKey={selectedAPIKey}
+        onDelete={handleDeleteConfirm}
       />
     </PageSection>
   );

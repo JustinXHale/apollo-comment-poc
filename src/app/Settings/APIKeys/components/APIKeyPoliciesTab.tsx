@@ -6,6 +6,7 @@ import {
   PageSection,
   Card,
   CardBody,
+  Label,
 } from '@patternfly/react-core';
 import {
   Table,
@@ -17,6 +18,7 @@ import {
 } from '@patternfly/react-table';
 import { ExclamationTriangleIcon } from '@patternfly/react-icons';
 import { getAPIKeyPolicies } from '../mockData';
+import { PolicyType } from '../types';
 
 interface APIKeyPoliciesTabProps {
   keyId: string;
@@ -24,6 +26,17 @@ interface APIKeyPoliciesTabProps {
 
 const APIKeyPoliciesTab: React.FunctionComponent<APIKeyPoliciesTabProps> = ({ keyId }) => {
   const policies = getAPIKeyPolicies(keyId);
+
+  const getPolicyTypeLabel = (type: PolicyType) => {
+    const typeMap = {
+      AuthPolicy: { color: 'blue' as const, label: 'AuthPolicy' },
+      RateLimitPolicy: { color: 'purple' as const, label: 'RateLimitPolicy' },
+      TLSPolicy: { color: 'green' as const, label: 'TLSPolicy' },
+      DNSPolicy: { color: 'orange' as const, label: 'DNSPolicy' },
+    };
+    const { color, label } = typeMap[type];
+    return <Label id={`policy-type-${type.toLowerCase()}`} color={color}>{label}</Label>;
+  };
 
   if (policies.length === 0) {
     return (
@@ -53,6 +66,7 @@ const APIKeyPoliciesTab: React.FunctionComponent<APIKeyPoliciesTabProps> = ({ ke
             <Thead>
               <Tr>
                 <Th>Name</Th>
+                <Th>Type</Th>
                 <Th>ID</Th>
                 <Th>Description</Th>
               </Tr>
@@ -61,6 +75,9 @@ const APIKeyPoliciesTab: React.FunctionComponent<APIKeyPoliciesTabProps> = ({ ke
               {policies.map((policy) => (
                 <Tr key={policy.id}>
                   <Td dataLabel="Name">{policy.name}</Td>
+                  <Td dataLabel="Type">
+                    {getPolicyTypeLabel(policy.type)}
+                  </Td>
                   <Td dataLabel="ID">
                     <code>{policy.id}</code>
                   </Td>

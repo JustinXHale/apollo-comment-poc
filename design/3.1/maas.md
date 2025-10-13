@@ -307,11 +307,12 @@ The Policy Details page should have a tab for Details, which displays all of the
 
 ## Remaining Design TODOS
 
-- Add the ability to Delete an API key with a caution that this is irreversible and make them type the name again
+- Fix the Delete API Key modal to follow PatternFly 6 modal documentation patterns
+- On the API Keys page, display a PatternFly 6 dropdown very similar to the ones in the Registry page with options to "View details" or "Delete API key" (which should activate the same Delete API Key modal)
+- Add a column for "last used" to the API Keys page (as the last column) to show the last time the key was used
+- Add a column for "status" to the API Keys page (in the second position, right after name) with status options for Active, Expired, or Disabled
+- In the Policies tab of API Key Details pages, add a column to the table for "Type" and include examples for the various policy types of Kuadrant.io (AuthPolicy, RateLimitPolicy, TLSPolicy, DNSPolicy)
 - Add the ability to connect an external model provider's API endpoint as an AI Asset potentially
-- Column for "last used" in the API Keys list to show the last time it was used
-- Column for "status" of the key, whether it's active or revoked or suspended or throttled or whatever
-- Add a show/eye icon to reveal the API key, copy icon too
 - Integration of multiple API Keys in the AI Assets area
 - Tiers
 
