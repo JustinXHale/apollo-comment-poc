@@ -136,76 +136,53 @@ Based on Jira issues RHOAISTRAT-638, RHOAIUX-996, RHOAISTRAT-639, RHAIRFE-151, R
 
 ### ❌ NOT IMPLEMENTED (Remaining Work)
 
-#### Platform Admin Experience (RHOAISTRAT-638, RHAIRFE-138, RHOAIUX-996)
-- ❌ **Tenant/User Management Dashboard** - User Management page is placeholder only
-- ❌ **Tenant Onboarding Workflow** - No interface to onboard tenants and assign quotas
-- ❌ **Model Catalog Management for Admins** - No admin interface to add/remove models from catalog
-- ❌ **System-Wide Health Dashboard** - Observe & Monitor exists but lacks dedicated admin system health view
-- ❌ **System-Level Policies Configuration Interface** - No dedicated admin policy configuration UI
-- ❌ **RBAC Management Interface** - No UI to create/manage roles, assign users/groups to roles per model
-- ❌ **RBAC Visualization** - No clear visualization of which users/groups have access to which models
-- ❌ **Audit Trail Dashboard** - No audit trail visualization for permission changes
+#### API Keys (RHAIRFE-244)
+- Add an example of a "Personal Key" as the first one in the API Keys List
+- Add a key to the API keys list that has a Status of Expired
+- Add an action kebab option to the API Keys list for "Disable API key" or "Enable API key" (depending on the current status) below "View details"
+- In the API Key Details tab, add a section for "Usage Example" with a PatternFly 6 code lock showing a curl sample POST query to a chat completions endpoint with a bearer token using the API key for authorization
+
+#### AI Playground
+- In the AI Playground's sidebar below the Model dropdown add an "API key" dropdown to select one of the available API keys. By default have it select a "Playground key (free)".
+
+#### Policies - Advanced Features (RHAIRFE-244, RHOAISTRAT-639)
+- In the Policies list, add a column to the table for "Type" as the second column and include examples for the various policy types of Kuadrant.io (AuthPolicy, RateLimitPolicy, TLSPolicy, DNSPolicy)
+- In the Details tab for policies, add a field for "Git source" with a hyperlink to a GitHub URL that ends with a file for a policy.yaml, or "None" for some of them
+- For Policies that include a "Git source" in them, display an inline PatternFly info alert at the top of the details page saying "This policy is managed in git" and pointing the user to that Git source URL to make changes because editing is disabled in-Console.
+- In the Policies list, make the action kebab menu openable and include options for "View details", "Disable policy," "Edit policy," and "Delete policy"
+- In the Policies list, clciking "Edit policy" should open up a PatternFly 6 modal to Edit the policy with fields very similar to the ones for Creating policies (which exists now)
+- In the Policies list, clicking "Delete policy" shouold display a modal similar to others where the user has to type in the name of the policy in order to delete it and remove it from the list.
+- In the Policy Details page, display the number of keys that the policy applies to
+- In the Policy Details page, add a tab for "YAML" which displays the full Kuadrant.io YAML file for the policy in plain text in a PatternFly code element
+- For an example of a RateLimitPolicy, on its Details page display the current Kuadrant.io rate limit and quota that is set in the policy
+- For RateLimitPolicies add the ability to set a "Quota renewal schedule" from the Details page, which displays a modal where the user can either set the Start Time to "Date created" or various date-based options kind of like scheduling something in Google Calendar
+- For RateLimitPolicies add the ability to set an "Over-limit behavior" setting for either Hard (which doesn't allow any more tokens) or Soft (which lets the user specify how much to throttle them down)
+
+#### AI Assets
+- In the AI Assets list, add action kebabs (refer to the ones used in the API keys list for reference) with an option to "Remove asset" in the menu
+- In the AI Assets list, change the column "Model deployment name" to "Model name"
+- In the AI Assets list, include a column after "Model name" for "Model ID" (for things like "gpt-oss-20b")
+- In the AI Assets list, the "Add asset" modal should be updated to support adding models from one of two locations: Internal (on-cluster) or External. External model providers would include OpenAI and Anthropic. If the user selects one of those, they should be prompted to add their API key from that provider, and then select from a list which models they would like to add as AI Assets to the list.
+- In the AI Assets list, remove the numbers from the tab titles
+- In the AI Assets list, remove the tab for "Models as a service" entirely along with its list
+
+#### Model Deployments - Additional Features (RHAIRFE-151)
+- In the Model Deployments list's action kebab menu, add an option to "Publish as AI Asset" which should open up the existing "Add asset" modal with the model deployment details pre-selected.
+- In the "Deploy model" wizard's Advanced Options step, remove the "Make this deployment available globally for models as a service" and remove the "Tech Preview" badge as well from the other option
+
+
+#### Later
+- ❌ **Micro UI for Quick Key Creation** - No embedded key creation widget in AI Playground or AI Available Assets
+- ❌ **Per-Asset Key Generation** - No quick "Generate Key for this Asset" action on asset cards
+- ❌ **Quality Tiers Implementation** - No tier-based policies (Tier 0, Tier 1, etc.)
+- ❌ **Rate Limiting Enforcement** - Rate limits displayed but not enforced
+- ❌ **Chargeback/Cost Calculation** - Cost metrics shown but no actual cost calculation engine
 - ❌ **Quota Management UI** - No interface to set/view/manage quotas for users/groups/keys
 - ❌ **Admin "Make Available as MaaS" Toggle** - Toggle exists in wizard but no way to edit existing deployments
 
-#### LLS (Llama Stack Server) Integration (RHAIRFE-151, RHAIRFE-608)
-- ❌ **LLS Configuration Wizard** - No wizard to set up LLS in project namespace
-- ❌ **LLS Model Registration Workflow** - "Register" action present but doesn't launch LLS wizard
-- ❌ **LLS MCP Server Registration** - No workflow to register MCP servers with LLS
-- ❌ **LLS Status Updates** - LLS status shown but no actual integration with real LLS backend
-- ❌ **Projects Page LLS Configuration** - No "Configure Llama Stack Server in my project" section
-- ❌ **Bulk Model Selection for LLS** - No way to select multiple models to register with LLS at once
 
-#### API Keys - Advanced Features (RHAIRFE-244)
-- ❌ **ISV Key Storage Implementation** - No actual storage/retrieval of third-party ISV keys (GitHub, Atlassian, etc.)
-- ❌ **Key Regeneration** - No ability to regenerate an existing API key
-- ❌ **Key Expiration Automation** - Keys have expiration dates but no automated expiry enforcement shown
-- ❌ **Micro UI for Quick Key Creation** - No embedded key creation widget in AI Playground or AI Available Assets
-- ❌ **Per-Asset Key Generation** - No quick "Generate Key for this Asset" action on asset cards
 
-#### Policies - Advanced Features (RHAIRFE-244, RHOAISTRAT-639)
-- ❌ **Policy Editing** - Edit action present but not implemented
-- ❌ **Policy Activation/Deactivation** - Toggle action present but not implemented
-- ❌ **Policy Deletion** - Delete action present but not implemented
-- ❌ **Real-time Policy Enforcement** - Policies are displayed but not actually enforced
-- ❌ **Policy Impact Preview** - No visualization of how many users/keys a policy will affect
-- ❌ **Quality Tiers Implementation** - No tier-based policies (Tier 0, Tier 1, etc.)
-- ❌ **Over-Limit Behavior Configuration** - No settings for soft throttle vs hard throttle
-- ❌ **Date-Based Quota Renewals** - No automated quota renewal scheduling
 
-#### Observability - Advanced Features (RHOAISTRAT-650)
-- ❌ **API Key-Filtered Dashboard for AI Engineers** - Dashboard exists but not filtered per API key for end users
-- ❌ **Link to Perses Dashboards** - Placeholder "View Perses Dashboard" link not functional
-- ❌ **Real-time Metrics Updates** - Dashboard shows static mock data, not live metrics
-- ❌ **Custom Time Range Selection** - Time range selector present but not fully functional
-- ❌ **Alert Configuration** - No alert status integration or alert management
-- ❌ **Distributed Tracing Visualization** - Traces tab exists but lacks detailed tracing UI
-- ❌ **Per-Key Usage Breakdown** - Can't drill down into specific API key usage from cluster view
-
-#### MaaS Integration - Core Features (RHOAISTRAT-639, RHAIRFE-608)
-- ❌ **API Gateway Backend Integration** - No actual RHCL or gateway integration (UI only)
-- ❌ **Token Validation Service** - No backend service to validate generated API tokens
-- ❌ **Rate Limiting Enforcement** - Rate limits displayed but not enforced
-- ❌ **External Model Provider Integration** - Can't actually add OpenAI, Anthropic endpoints
-- ❌ **Usage Quota Enforcement** - Quotas displayed but not actively enforced or tracked
-- ❌ **Global Scope Implementation** - "Make available globally" toggle exists but no global filtering
-- ❌ **Chargeback/Cost Calculation** - Cost metrics shown but no actual cost calculation engine
-- ❌ **Token Consumption Tracking** - Token metrics displayed but not tracked per user/key
-- ❌ **Generate API Key Feature** - Feature flag exists (`enableGenerateApiKey`) but implementation incomplete
-
-#### Model Deployments - Additional Features (RHAIRFE-151)
-- ❌ **Edit Deployment to Toggle MaaS** - Can only set MaaS during creation, not after deployment
-- ❌ **Deployment Use Case Editing** - Use cases shown but can't be edited post-deployment
-- ❌ **Model Deployment Details Page** - No comprehensive details page for individual deployments
-- ❌ **Stop/Start Deployment Actions** - Stop button present but opens feature modal instead of working
-
-#### General Platform Features
-- ❌ **Connections Management** - Connection types page is placeholder, needed for external model endpoints
-- ❌ **Model Registry Settings** - Model Registry Settings page is placeholder
-- ❌ **Serving Runtimes Management** - Serving Runtimes page is placeholder
-- ❌ **Documentation Links** - Many "View documentation" links are placeholders
-- ❌ **Backend API Integration** - All data is mock/static, no real API integration
-- ❌ **GitOps Configuration** - No GitOps-based configuration for MaaS setup
 
 ## Sources
 
@@ -251,6 +228,13 @@ source: https://docs.google.com/presentation/d/1ms_my1WI4l_-zBe6wBCAoeUA2dNnQAVi
 - date: 2025-09-03
 - description: Summary of Dev Preview strategy and plan for MaaS in RHOAI, confirms that group filtering of models is a thing for the future and by default we can list models to everyone
 
+### Repositories
+
+source: https://github.com/opendatahub-io/maas-billing/tree/main
+- title: ODH - Models as a Service with Policy Management
+- description: Core GitHub repository for all MaaS-related infrastructure code (config, components)
+source: https://github.com/rh-aiservices-bu/litemaas
+- description Repository for LiteMaaS, helpful as a reference implementation of MaaS functionality, created by the CAI team
 
 ### Jira
 
@@ -272,11 +256,12 @@ source: https://issues.redhat.com/browse/RHAIRFE-138
 - title: MaaS UI for Admin
 source: https://issues.redhat.com/browse/RHOAISTRAT-650
 - title: Observability for MaaS v1.0
+source: https://issues.redhat.com/browse/RHAIRFE-137
+- title: Basic Chargeback & Showback ($$$) Reporting for MaaS
+- description: Not in scope for 3.0, but possibly 3.2 or 3.3
 
 ### Other
 
-source: https://github.com/opendatahub-io/maas-billing
-- description: Core GitHub repository for all MaaS-related infrastructure code (config, components)
 source: https://www.redhat.com/rhdc/managed-files/ma-models-as-a-service-overview-2669809OM-202509-en.pdf
 - description: Introductory guide to Models-as-a-Service, customer-facing
 source: https://maas.apps.prod.rhoai.rh-aiservices-bu.com

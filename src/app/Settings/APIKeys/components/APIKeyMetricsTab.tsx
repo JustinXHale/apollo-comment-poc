@@ -205,6 +205,7 @@ const APIKeyMetricsTab: React.FunctionComponent<APIKeyMetricsTabProps> = ({ keyI
                   />
                 }
                 height={350}
+                width={1200}
                 legendComponent={
                   <ChartLegend 
                     data={[{ name: 'Requests' }]} 
