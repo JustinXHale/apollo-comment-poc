@@ -312,6 +312,183 @@ const EndpointPopover: React.FunctionComponent<{
   );
 };
 
+// Combined Endpoints Popover Component (shows both internal and external)
+const CombinedEndpointsPopover: React.FunctionComponent<{
+  model: ModelAsset;
+  copiedItems: Set<string>;
+  handleCopyWithFeedback: (text: string, itemId: string) => void;
+  generatedTokens?: Map<string, string>;
+  isGeneratingToken?: Set<string>;
+  onGenerateToken?: (modelId: string) => void;
+  onClearGeneratedToken?: (modelId: string) => void;
+  isMaaS?: boolean;
+}> = ({ model, copiedItems, handleCopyWithFeedback, generatedTokens, isGeneratingToken, onGenerateToken, onClearGeneratedToken, isMaaS }) => {
+  const [isPopoverOpen, setIsPopoverOpen] = React.useState(false);
+  
+  const internalEndpointId = `internal-endpoint-${model.id}`;
+  const internalTokenId = `internal-token-${model.id}`;
+  const externalEndpointId = `external-endpoint-${model.id}`;
+  const externalTokenId = `external-token-${model.id}`;
+
+  const handlePopoverClose = () => {
+    setIsPopoverOpen(false);
+    // Clear generated token for MaaS models when popover closes
+    if ((model.name === 'llama-3.1-8b-instruct' || model.name === 'Pixtral-Large-Instruct-2411-hf-quantized.w8a8') && model.externalEndpoint) {
+      onClearGeneratedToken?.(model.id);
+    }
+  };
+
+  const popoverContent = (
+    <div style={{ padding: '0.5rem', width: '400px', minWidth: '400px' }}>
+      {/* Internal Endpoint Section */}
+      <div style={{ marginBottom: model.externalEndpoint ? '1rem' : '0.75rem' }}>
+        <label style={{ fontWeight: 'bold', fontSize: '0.875rem', display: 'block', marginBottom: '0.5rem' }}>
+          Internal Endpoint URL
+        </label>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+          <TextInput
+            value={model.internalEndpoint || ''}
+            readOnly
+            aria-label="Internal Endpoint URL"
+            style={{ fontSize: '0.75rem', height: '28px', fontFamily: 'monospace' }}
+          />
+          <Tooltip content={copiedItems.has(internalEndpointId) ? 'Copied' : 'Copy endpoint'}>
+            <Button
+              variant="plain"
+              size="sm"
+              aria-label="Copy internal endpoint"
+              onClick={() => handleCopyWithFeedback(model.internalEndpoint!, internalEndpointId)}
+              style={{ padding: '4px' }}
+            >
+              {copiedItems.has(internalEndpointId) ? <CheckCircleIcon style={{ fontSize: '12px' }} /> : <CopyIcon style={{ fontSize: '12px' }} />}
+            </Button>
+          </Tooltip>
+        </div>
+      </div>
+
+      {/* External Endpoint Section (if available) */}
+      {model.externalEndpoint && (
+        <>
+          <div style={{ marginBottom: '0.75rem' }}>
+            <label style={{ fontWeight: 'bold', fontSize: '0.875rem', display: 'block', marginBottom: '0.5rem' }}>
+              {isMaaS ? 'MaaS route' : 'External Endpoint URL'}
+            </label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <TextInput
+                value={model.externalEndpoint || ''}
+                readOnly
+                aria-label="External Endpoint URL"
+                style={{ fontSize: '0.75rem', height: '28px', fontFamily: 'monospace' }}
+              />
+              <Tooltip content={copiedItems.has(externalEndpointId) ? 'Copied' : 'Copy endpoint'}>
+                <Button
+                  variant="plain"
+                  size="sm"
+                  aria-label="Copy external endpoint"
+                  onClick={() => handleCopyWithFeedback(model.externalEndpoint!, externalEndpointId)}
+                  style={{ padding: '4px' }}
+                >
+                  {copiedItems.has(externalEndpointId) ? <CheckCircleIcon style={{ fontSize: '12px' }} /> : <CopyIcon style={{ fontSize: '12px' }} />}
+                </Button>
+              </Tooltip>
+            </div>
+          </div>
+
+          <div>
+            <label style={{ fontWeight: 'bold', fontSize: '0.875rem', display: 'block', marginBottom: '0.25rem' }}>
+              API Token
+            </label>
+            {(model.name === 'llama-3.1-8b-instruct' || model.name === 'Pixtral-Large-Instruct-2411-hf-quantized.w8a8') ? (
+              // MaaS model token generation
+              generatedTokens?.has(model.id) ? (
+                <div>
+                  <Alert
+                    variant="info"
+                    title="Important: Copy and store this token"
+                    isInline
+                    style={{ marginBottom: '0.5rem' }}
+                  >
+                    This token cannot be viewed again after you close this dialog.
+                  </Alert>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                    <TextInput
+                      value={generatedTokens.get(model.id) || ''}
+                      readOnly
+                      aria-label="Generated API Token"
+                      style={{ fontSize: '0.75rem', height: '28px', fontFamily: 'monospace' }}
+                    />
+                    <Tooltip content={copiedItems.has(externalTokenId) ? 'Copied' : 'Copy token'}>
+                      <Button
+                        variant="plain"
+                        size="sm"
+                        aria-label="Copy token"
+                        onClick={() => handleCopyWithFeedback(generatedTokens.get(model.id)!, externalTokenId)}
+                        style={{ padding: '4px' }}
+                      >
+                        {copiedItems.has(externalTokenId) ? <CheckCircleIcon style={{ fontSize: '12px' }} /> : <CopyIcon style={{ fontSize: '12px' }} />}
+                      </Button>
+                    </Tooltip>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => onGenerateToken?.(model.id)}
+                  isLoading={isGeneratingToken?.has(model.id)}
+                  isDisabled={isGeneratingToken?.has(model.id)}
+                >
+                  {isGeneratingToken?.has(model.id) ? 'Generating...' : 'Generate API token'}
+                </Button>
+              )
+            ) : (
+              // Regular model token display
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                <TextInput
+                  value={model.externalToken || ''}
+                  readOnly
+                  aria-label="API Token"
+                  style={{ fontSize: '0.75rem', height: '28px', fontFamily: 'monospace' }}
+                />
+                <Tooltip content={copiedItems.has(externalTokenId) ? 'Copied' : 'Copy token'}>
+                  <Button
+                    variant="plain"
+                    size="sm"
+                    aria-label="Copy token"
+                    onClick={() => handleCopyWithFeedback(model.externalToken!, externalTokenId)}
+                    style={{ padding: '4px' }}
+                  >
+                    {copiedItems.has(externalTokenId) ? <CheckCircleIcon style={{ fontSize: '12px' }} /> : <CopyIcon style={{ fontSize: '12px' }} />}
+                  </Button>
+                </Tooltip>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+
+  return (
+    <Popover
+      bodyContent={popoverContent}
+      position="right"
+      hasAutoWidth
+      enableFlip={false}
+      isVisible={isPopoverOpen}
+      shouldOpen={() => setIsPopoverOpen(true)}
+      shouldClose={handlePopoverClose}
+    >
+      <Button
+        variant="link"
+        onClick={() => setIsPopoverOpen(true)}
+      >
+        View
+      </Button>
+    </Popover>
+  );
+};
+
 // MCP Endpoint Popover Component
 const MCPEndpointPopover: React.FunctionComponent<{
   server: MCPServer;
@@ -1635,13 +1812,12 @@ const AvailableAIAssets: React.FunctionComponent = () => {
                   minWidth: 0
                 }}>Model name</div>
               </Th>
-              <Th width={10}>Model ID</Th>
-              <Th width={10}>Internal endpoint</Th>
-              <Th width={10}>External endpoint</Th>
-              <Th width={10}>Use Case</Th>
-              <Th width={10}>Status</Th>
-              <Th width={10}>Playground</Th>
-              <Th width={10}></Th>
+              <Th>Model ID</Th>
+              <Th>Endpoints</Th>
+              <Th>Use Case</Th>
+              <Th>Status</Th>
+              <Th>Playground</Th>
+              <Th></Th>
             </Tr>
           </Thead>
           <Tbody>
@@ -1693,70 +1869,16 @@ const AvailableAIAssets: React.FunctionComponent = () => {
                 <Td dataLabel="Model ID">
                   {model.slug}
                 </Td>
-                <Td dataLabel="Internal endpoint">
-                  <EndpointPopover 
+                <Td dataLabel="Endpoints">
+                  <CombinedEndpointsPopover 
                     model={model}
                     copiedItems={copiedItems}
                     handleCopyWithFeedback={handleCopyWithFeedback}
-                    type="internal"
                     generatedTokens={generatedTokens}
                     isGeneratingToken={isGeneratingToken}
                     onGenerateToken={handleGenerateToken}
                     onClearGeneratedToken={handleClearGeneratedToken}
                   />
-                </Td>
-                <Td dataLabel="External endpoint">
-                  {/* Mistral always shows View regardless of user role */}
-                  {model.name === 'mistral-7b-instruct:9.1.1' && (
-                    <EndpointPopover 
-                      model={model}
-                      copiedItems={copiedItems}
-                      handleCopyWithFeedback={handleCopyWithFeedback}
-                      type="external"
-                      generatedTokens={generatedTokens}
-                      isGeneratingToken={isGeneratingToken}
-                      onGenerateToken={handleGenerateToken}
-                      onClearGeneratedToken={handleClearGeneratedToken}
-                    />
-                  )}
-                  {/* For other models, show based on user role */}
-                  {(model.name === 'granite-7b-code:1.1' || model.name === 'gpt-oss-120b-FP8-Dynamic:1.4.0') && (
-                    userProfile === 'AI Engineer' ? (
-                      <Popover
-                        bodyContent={
-                          <div>
-                            <div>No external endpoint has been configured</div>
-                            <div>for this model.</div>
-                          </div>
-                        }
-                        triggerAction="hover"
-                      >
-                        <Label variant="filled" color="grey" icon={<InfoCircleIcon />}>Not available</Label>
-                      </Popover>
-                    ) : (
-                      !modelsWithEndpoints.has(model.id) && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                      <Button 
-                        variant="link" 
-                        onClick={() => handleCreateEndpoint(model.id, model.name)}
-                      >
-                            Edit deployment
-                      </Button>
-                          <Popover
-                            bodyContent={
-                              <div>
-                                Edit your deployment and select &apos;Make deployed models available through an external route&apos;.
-                              </div>
-                            }
-                          >
-                            <Button variant="plain" aria-label="More info">
-                              <OutlinedQuestionCircleIcon style={{ fontSize: '14px', color: '#6a6e73' }} />
-                            </Button>
-                          </Popover>
-                        </div>
-                      )
-                    )
-                  )}
                 </Td>
                 <Td>
                   <div>
