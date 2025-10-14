@@ -5,14 +5,19 @@ UXD Orientation doc: https://docs.google.com/document/d/10IIWRpETdRIDzQiPIvHSzCB
 NotebookLM: https://notebooklm.google.com/notebook/7c5d493a-85b8-438d-b1d9-aeab507c63a7
 Journey map: https://miro.com/app/board/uXjVIgQDVWw=/
 
+## Design TODOs
 
+- Add the ability to connect an external model provider's API endpoint as an AI Asset potentially
+- Integration of multiple API Keys in the AI Assets area
+- Tiers
+- Add "Make available as AI Asset" to the Model Deployments area
+- Add baseline Tiers out of the box (e.g. Tier 0, Tier 1)
+- Show quota total remaining for a key
+- Add support for throttling after the quota
 
+## Jira-based Design TODOs
 
-
-
-
-
-
+## Remaining Jira-based Design TODOs
 
 ## Sources
 
@@ -32,6 +37,9 @@ source: https://redhat.enterprise.slack.com/archives/C094HF5KD6E
 
 ### Docs
 
+source: https://docs.google.com/document/d/1JhZ7jcBJH71nzvYWYCHk_EXEtxMFKkSyvkblmDL_KtU/edit
+- title: Refinement - RHOAISTRAT-639
+- description: contains a bunch of details for what's in and out of scope for 3.0, some of which is likely 3.2/3.3
 source: https://docs.google.com/document/d/142X3mx_SIdSWMvgf3ppSW83J__ZtQ4EDmOiF0IKZYJc/edit?pli=1&tab=t.grnrd6dljv81
 - title: Models-as-a-Service Worksheet
 - description: Contains PM's source of truth for MaaS roadmap items, requirements, and more.
@@ -50,6 +58,11 @@ source: https://docs.google.com/presentation/d/1ORtU9uYWKxlOngo1Xj7atkLPYdUMUTZr
 - title: RHAI MaaS Master Deck
 - date: 2025-08-01
 - descrption: PM slide deck covering MaaS
+source: https://docs.google.com/presentation/d/1ms_my1WI4l_-zBe6wBCAoeUA2dNnQAViZQYlgUkFlCY/edit?slide=id.p#slide=id.p
+- title: MaaS: path to DevPreview
+- date: 2025-09-03
+- description: Summary of Dev Preview strategy and plan for MaaS in RHOAI, confirms that group filtering of models is a thing for the future and by default we can list models to everyone
+
 
 ### Jira
 
@@ -69,9 +82,13 @@ source: https://issues.redhat.com/browse/RHAIRFE-244
 - title: API Keys UI - to enable API Endpoint consumption for Gen AI Studio components
 source: https://issues.redhat.com/browse/RHAIRFE-138
 - title: MaaS UI for Admin
+source: https://issues.redhat.com/browse/RHOAISTRAT-650
+- title: Observability for MaaS v1.0
 
 ### Other
 
+source: https://github.com/opendatahub-io/maas-billing
+- description: Core GitHub repository for all MaaS-related infrastructure code (config, components)
 source: https://www.redhat.com/rhdc/managed-files/ma-models-as-a-service-overview-2669809OM-202509-en.pdf
 - description: Introductory guide to Models-as-a-Service, customer-facing
 source: https://maas.apps.prod.rhoai.rh-aiservices-bu.com
@@ -82,19 +99,8 @@ source: https://litemaas-litemaas.apps.prod.rhoai.rh-aiservices-bu.com/home
 - description: MaaS demo UI powered by LiteLLM and created by the AI Customer Adoption and Innovation Team (CAI)
 source: http://18.223.29.178:3000
 - description: MaaS demo UI for policy management and observability, created by Noy
-source: 
-
-
-
-
-
-
-
-
-
-## Design Philosophy
-
-The AI Assets area contains all “as‑a‑service” offerings that are available through the platform. It targets engineers and developers who need a quick, safe, ready‑to‑consume endpoint without having to understand the underlying infrastructure. The UI is intentionally simple for non‑experts but encourages best practices: every MaaS endpoint is routed through an API gateway that enforces API‑key authentication, provides observability, monitoring, and chargeback, and allows key revocation if a compromise occurs. This cautious default can be extended to future services such as MCP servers and Agents-as-a-Service, ensuring consistent security and operational controls across the AI Assets catalog.
+source: https://miro.com/app/board/uXjVIh6zvD0=/
+- description: MaaS Architecture diagrams
 
 ## Open Questions
 
@@ -104,8 +110,17 @@ In 3.2 we intend to make the Models tab only include endpoints that are "gated" 
 - (ENG/PM) Will we support Perses dashboards in 3.2?
 - (USER) Should our platform allow AIEs to add and bring their own API key to the Playground and elsewhere?
 
-
 ## Design History
+
+2025-10-13
+- Fix the Delete API Key modal to follow PatternFly 6 modal documentation patterns
+- On the API Keys page, display a PatternFly 6 dropdown very similar to the ones in the Registry page with options to "View details" or "Delete API key" (which should activate the same Delete API Key modal)
+- Add a column for "last used" to the API Keys page (as the last column) to show the last time the key was used
+- Add a column for "status" to the API Keys page (in the second position, right after name) with status options for Active, Expired, or Disabled
+- In the Policies tab of API Key Details pages, add a column to the table for "Type" and include examples for the various policy types of Kuadrant.io (AuthPolicy, RateLimitPolicy, TLSPolicy, DNSPolicy)
+
+2025-10-07
+- Added navigation icons to left nav, some may need adjustments
 
 2025-10-05
 - Created initial design for Policy management, based on Noy's work so far
@@ -197,6 +212,10 @@ In 3.2 we intend to make the Models tab only include endpoints that are "gated" 
 - New "Add Asset" button to add a model
 
 ## Design
+
+### Design Philosophy
+
+The AI Assets area contains all “as‑a‑service” offerings that are available through the platform. It targets engineers and developers who need a quick, safe, ready‑to‑consume endpoint without having to understand the underlying infrastructure. The UI is intentionally simple for non‑experts but encourages best practices: every MaaS endpoint is routed through an API gateway that enforces API‑key authentication, provides observability, monitoring, and chargeback, and allows key revocation if a compromise occurs. This cautious default can be extended to future services such as MCP servers and Agents-as-a-Service, ensuring consistent security and operational controls across the AI Assets catalog.
 
 ### API Keys page
 
@@ -307,12 +326,11 @@ The Policy Details page should have a tab for Details, which displays all of the
 
 ## Remaining Design TODOS
 
-- Fix the Delete API Key modal to follow PatternFly 6 modal documentation patterns
-- On the API Keys page, display a PatternFly 6 dropdown very similar to the ones in the Registry page with options to "View details" or "Delete API key" (which should activate the same Delete API Key modal)
-- Add a column for "last used" to the API Keys page (as the last column) to show the last time the key was used
-- Add a column for "status" to the API Keys page (in the second position, right after name) with status options for Active, Expired, or Disabled
-- In the Policies tab of API Key Details pages, add a column to the table for "Type" and include examples for the various policy types of Kuadrant.io (AuthPolicy, RateLimitPolicy, TLSPolicy, DNSPolicy)
+- Add the ability to Delete an API key with a caution that this is irreversible and make them type the name again
 - Add the ability to connect an external model provider's API endpoint as an AI Asset potentially
+- Column for "last used" in the API Keys list to show the last time it was used
+- Column for "status" of the key, whether it's active or revoked or suspended or throttled or whatever
+- Add a show/eye icon to reveal the API key, copy icon too
 - Integration of multiple API Keys in the AI Assets area
 - Tiers
 
