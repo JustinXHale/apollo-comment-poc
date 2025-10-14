@@ -144,6 +144,12 @@ const APIKeys: React.FunctionComponent = () => {
     // TODO: Implement actual delete functionality
   };
 
+  const handleToggleAPIKeyStatus = (apiKey: APIKey) => {
+    console.log('Toggling API key status:', apiKey.id);
+    // TODO: Implement actual toggle functionality
+    setOpenKebabMenus(new Set());
+  };
+
   const handleCreateAPIKey = () => {
     setIsCreateModalOpen(true);
   };
@@ -261,6 +267,13 @@ const APIKeys: React.FunctionComponent = () => {
                           onClick={() => handleViewDetails(apiKey)}
                         >
                           View details
+                        </DropdownItem>
+                        <DropdownItem
+                          id={`toggle-status-${apiKey.id}`}
+                          key="toggle-status"
+                          onClick={() => handleToggleAPIKeyStatus(apiKey)}
+                        >
+                          {apiKey.status === 'Active' ? 'Disable API key' : 'Enable API key'}
                         </DropdownItem>
                         <DropdownItem
                           id={`delete-api-key-${apiKey.id}`}

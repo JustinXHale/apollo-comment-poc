@@ -516,6 +516,12 @@ const Deployments: React.FunctionComponent = () => {
                         Edit
                       </DropdownItem>
                       <DropdownItem
+                        key="publish"
+                        onClick={() => handleEditDeployment(deployment.id)}
+                      >
+                        Publish as AI Asset
+                      </DropdownItem>
+                      <DropdownItem
                         key="delete"
                         onClick={() => handleDeleteDeployment(deployment.id)}
                       >

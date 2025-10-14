@@ -68,6 +68,7 @@ import {
 import {
   CheckCircleIcon,
   CopyIcon,
+  EllipsisVIcon,
   ExclamationCircleIcon,
   FilterIcon,
   InfoCircleIcon,
@@ -688,12 +689,20 @@ const AvailableAIAssets: React.FunctionComponent = () => {
   const [mcpCurrentPage, setMcpCurrentPage] = React.useState(1);
   const [mcpPerPage, setMcpPerPage] = React.useState(10);
   const [isProjectSelectOpen, setIsProjectSelectOpen] = React.useState(false);
+  const [openKebabMenus, setOpenKebabMenus] = React.useState<Set<string>>(new Set());
   
   // Add Asset modal state
   type AssetType = 'Model' | 'MCP Server' | '';
+  type ModelLocation = 'Internal' | 'External' | '';
   const [isAddAssetModalOpen, setIsAddAssetModalOpen] = React.useState(false);
   const [assetType, setAssetType] = React.useState<AssetType>('');
   const [isAssetTypeOpen, setIsAssetTypeOpen] = React.useState(false);
+  const [modelLocation, setModelLocation] = React.useState<ModelLocation>('');
+  const [isModelLocationOpen, setIsModelLocationOpen] = React.useState(false);
+  const [externalProvider, setExternalProvider] = React.useState('');
+  const [isExternalProviderOpen, setIsExternalProviderOpen] = React.useState(false);
+  const [externalProviderAPIKey, setExternalProviderAPIKey] = React.useState('');
+  const [selectedExternalModels, setSelectedExternalModels] = React.useState<Set<string>>(new Set());
   const [project, setProject] = React.useState('');
   const [isAddAssetProjectOpen, setIsAddAssetProjectOpen] = React.useState(false);
   const [modelDeployment, setModelDeployment] = React.useState('');
@@ -1618,13 +1627,15 @@ const AvailableAIAssets: React.FunctionComponent = () => {
                   textOverflow: 'ellipsis', 
                   whiteSpace: 'nowrap',
                   minWidth: 0
-                }}>Model deployment name</div>
+                }}>Model name</div>
               </Th>
+              <Th width={10}>Model ID</Th>
               <Th width={10}>Internal endpoint</Th>
               <Th width={10}>External endpoint</Th>
               <Th width={10}>Use Case</Th>
               <Th width={10}>Status</Th>
               <Th width={10}>Playground</Th>
+              <Th width={5}></Th>
             </Tr>
           </Thead>
           <Tbody>
@@ -1777,6 +1788,62 @@ const AvailableAIAssets: React.FunctionComponent = () => {
                       </FlexItem>
                     )}
                   </Flex>
+                </Td>
+                <Td 
+                  dataLabel="Actions" 
+                  style={{ textAlign: 'right', width: '60px' }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Dropdown
+                    id={`model-actions-${model.id}`}
+                    isOpen={openKebabMenus.has(`model-${model.id}`)}
+                    onOpenChange={(isOpen) => {
+                      if (!isOpen) {
+                        setOpenKebabMenus(prev => {
+                          const newSet = new Set(prev);
+                          newSet.delete(`model-${model.id}`);
+                          return newSet;
+                        });
+                      }
+                    }}
+                    popperProps={{ position: 'right' }}
+                    toggle={(toggleRef) => (
+                      <MenuToggle
+                        id={`model-menu-toggle-${model.id}`}
+                        ref={toggleRef}
+                        onClick={() => {
+                          setOpenKebabMenus(prev => {
+                            const newSet = new Set(prev);
+                            if (newSet.has(`model-${model.id}`)) {
+                              newSet.delete(`model-${model.id}`);
+                            } else {
+                              newSet.add(`model-${model.id}`);
+                            }
+                            return newSet;
+                          });
+                        }}
+                        variant="plain"
+                        aria-label={`Actions for ${model.name}`}
+                        isExpanded={openKebabMenus.has(`model-${model.id}`)}
+                      >
+                        <EllipsisVIcon />
+                      </MenuToggle>
+                    )}
+                  >
+                    <DropdownList>
+                      <DropdownItem
+                        id={`remove-asset-${model.id}`}
+                        key="remove"
+                        onClick={() => {
+                          console.log('Removing asset:', model.id);
+                          setOpenKebabMenus(new Set());
+                          // TODO: Implement actual remove functionality
+                        }}
+                      >
+                        Remove asset
+                      </DropdownItem>
+                    </DropdownList>
+                  </Dropdown>
                 </Td>
               </Tr>
             ))}
@@ -2123,8 +2190,9 @@ const AvailableAIAssets: React.FunctionComponent = () => {
                   textOverflow: 'ellipsis', 
                   whiteSpace: 'nowrap',
                   minWidth: 0
-                }}>Model deployment name</div>
+                }}>Model name</div>
               </Th>
+              <Th width={10}>Model ID</Th>
               <Th width={10}>External endpoint</Th>
               <Th width={10}>Status</Th>
               <Th width={10}>Playground</Th>
@@ -2468,7 +2536,7 @@ const AvailableAIAssets: React.FunctionComponent = () => {
         >
           <Tab
             eventKey={0}
-            title={<TabTitleText>Models ({getRegularModels().length})</TabTitleText>}
+            title={<TabTitleText>Models</TabTitleText>}
             aria-label="Models tab"
           >
             <div style={{ paddingTop: '1rem' }}>
@@ -2723,7 +2791,7 @@ const AvailableAIAssets: React.FunctionComponent = () => {
           </Tab>
           <Tab
             eventKey={1}
-            title={<TabTitleText>MCP Servers ({mockMCPServers.length})</TabTitleText>}
+            title={<TabTitleText>MCP servers</TabTitleText>}
             aria-label="MCP Servers tab"
           >
             <div style={{ paddingTop: '1rem' }}>
@@ -2978,16 +3046,36 @@ const AvailableAIAssets: React.FunctionComponent = () => {
               </div>
             </div>
           </Tab>
-          <Tab
-            eventKey={2}
-            title={
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <TabTitleText>Models as a service ({getMaaSModels().length})</TabTitleText>
-                <Label color="orange" variant="outline" style={{ fontSize: '10px' }}>Developer Preview</Label>
-              </div>
-            }
-            aria-label="Models as a service tab"
-          >
+        </Tabs>
+      </PageSection>
+
+      {/* Endpoint Creation Progress Modal */}
+      <Modal
+        variant={ModalVariant.small}
+        title="Creating Endpoint"
+        isOpen={isCreatingEndpoint}
+        onClose={() => {}} // Prevent closing during creation
+      >
+        <ModalHeader>
+          <Title headingLevel="h2" size="xl">
+            Creating Endpoint
+          </Title>
+        </ModalHeader>
+        <ModalBody>
+          <div className="pf-v5-u-mb-lg">
+            <div className="pf-v5-u-mb-md">{currentProgressMessage}</div>
+            <Progress value={creationProgress} />
+          </div>
+        </ModalBody>
+      </Modal>
+
+      {/* Model Selection Modal */}
+      <Modal
+        variant={ModalVariant.large}
+        title="Configure playground"
+        isOpen={isModelSelectionModalOpen}
+        onClose={handleCancelModelSelection}
+      >
             <div style={{ paddingTop: '1rem' }}>
               {/* Filters and Controls for MaaS Models */}
               <div 
@@ -3217,43 +3305,13 @@ const AvailableAIAssets: React.FunctionComponent = () => {
                 </div>
               )}
               
-              <div style={{ paddingTop: '1rem' }}>
-              </div>
-              <div style={{ marginTop: modelsViewMode === 'cards' ? '1.5rem' : '0' }}>
-                {modelsViewMode === 'table' ? renderMaaSModelsTable() : renderMaaSModelsCards()}
+              <div style={{ marginTop: '1.5rem' }}>
+                {renderMCPCards()}
               </div>
             </div>
           </Tab>
         </Tabs>
       </PageSection>
-
-      {/* Endpoint Creation Progress Modal */}
-      <Modal
-        variant={ModalVariant.small}
-        title="Creating Endpoint"
-        isOpen={isCreatingEndpoint}
-        onClose={() => {}} // Prevent closing during creation
-      >
-        <ModalHeader>
-          <Title headingLevel="h2" size="xl">
-            Creating Endpoint
-          </Title>
-        </ModalHeader>
-        <ModalBody>
-          <div className="pf-v5-u-mb-lg">
-            <div className="pf-v5-u-mb-md">{currentProgressMessage}</div>
-            <Progress value={creationProgress} />
-          </div>
-        </ModalBody>
-      </Modal>
-
-      {/* Model Selection Modal */}
-      <Modal
-        variant={ModalVariant.large}
-        title="Configure playground"
-        isOpen={isModelSelectionModalOpen}
-        onClose={handleCancelModelSelection}
-      >
         <ModalHeader>
           <Title headingLevel="h2" size="xl">
             Configure playground
@@ -3351,7 +3409,8 @@ const AvailableAIAssets: React.FunctionComponent = () => {
               <Thead>
                 <Tr>
                   <Th width={10}></Th>
-                  <Th>Model deployment name</Th>
+                  <Th>Model name</Th>
+                  <Th>Model ID</Th>
                   <Th>Description</Th>
                   <Th>Use Case</Th>
                   <Th>Status</Th>
@@ -3670,91 +3729,341 @@ const AvailableAIAssets: React.FunctionComponent = () => {
             {assetType === 'Model' && (
               <>
                 <FormGroup 
-                  label="Project" 
-                  fieldId="add-asset-project-select"
+                  label="Model location" 
+                  fieldId="model-location-select"
                   isRequired
                 >
                   <Select
-                    id="add-asset-project-select"
-                    isOpen={isAddAssetProjectOpen}
-                    selected={project}
+                    id="model-location-select"
+                    isOpen={isModelLocationOpen}
+                    selected={modelLocation}
                     onSelect={(_event, value) => {
-                      setProject(value as string);
-                      setIsAddAssetProjectOpen(false);
+                      setModelLocation(value as ModelLocation);
+                      setIsModelLocationOpen(false);
+                      // Reset conditional fields when location changes
+                      setProject('');
+                      setModelDeployment('');
+                      setExternalProvider('');
+                      setExternalProviderAPIKey('');
+                      setSelectedExternalModels(new Set());
                     }}
-                    onOpenChange={(isOpen) => setIsAddAssetProjectOpen(isOpen)}
+                    onOpenChange={(isOpen) => setIsModelLocationOpen(isOpen)}
                     toggle={(toggleRef) => (
                       <MenuToggle
                         ref={toggleRef}
-                        onClick={() => setIsAddAssetProjectOpen(!isAddAssetProjectOpen)}
-                        isExpanded={isAddAssetProjectOpen}
+                        onClick={() => setIsModelLocationOpen(!isModelLocationOpen)}
+                        isExpanded={isModelLocationOpen}
                         style={{ width: '100%' }}
-                        id="add-asset-project-toggle"
+                        id="model-location-toggle"
                       >
-                        {project || 'Select project'}
+                        {modelLocation || 'Select model location'}
                       </MenuToggle>
                     )}
                   >
                     <SelectList>
-                      <SelectOption value="Project 1" id="add-asset-project-1">
-                        Project 1
+                      <SelectOption value="Internal" id="location-internal">
+                        Internal (on-cluster)
                       </SelectOption>
-                      <SelectOption value="Project 2" id="add-asset-project-2">
-                        Project 2
-                      </SelectOption>
-                      <SelectOption value="Project 3" id="add-asset-project-3">
-                        Project 3
+                      <SelectOption value="External" id="location-external">
+                        External
                       </SelectOption>
                     </SelectList>
                   </Select>
                 </FormGroup>
 
-                <FormGroup 
-                  label="Model deployment" 
-                  fieldId="add-asset-model-deployment-select"
-                  isRequired
-                >
-                  <Select
-                    id="add-asset-model-deployment-select"
-                    isOpen={isModelDeploymentOpen}
-                    selected={modelDeployment}
-                    onSelect={(_event, value) => {
-                      setModelDeployment(value as string);
-                      setIsModelDeploymentOpen(false);
-                    }}
-                    onOpenChange={(isOpen) => setIsModelDeploymentOpen(isOpen)}
-                    toggle={(toggleRef) => (
-                      <MenuToggle
-                        ref={toggleRef}
-                        onClick={() => setIsModelDeploymentOpen(!isModelDeploymentOpen)}
-                        isExpanded={isModelDeploymentOpen}
-                        style={{ width: '100%' }}
-                        id="add-asset-model-deployment-toggle"
+                {modelLocation === 'Internal' && (
+                  <>
+                    <FormGroup 
+                      label="Project" 
+                      fieldId="add-asset-project-select"
+                      isRequired
+                    >
+                      <Select
+                        id="add-asset-project-select"
+                        isOpen={isAddAssetProjectOpen}
+                        selected={project}
+                        onSelect={(_event, value) => {
+                          setProject(value as string);
+                          setIsAddAssetProjectOpen(false);
+                        }}
+                        onOpenChange={(isOpen) => setIsAddAssetProjectOpen(isOpen)}
+                        toggle={(toggleRef) => (
+                          <MenuToggle
+                            ref={toggleRef}
+                            onClick={() => setIsAddAssetProjectOpen(!isAddAssetProjectOpen)}
+                            isExpanded={isAddAssetProjectOpen}
+                            style={{ width: '100%' }}
+                            id="add-asset-project-toggle"
+                          >
+                            {project || 'Select project'}
+                          </MenuToggle>
+                        )}
                       >
-                        {modelDeployment || 'Select model deployment'}
-                      </MenuToggle>
+                        <SelectList>
+                          <SelectOption value="Project 1" id="add-asset-project-1">
+                            Project 1
+                          </SelectOption>
+                          <SelectOption value="Project 2" id="add-asset-project-2">
+                            Project 2
+                          </SelectOption>
+                          <SelectOption value="Project 3" id="add-asset-project-3">
+                            Project 3
+                          </SelectOption>
+                        </SelectList>
+                      </Select>
+                    </FormGroup>
+
+                    <FormGroup 
+                      label="Model deployment" 
+                      fieldId="add-asset-model-deployment-select"
+                      isRequired
+                    >
+                      <Select
+                        id="add-asset-model-deployment-select"
+                        isOpen={isModelDeploymentOpen}
+                        selected={modelDeployment}
+                        onSelect={(_event, value) => {
+                          setModelDeployment(value as string);
+                          setIsModelDeploymentOpen(false);
+                        }}
+                        onOpenChange={(isOpen) => setIsModelDeploymentOpen(isOpen)}
+                        toggle={(toggleRef) => (
+                          <MenuToggle
+                            ref={toggleRef}
+                            onClick={() => setIsModelDeploymentOpen(!isModelDeploymentOpen)}
+                            isExpanded={isModelDeploymentOpen}
+                            style={{ width: '100%' }}
+                            id="add-asset-model-deployment-toggle"
+                          >
+                            {modelDeployment || 'Select model deployment'}
+                          </MenuToggle>
+                        )}
+                      >
+                        <SelectList>
+                          <SelectOption value="Model Deployment 1" id="add-asset-deployment-1">
+                            Model Deployment 1
+                          </SelectOption>
+                          <SelectOption value="Model Deployment 2" id="add-asset-deployment-2">
+                            Model Deployment 2
+                          </SelectOption>
+                          <SelectOption value="Model Deployment 3" id="add-asset-deployment-3">
+                            Model Deployment 3
+                          </SelectOption>
+                        </SelectList>
+                      </Select>
+                      <FormHelperText>
+                        <HelperText>
+                          <HelperTextItem>
+                            Adding this as an AI asset will make it available to other users outside of the namespace/project.
+                          </HelperTextItem>
+                        </HelperText>
+                      </FormHelperText>
+                    </FormGroup>
+                  </>
+                )}
+
+                {modelLocation === 'External' && (
+                  <>
+                    <FormGroup 
+                      label="External provider" 
+                      fieldId="external-provider-select"
+                      isRequired
+                    >
+                      <Select
+                        id="external-provider-select"
+                        isOpen={isExternalProviderOpen}
+                        selected={externalProvider}
+                        onSelect={(_event, value) => {
+                          setExternalProvider(value as string);
+                          setIsExternalProviderOpen(false);
+                        }}
+                        onOpenChange={(isOpen) => setIsExternalProviderOpen(isOpen)}
+                        toggle={(toggleRef) => (
+                          <MenuToggle
+                            ref={toggleRef}
+                            onClick={() => setIsExternalProviderOpen(!isExternalProviderOpen)}
+                            isExpanded={isExternalProviderOpen}
+                            style={{ width: '100%' }}
+                            id="external-provider-toggle"
+                          >
+                            {externalProvider || 'Select external provider'}
+                          </MenuToggle>
+                        )}
+                      >
+                        <SelectList>
+                          <SelectOption value="OpenAI" id="provider-openai">
+                            OpenAI
+                          </SelectOption>
+                          <SelectOption value="Anthropic" id="provider-anthropic">
+                            Anthropic
+                          </SelectOption>
+                        </SelectList>
+                      </Select>
+                    </FormGroup>
+
+                    <FormGroup 
+                      label="API key" 
+                      fieldId="external-provider-api-key"
+                      isRequired
+                    >
+                      <TextInput
+                        id="external-provider-api-key"
+                        type="password"
+                        value={externalProviderAPIKey}
+                        onChange={(_event, value) => setExternalProviderAPIKey(value)}
+                        placeholder="Enter your API key"
+                      />
+                      <FormHelperText>
+                        <HelperText>
+                          <HelperTextItem>
+                            Your API key from {externalProvider || 'the external provider'} to authenticate requests.
+                          </HelperTextItem>
+                        </HelperText>
+                      </FormHelperText>
+                    </FormGroup>
+
+                    {externalProviderAPIKey && (
+                      <FormGroup 
+                        label="Available models" 
+                        fieldId="external-models-select"
+                        isRequired
+                      >
+                        <div style={{ 
+                          border: '1px solid var(--pf-v5-global--BorderColor--100)', 
+                          borderRadius: '4px', 
+                          padding: '1rem',
+                          maxHeight: '300px',
+                          overflowY: 'auto'
+                        }}>
+                          <p style={{ marginBottom: '1rem', fontSize: '0.875rem', color: '#6a6e73' }}>
+                            Select the models you want to add as AI assets:
+                          </p>
+                          {externalProvider === 'OpenAI' && (
+                            <>
+                              <Checkbox
+                                id="external-model-gpt4"
+                                label="GPT-4"
+                                description="Most capable model, best for complex tasks"
+                                isChecked={selectedExternalModels.has('gpt-4')}
+                                onChange={(_event, checked) => {
+                                  setSelectedExternalModels(prev => {
+                                    const newSet = new Set(prev);
+                                    if (checked) {
+                                      newSet.add('gpt-4');
+                                    } else {
+                                      newSet.delete('gpt-4');
+                                    }
+                                    return newSet;
+                                  });
+                                }}
+                                style={{ marginBottom: '0.5rem' }}
+                              />
+                              <Checkbox
+                                id="external-model-gpt4-turbo"
+                                label="GPT-4 Turbo"
+                                description="Fast and efficient variant of GPT-4"
+                                isChecked={selectedExternalModels.has('gpt-4-turbo')}
+                                onChange={(_event, checked) => {
+                                  setSelectedExternalModels(prev => {
+                                    const newSet = new Set(prev);
+                                    if (checked) {
+                                      newSet.add('gpt-4-turbo');
+                                    } else {
+                                      newSet.delete('gpt-4-turbo');
+                                    }
+                                    return newSet;
+                                  });
+                                }}
+                                style={{ marginBottom: '0.5rem' }}
+                              />
+                              <Checkbox
+                                id="external-model-gpt35-turbo"
+                                label="GPT-3.5 Turbo"
+                                description="Fast and cost-effective for simpler tasks"
+                                isChecked={selectedExternalModels.has('gpt-3.5-turbo')}
+                                onChange={(_event, checked) => {
+                                  setSelectedExternalModels(prev => {
+                                    const newSet = new Set(prev);
+                                    if (checked) {
+                                      newSet.add('gpt-3.5-turbo');
+                                    } else {
+                                      newSet.delete('gpt-3.5-turbo');
+                                    }
+                                    return newSet;
+                                  });
+                                }}
+                              />
+                            </>
+                          )}
+                          {externalProvider === 'Anthropic' && (
+                            <>
+                              <Checkbox
+                                id="external-model-claude-3-opus"
+                                label="Claude 3 Opus"
+                                description="Most intelligent model for complex tasks"
+                                isChecked={selectedExternalModels.has('claude-3-opus')}
+                                onChange={(_event, checked) => {
+                                  setSelectedExternalModels(prev => {
+                                    const newSet = new Set(prev);
+                                    if (checked) {
+                                      newSet.add('claude-3-opus');
+                                    } else {
+                                      newSet.delete('claude-3-opus');
+                                    }
+                                    return newSet;
+                                  });
+                                }}
+                                style={{ marginBottom: '0.5rem' }}
+                              />
+                              <Checkbox
+                                id="external-model-claude-3-sonnet"
+                                label="Claude 3 Sonnet"
+                                description="Balanced performance and intelligence"
+                                isChecked={selectedExternalModels.has('claude-3-sonnet')}
+                                onChange={(_event, checked) => {
+                                  setSelectedExternalModels(prev => {
+                                    const newSet = new Set(prev);
+                                    if (checked) {
+                                      newSet.add('claude-3-sonnet');
+                                    } else {
+                                      newSet.delete('claude-3-sonnet');
+                                    }
+                                    return newSet;
+                                  });
+                                }}
+                                style={{ marginBottom: '0.5rem' }}
+                              />
+                              <Checkbox
+                                id="external-model-claude-3-haiku"
+                                label="Claude 3 Haiku"
+                                description="Fast and cost-effective for quick tasks"
+                                isChecked={selectedExternalModels.has('claude-3-haiku')}
+                                onChange={(_event, checked) => {
+                                  setSelectedExternalModels(prev => {
+                                    const newSet = new Set(prev);
+                                    if (checked) {
+                                      newSet.add('claude-3-haiku');
+                                    } else {
+                                      newSet.delete('claude-3-haiku');
+                                    }
+                                    return newSet;
+                                  });
+                                }}
+                              />
+                            </>
+                          )}
+                        </div>
+                        <FormHelperText>
+                          <HelperText>
+                            <HelperTextItem>
+                              Selected models will be added as AI assets and available for use.
+                            </HelperTextItem>
+                          </HelperText>
+                        </FormHelperText>
+                      </FormGroup>
                     )}
-                  >
-                    <SelectList>
-                      <SelectOption value="Model Deployment 1" id="add-asset-deployment-1">
-                        Model Deployment 1
-                      </SelectOption>
-                      <SelectOption value="Model Deployment 2" id="add-asset-deployment-2">
-                        Model Deployment 2
-                      </SelectOption>
-                      <SelectOption value="Model Deployment 3" id="add-asset-deployment-3">
-                        Model Deployment 3
-                      </SelectOption>
-                    </SelectList>
-                  </Select>
-                  <FormHelperText>
-                    <HelperText>
-                      <HelperTextItem>
-                        Adding this as an AI asset will make it available to other users outside of the namespace/project.
-                      </HelperTextItem>
-                    </HelperText>
-                  </FormHelperText>
-                </FormGroup>
+                  </>
+                )}
               </>
             )}
 

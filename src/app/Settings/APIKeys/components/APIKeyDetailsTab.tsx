@@ -8,6 +8,9 @@ import {
   Card,
   CardBody,
   PageSection,
+  Title,
+  CodeBlock,
+  CodeBlockCode,
 } from '@patternfly/react-core';
 import { APIKey } from '../types';
 
@@ -91,6 +94,33 @@ const APIKeyDetailsTab: React.FunctionComponent<APIKeyDetailsTabProps> = ({ apiK
               </DescriptionListGroup>
             )}
           </DescriptionList>
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardBody>
+          <Title headingLevel="h3" size="lg" id="usage-example-title">Usage Example</Title>
+          <p style={{ marginBottom: '1rem', marginTop: '0.5rem' }}>
+            Use this API key to authenticate requests to the chat completions endpoint:
+          </p>
+          <CodeBlock id="usage-example-code">
+            <CodeBlockCode>
+{`curl -X POST https://api.example.com/v1/chat/completions \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer ${apiKey.apiKey}" \\
+  -d '{
+    "model": "gpt-oss-20b",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Hello, how are you?"
+      }
+    ],
+    "temperature": 0.7,
+    "max_tokens": 150
+  }'`}
+            </CodeBlockCode>
+          </CodeBlock>
         </CardBody>
       </Card>
     </PageSection>

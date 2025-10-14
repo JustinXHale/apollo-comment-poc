@@ -16,8 +16,9 @@ import {
 import { useDocumentTitle } from '@app/utils/useDocumentTitle';
 import { getPolicyById } from './mockData';
 import { PolicyDetailsTab } from './components/PolicyDetailsTab';
+import { CodeBlock, CodeBlockCode } from '@patternfly/react-core';
 
-type TabKey = 'details';
+type TabKey = 'details' | 'yaml';
 
 const PolicyDetails: React.FunctionComponent = () => {
   const { policyId, tab } = useParams<{ policyId: string; tab?: string }>();
@@ -29,7 +30,7 @@ const PolicyDetails: React.FunctionComponent = () => {
   const policy = policyId ? getPolicyById(policyId) : undefined;
 
   React.useEffect(() => {
-    if (tab && ['details'].includes(tab)) {
+    if (tab && ['details', 'yaml'].includes(tab)) {
       setActiveTabKey(tab as TabKey);
     }
   }, [tab]);
@@ -82,6 +83,15 @@ const PolicyDetails: React.FunctionComponent = () => {
         >
           <Tab eventKey="details" title={<TabTitleText>Details</TabTitleText>} aria-label="Details tab">
             <PolicyDetailsTab policy={policy} />
+          </Tab>
+          <Tab eventKey="yaml" title={<TabTitleText>YAML</TabTitleText>} aria-label="YAML tab">
+            <PageSection>
+              <CodeBlock id="policy-yaml-code">
+                <CodeBlockCode>
+                  {policy.yaml || '# No YAML available for this policy'}
+                </CodeBlockCode>
+              </CodeBlock>
+            </PageSection>
           </Tab>
         </Tabs>
       </PageSection>

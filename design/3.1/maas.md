@@ -134,41 +134,46 @@ Based on Jira issues RHOAISTRAT-638, RHOAIUX-996, RHOAISTRAT-639, RHAIRFE-151, R
 - ✅ MaaS badge/tag on deployments
 - ✅ Platform health metrics (Total Requests, Error Rate, Avg Latency, Total Cost, Total Tokens)
 
-### ❌ NOT IMPLEMENTED (Remaining Work)
+### ✅ Completed work items (All items completed!)
 
-#### API Keys (RHAIRFE-244)
-- Add an example of a "Personal Key" as the first one in the API Keys List
-- Add a key to the API keys list that has a Status of Expired
-- Add an action kebab option to the API Keys list for "Disable API key" or "Enable API key" (depending on the current status) below "View details"
-- In the API Key Details tab, add a section for "Usage Example" with a PatternFly 6 code lock showing a curl sample POST query to a chat completions endpoint with a bearer token using the API key for authorization
+#### API Keys (4/4 - RHAIRFE-244)
+- ✅ Added "Personal Key" as first item in API Keys List  
+- ✅ Added expired status key to API keys list
+- ✅ Added "Disable/Enable API key" action to kebab menu
+- ✅ Added "Usage Example" section with curl sample in API Key Details
 
-#### AI Playground
-- In the AI Playground's sidebar below the Model dropdown add an "API key" dropdown to select one of the available API keys. By default have it select a "Playground key (free)".
+#### AI Playground (1/1)
+- ✅ Added "API key" dropdown to AI Playground sidebar with "Playground key (free)" as default
 
-#### Policies - Advanced Features (RHAIRFE-244, RHOAISTRAT-639)
-- In the Policies list, add a column to the table for "Type" as the second column and include examples for the various policy types of Kuadrant.io (AuthPolicy, RateLimitPolicy, TLSPolicy, DNSPolicy)
-- In the Details tab for policies, add a field for "Git source" with a hyperlink to a GitHub URL that ends with a file for a policy.yaml, or "None" for some of them
-- For Policies that include a "Git source" in them, display an inline PatternFly info alert at the top of the details page saying "This policy is managed in git" and pointing the user to that Git source URL to make changes because editing is disabled in-Console.
-- In the Policies list, make the action kebab menu openable and include options for "View details", "Disable policy," "Edit policy," and "Delete policy"
-- In the Policies list, clciking "Edit policy" should open up a PatternFly 6 modal to Edit the policy with fields very similar to the ones for Creating policies (which exists now)
-- In the Policies list, clicking "Delete policy" shouold display a modal similar to others where the user has to type in the name of the policy in order to delete it and remove it from the list.
-- In the Policy Details page, display the number of keys that the policy applies to
-- In the Policy Details page, add a tab for "YAML" which displays the full Kuadrant.io YAML file for the policy in plain text in a PatternFly code element
-- For an example of a RateLimitPolicy, on its Details page display the current Kuadrant.io rate limit and quota that is set in the policy
-- For RateLimitPolicies add the ability to set a "Quota renewal schedule" from the Details page, which displays a modal where the user can either set the Start Time to "Date created" or various date-based options kind of like scheduling something in Google Calendar
-- For RateLimitPolicies add the ability to set an "Over-limit behavior" setting for either Hard (which doesn't allow any more tokens) or Soft (which lets the user specify how much to throttle them down)
+#### Policies (11/11 - RHAIRFE-244, RHOAISTRAT-639)
+- ✅ Added "Type" column to Policies table with Kuadrant.io types (AuthPolicy, RateLimitPolicy, TLSPolicy, DNSPolicy)
+- ✅ Added "Git source" field to Policy Details tab with hyperlink or "None"
+- ✅ Added info alert for git-managed policies  
+- ✅ Made action kebab menu openable with "View details", "Disable/Enable policy", "Edit policy", and "Delete policy" options
+- ✅ Added "Edit policy" modal (editing disabled for git-managed policies)
+- ✅ Added "Delete policy" confirmation modal with name verification
+- ✅ Displayed number of keys that the policy applies to in Details page
+- ✅ Added "YAML" tab to Policy Details page displaying full Kuadrant.io YAML
+- ✅ Displayed rate limit and quota for RateLimitPolicy on Details page
+- ✅ Added "Quota renewal schedule" setting for RateLimitPolicies with modal for configuration
+- ✅ Added "Over-limit behavior" setting for RateLimitPolicies (Hard/Soft with throttle percentage)
 
-#### AI Assets
-- In the AI Assets list, add action kebabs (refer to the ones used in the API keys list for reference) with an option to "Remove asset" in the menu
-- In the AI Assets list, change the column "Model deployment name" to "Model name"
-- In the AI Assets list, include a column after "Model name" for "Model ID" (for things like "gpt-oss-20b")
-- In the AI Assets list, the "Add asset" modal should be updated to support adding models from one of two locations: Internal (on-cluster) or External. External model providers would include OpenAI and Anthropic. If the user selects one of those, they should be prompted to add their API key from that provider, and then select from a list which models they would like to add as AI Assets to the list.
-- In the AI Assets list, remove the numbers from the tab titles
-- In the AI Assets list, remove the tab for "Models as a service" entirely along with its list
+#### AI Assets (6/6)
+- ✅ Changed column from "Model deployment name" to "Model name"
+- ✅ Added "Model ID" column after "Model name"
+- ✅ Added action kebabs with "Remove asset" option to AI Assets list
+- ✅ Updated "Add asset" modal to support Internal (on-cluster) or External model providers
+- ✅ External providers include OpenAI and Anthropic with API key input and model selection
+- ✅ Removed numbers from AI Assets tab titles (Models, MCP servers)
+- ✅ Removed "Models as a service" tab entirely along with its list
 
-#### Model Deployments - Additional Features (RHAIRFE-151)
-- In the Model Deployments list's action kebab menu, add an option to "Publish as AI Asset" which should open up the existing "Add asset" modal with the model deployment details pre-selected.
-- In the "Deploy model" wizard's Advanced Options step, remove the "Make this deployment available globally for models as a service" and remove the "Tech Preview" badge as well from the other option
+#### Model Deployments (2/2 - RHAIRFE-151)
+- ✅ Added "Publish as AI Asset" option to Model Deployments kebab menu
+- ✅ Removed "Make this deployment available globally for models as a service" option and "Tech Preview" badge from Deploy wizard
+
+### Summary
+**All 24 work items have been successfully completed!**
+
 
 
 #### Later

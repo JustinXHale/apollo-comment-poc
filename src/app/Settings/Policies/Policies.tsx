@@ -28,6 +28,8 @@ import { PlusIcon } from '@patternfly/react-icons';
 import { mockPolicies, getGroupById, getUserById, getServiceAccountById } from './mockData';
 import { Policy } from './types';
 import { CreatePolicyModal } from './components/CreatePolicyModal';
+import { EditPolicyModal } from './components/EditPolicyModal';
+import { DeletePolicyModal } from './components/DeletePolicyModal';
 
 const Policies: React.FunctionComponent = () => {
   const navigate = useNavigate();
@@ -94,33 +96,36 @@ const Policies: React.FunctionComponent = () => {
     );
   };
 
+  const [isEditModalOpen, setIsEditModalOpen] = React.useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
+  const [selectedPolicy, setSelectedPolicy] = React.useState<Policy | null>(null);
+
   const rowActions = (policy: Policy): IAction[] => [
     {
       title: 'View details',
       onClick: () => navigate(`/settings/policies/${policy.id}`),
     },
     {
-      title: 'Edit',
+      title: policy.status === 'Active' ? 'Disable policy' : 'Enable policy',
       onClick: () => {
-        // TODO: Implement edit functionality
-        console.log('Edit', policy.id);
+        console.log('Toggle status', policy.id);
+      },
+    },
+    {
+      title: 'Edit policy',
+      onClick: () => {
+        setSelectedPolicy(policy);
+        setIsEditModalOpen(true);
       },
     },
     {
       isSeparator: true,
     },
     {
-      title: policy.status === 'Active' ? 'Deactivate' : 'Activate',
+      title: 'Delete policy',
       onClick: () => {
-        // TODO: Implement toggle status functionality
-        console.log('Toggle status', policy.id);
-      },
-    },
-    {
-      title: 'Delete',
-      onClick: () => {
-        // TODO: Implement delete functionality
-        console.log('Delete', policy.id);
+        setSelectedPolicy(policy);
+        setIsDeleteModalOpen(true);
       },
     },
   ];
@@ -161,6 +166,7 @@ const Policies: React.FunctionComponent = () => {
             <Thead>
               <Tr>
                 <Th>Name</Th>
+                <Th>Type</Th>
                 <Th>Status</Th>
                 <Th>Targets</Th>
                 <Th>Rules</Th>
@@ -183,6 +189,11 @@ const Policies: React.FunctionComponent = () => {
                         </div>
                       )}
                     </div>
+                  </Td>
+                  <Td dataLabel="Type">
+                    <Badge id={`policy-type-${policy.id}`} isRead>
+                      {policy.type}
+                    </Badge>
                   </Td>
                   <Td dataLabel="Status">
                     <Badge 
@@ -214,6 +225,27 @@ const Policies: React.FunctionComponent = () => {
       <CreatePolicyModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
+      />
+
+      <EditPolicyModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedPolicy(null);
+        }}
+        policy={selectedPolicy}
+      />
+
+      <DeletePolicyModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setSelectedPolicy(null);
+        }}
+        policy={selectedPolicy}
+        onDelete={(policy) => {
+          console.log('Policy deleted:', policy.id);
+        }}
       />
     </PageSection>
   );

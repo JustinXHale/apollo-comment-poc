@@ -128,7 +128,7 @@ export const ModelDeploymentModal: React.FunctionComponent<ModelDeploymentModalP
             </FormGroup>
             
             <FormGroup 
-              label="Model deployment name" 
+              label="Model name" 
               fieldId="inference-service-name"
               isRequired
             >
