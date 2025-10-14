@@ -17,7 +17,195 @@ Journey map: https://miro.com/app/board/uXjVIgQDVWw=/
 
 ## Jira-based Design TODOs
 
+Based on Jira issues RHOAISTRAT-638, RHOAIUX-996, RHOAISTRAT-639, RHAIRFE-151, RHAIRFE-608, RHOAISTRAT-703, RHAIRFE-244, RHAIRFE-138, and RHOAISTRAT-650:
+
+### Platform Admin Experience (RHOAISTRAT-638, RHAIRFE-138, RHOAIUX-996)
+1. **Tenant/User Management Dashboard** - Interface to onboard tenants, assign quotas, and manage user access
+2. **Model Catalog Management** - Add, remove, and update models in the public catalog with immediate availability
+3. **System-Wide Monitoring Dashboard** - Real-time view of platform health, total requests, token consumption, error rates
+4. **System-Level Policies Configuration** - Interface for default quota limits, access controls, and system policies
+5. **RBAC Management Interface** - Create/manage roles (model-consumer, model-owner), assign users/groups to roles, visualize permissions per model
+6. **Audit Trail Visualization** - Clear audit trail of changes to model permissions and system configurations
+
+### AI Engineer Experience - AI Available Assets (RHAIRFE-151, RHAIRFE-608)
+1. **AI Available Assets Page** - Unified discovery page for models and MCP servers with tabs for each asset type
+2. **Model Endpoint Discovery** - Display internal/external API endpoints, service tokens, LLS registration status, use cases, and actions
+3. **MCP Server Endpoint Discovery** - Display MCP server name, source, endpoints, tools, registration status, use cases
+4. **LLS Registration Workflow** - Register models/MCP servers with Llama Stack Server, wizard to configure LLS in project namespace
+5. **AI Playground Integration** - Token pass-through from assets to playground for seamless interaction
+6. **MaaS Model Toggle in Deployments** - Admin toggle to make model available as MaaS (globally accessible across projects)
+7. **Project/Namespace Scoping** - Filter assets by selected project, with future support for global cluster-wide view
+8. **Add Asset Functionality** - "Add Asset" button to add external models, model deployments, or MCP servers
+
+### API Keys Management (RHAIRFE-244, RHAIRFE-138)
+1. **API Keys List Page** - Table with columns for Name, Status, API Key (masked), Assets, Owner, Last Used, Expiration Date
+2. **Create API Key Modal** - Form with Name, Description, Owner selection, Limits/Policies section (token/rate limits, budget, expiration)
+3. **API Key Details Page** - Five tabs: Details, Assets, Metrics, Policies, Settings
+4. **Details Tab** - Display key metadata (name, description, dates, key value with copy)
+5. **Assets Tab** - Collapsible sections for Models, MCP Servers, Vector Databases, Agents with endpoints
+6. **Metrics Tab** - Charts for Total Requests, Success Rate, Total Tokens, Total Cost with time range selector and Perses link
+7. **Policies Tab** - Table of applied policies with Name, ID, Description, and Type columns (AuthPolicy, RateLimitPolicy, TLSPolicy, DNSPolicy)
+8. **Settings Tab** - Danger zone with delete functionality and confirmation modal
+9. **API Key Actions** - Dropdown menu with "View details" and "Delete API key" options
+10. **Status Labels** - Active (green), Expired (red), Disabled (grey)
+11. **ISV Key Storage** - Store third-party ISV keys for MCP server authentication (GitHub, Atlassian, Asana, etc.)
+
+### Policies Management (RHAIRFE-244, RHOAISTRAT-639)
+1. **Policies List Page** - Table with Name, Description, Status, Targets, Rules columns
+2. **Create Policy Modal** - Fields for Name, Description, Available Assets (Models/MCP dropdowns), Limits (Token/Rate/Time), Targets (Groups/Users/Service Accounts)
+3. **Policy Details Page** - Details tab displaying all policy configuration
+4. **Policy Actions** - View, Edit, Activate/Deactivate, Delete
+5. **Policy Types** - Support for AuthPolicy, RateLimitPolicy, TLSPolicy, DNSPolicy (Kuadrant.io types)
+6. **Rate Limiting Enforcement** - Token-based rate limiting, request-based rate limiting
+7. **RBAC Integration** - Model-level RBAC, user/group access controls
+
+### Observability & Monitoring (RHOAISTRAT-650)
+1. **Unified Platform Dashboard** - Cluster-level and model-level metrics with cross-runtime consistency
+2. **Model Inventory Overview** - Table showing all deployed models with status, resources, performance metrics
+3. **Model-Level Performance Analysis** - Per-model request volumes, latency distributions, error rates, resource consumption
+4. **Platform Health Summary** - Overall error rates, service availability, performance KPIs, alert status
+5. **API Key-Filtered Dashboard** - AI Engineer view filtered by specific API keys showing performance and usage
+6. **Usage Tracking Metrics** - Requests per time period, tokens per user/group/key, top consumers
+7. **Reference Grafana Implementation** - Initial delivery as Grafana dashboards, future embedded UI
+8. **Perses Dashboard Integration** - Link to view detailed dashboards in Perses
+
+### MaaS Integration (RHOAISTRAT-639, RHAIRFE-608)
+1. **API Gateway Support** - Token validation, rate limiting, security enforcement through RHCL or alternative gateways
+2. **MaaS Dev Preview Toggle** - Checkbox in Deploy Model Wizard: "Make this deployment available globally for models as a service"
+3. **External Model Provider Support** - Ability to add external AI providers (OpenAI, Anthropic) as AI Assets
+4. **Usage Quota Management** - Track and enforce token consumption limits per user/key
+5. **Global vs Project Scope** - MaaS models visible globally across all projects, non-MaaS scoped to namespace
+6. **Generate/Regenerate API Keys** - Feature flag for API key generation in model endpoint modals
+7. **Chargeback/Cost Tracking** - Track costs per token, per user, per model for billing purposes
+
 ## Remaining Jira-based Design TODOs
+
+### ✅ IMPLEMENTED (Present in Prototype)
+
+#### AI Available Assets Page (RHAIRFE-151, RHAIRFE-608)
+- ✅ AI Available Assets page with Models and MCP Servers tabs (`/gen-ai-studio/asset-endpoints`)
+- ✅ Model endpoint discovery with internal/external endpoints, tokens, and copyable values
+- ✅ MCP server endpoint discovery with tools and descriptions
+- ✅ Project/namespace scoping with project selector dropdown
+- ✅ "Add Asset" button functionality
+- ✅ Search and filter capabilities for models and MCP servers
+- ✅ Integration with AI Playground (token pass-through)
+- ✅ Status indicators (registered vs not-registered for LLS)
+
+#### API Keys Management (RHAIRFE-244, RHAIRFE-138)
+- ✅ API Keys list page (`/gen-ai-studio/api-keys`) with proper column structure
+- ✅ Status column with Active/Expired/Disabled labels (green/red/grey)
+- ✅ Last Used column with relative time display
+- ✅ Expiration Date column
+- ✅ API Key column with masked values (sk-1234...)
+- ✅ Assets column showing badge counts for Models, MCP, Vector DBs, Agents
+- ✅ Owner column displaying owner type (User/Group/Service Account)
+- ✅ Actions dropdown with "View details" and "Delete API key" options
+- ✅ Create API Key modal with Name, Description, Owner, Limits, AI Asset Access sections
+- ✅ API Key Details page with five tabs (Details, Assets, Metrics, Policies, Settings)
+- ✅ Details tab with description list of key metadata
+- ✅ Assets tab with collapsible sections for Models, MCP Servers, Vector DBs, Agents
+- ✅ Metrics tab with usage cards (Total Requests, Success Rate, Total Tokens, Total Cost) and time range selector
+- ✅ Policies tab with table showing Policy Name, ID, Description, Type
+- ✅ Settings tab with Danger Zone and delete confirmation modal
+- ✅ Delete API Key modal following PatternFly 6 patterns with name confirmation
+
+#### Policies Management (RHAIRFE-244, RHOAISTRAT-639)
+- ✅ Policies list page (`/settings/policies`) with proper table structure
+- ✅ Columns for Name, Status, Targets (Groups/Users/Service Accounts), Rules
+- ✅ Create Policy modal with Name, Description, Available Assets, Limits, Targets sections
+- ✅ Policy Details page (`/settings/policies/:id`) with Details tab
+- ✅ Policy actions: View details, Edit, Activate/Deactivate, Delete
+- ✅ Badge displays for target counts and rule summaries
+
+#### Model Deployments (RHOAISTRAT-639, RHAIRFE-608)
+- ✅ Deploy Model Wizard (`/ai-hub/deployments/deploy`)
+- ✅ "Make available as AI asset" checkbox (Tech Preview label)
+- ✅ "Make available globally for models as a service" checkbox (Developer Preview label)
+- ✅ Advanced settings section in wizard
+- ✅ Deployments list page (`/ai-hub/deployments`)
+
+#### Observability (RHOAISTRAT-650)
+- ✅ Observe & Monitor Dashboard (`/observe-monitor/dashboard`) with multiple tabs
+- ✅ Usage (MaaS) tab with model deployment table
+- ✅ Model-level metrics display (requests, latency, error rates)
+- ✅ Charts for usage trends and top consumers
+- ✅ API Key column in model deployment table
+- ✅ MaaS badge/tag on deployments
+- ✅ Platform health metrics (Total Requests, Error Rate, Avg Latency, Total Cost, Total Tokens)
+
+### ❌ NOT IMPLEMENTED (Remaining Work)
+
+#### Platform Admin Experience (RHOAISTRAT-638, RHAIRFE-138, RHOAIUX-996)
+- ❌ **Tenant/User Management Dashboard** - User Management page is placeholder only
+- ❌ **Tenant Onboarding Workflow** - No interface to onboard tenants and assign quotas
+- ❌ **Model Catalog Management for Admins** - No admin interface to add/remove models from catalog
+- ❌ **System-Wide Health Dashboard** - Observe & Monitor exists but lacks dedicated admin system health view
+- ❌ **System-Level Policies Configuration Interface** - No dedicated admin policy configuration UI
+- ❌ **RBAC Management Interface** - No UI to create/manage roles, assign users/groups to roles per model
+- ❌ **RBAC Visualization** - No clear visualization of which users/groups have access to which models
+- ❌ **Audit Trail Dashboard** - No audit trail visualization for permission changes
+- ❌ **Quota Management UI** - No interface to set/view/manage quotas for users/groups/keys
+- ❌ **Admin "Make Available as MaaS" Toggle** - Toggle exists in wizard but no way to edit existing deployments
+
+#### LLS (Llama Stack Server) Integration (RHAIRFE-151, RHAIRFE-608)
+- ❌ **LLS Configuration Wizard** - No wizard to set up LLS in project namespace
+- ❌ **LLS Model Registration Workflow** - "Register" action present but doesn't launch LLS wizard
+- ❌ **LLS MCP Server Registration** - No workflow to register MCP servers with LLS
+- ❌ **LLS Status Updates** - LLS status shown but no actual integration with real LLS backend
+- ❌ **Projects Page LLS Configuration** - No "Configure Llama Stack Server in my project" section
+- ❌ **Bulk Model Selection for LLS** - No way to select multiple models to register with LLS at once
+
+#### API Keys - Advanced Features (RHAIRFE-244)
+- ❌ **ISV Key Storage Implementation** - No actual storage/retrieval of third-party ISV keys (GitHub, Atlassian, etc.)
+- ❌ **Key Regeneration** - No ability to regenerate an existing API key
+- ❌ **Key Expiration Automation** - Keys have expiration dates but no automated expiry enforcement shown
+- ❌ **Micro UI for Quick Key Creation** - No embedded key creation widget in AI Playground or AI Available Assets
+- ❌ **Per-Asset Key Generation** - No quick "Generate Key for this Asset" action on asset cards
+
+#### Policies - Advanced Features (RHAIRFE-244, RHOAISTRAT-639)
+- ❌ **Policy Editing** - Edit action present but not implemented
+- ❌ **Policy Activation/Deactivation** - Toggle action present but not implemented
+- ❌ **Policy Deletion** - Delete action present but not implemented
+- ❌ **Real-time Policy Enforcement** - Policies are displayed but not actually enforced
+- ❌ **Policy Impact Preview** - No visualization of how many users/keys a policy will affect
+- ❌ **Quality Tiers Implementation** - No tier-based policies (Tier 0, Tier 1, etc.)
+- ❌ **Over-Limit Behavior Configuration** - No settings for soft throttle vs hard throttle
+- ❌ **Date-Based Quota Renewals** - No automated quota renewal scheduling
+
+#### Observability - Advanced Features (RHOAISTRAT-650)
+- ❌ **API Key-Filtered Dashboard for AI Engineers** - Dashboard exists but not filtered per API key for end users
+- ❌ **Link to Perses Dashboards** - Placeholder "View Perses Dashboard" link not functional
+- ❌ **Real-time Metrics Updates** - Dashboard shows static mock data, not live metrics
+- ❌ **Custom Time Range Selection** - Time range selector present but not fully functional
+- ❌ **Alert Configuration** - No alert status integration or alert management
+- ❌ **Distributed Tracing Visualization** - Traces tab exists but lacks detailed tracing UI
+- ❌ **Per-Key Usage Breakdown** - Can't drill down into specific API key usage from cluster view
+
+#### MaaS Integration - Core Features (RHOAISTRAT-639, RHAIRFE-608)
+- ❌ **API Gateway Backend Integration** - No actual RHCL or gateway integration (UI only)
+- ❌ **Token Validation Service** - No backend service to validate generated API tokens
+- ❌ **Rate Limiting Enforcement** - Rate limits displayed but not enforced
+- ❌ **External Model Provider Integration** - Can't actually add OpenAI, Anthropic endpoints
+- ❌ **Usage Quota Enforcement** - Quotas displayed but not actively enforced or tracked
+- ❌ **Global Scope Implementation** - "Make available globally" toggle exists but no global filtering
+- ❌ **Chargeback/Cost Calculation** - Cost metrics shown but no actual cost calculation engine
+- ❌ **Token Consumption Tracking** - Token metrics displayed but not tracked per user/key
+- ❌ **Generate API Key Feature** - Feature flag exists (`enableGenerateApiKey`) but implementation incomplete
+
+#### Model Deployments - Additional Features (RHAIRFE-151)
+- ❌ **Edit Deployment to Toggle MaaS** - Can only set MaaS during creation, not after deployment
+- ❌ **Deployment Use Case Editing** - Use cases shown but can't be edited post-deployment
+- ❌ **Model Deployment Details Page** - No comprehensive details page for individual deployments
+- ❌ **Stop/Start Deployment Actions** - Stop button present but opens feature modal instead of working
+
+#### General Platform Features
+- ❌ **Connections Management** - Connection types page is placeholder, needed for external model endpoints
+- ❌ **Model Registry Settings** - Model Registry Settings page is placeholder
+- ❌ **Serving Runtimes Management** - Serving Runtimes page is placeholder
+- ❌ **Documentation Links** - Many "View documentation" links are placeholders
+- ❌ **Backend API Integration** - All data is mock/static, no real API integration
+- ❌ **GitOps Configuration** - No GitOps-based configuration for MaaS setup
 
 ## Sources
 
