@@ -17,6 +17,7 @@ import {
   EmptyStateActions,
   EmptyStateBody,
   EmptyStateFooter,
+  ExpandableSection,
   Flex,
   FlexItem,
   Form,
@@ -220,7 +221,7 @@ const EndpointPopover: React.FunctionComponent<{
       {type === 'external' && (
         <div>
           <label style={{ fontWeight: 'bold', fontSize: '0.875rem', display: 'block', marginBottom: '0.25rem' }}>
-            API Token
+            API Key
           </label>
           {(model.name === 'llama-3.1-8b-instruct' || model.name === 'Pixtral-Large-Instruct-2411-hf-quantized.w8a8') ? (
             // MaaS model token generation
@@ -238,7 +239,7 @@ const EndpointPopover: React.FunctionComponent<{
                   <TextInput
                     value={generatedTokens.get(model.id) || ''}
                     readOnly
-                    aria-label="Generated API Token"
+                    aria-label="Generated API Key"
                     style={{ fontSize: '0.75rem', height: '28px', fontFamily: 'monospace' }}
                   />
                   <Tooltip content={copiedItems.has(tokenId) ? 'Copied' : 'Copy token'}>
@@ -262,7 +263,7 @@ const EndpointPopover: React.FunctionComponent<{
                 isLoading={isGeneratingToken?.has(model.id)}
                 isDisabled={isGeneratingToken?.has(model.id)}
               >
-                {isGeneratingToken?.has(model.id) ? 'Generating...' : 'Generate API token'}
+                {isGeneratingToken?.has(model.id) ? 'Generating...' : 'Generate API Key'}
               </Button>
             )
           ) : (
@@ -271,7 +272,7 @@ const EndpointPopover: React.FunctionComponent<{
             <TextInput
               value={token || ''}
               readOnly
-              aria-label="API Token"
+              aria-label="API Key"
               style={{ fontSize: '0.75rem', height: '28px', fontFamily: 'monospace' }}
             />
             <Tooltip content={copiedItems.has(tokenId) ? 'Copied' : 'Copy token'}>
@@ -340,31 +341,6 @@ const CombinedEndpointsPopover: React.FunctionComponent<{
 
   const popoverContent = (
     <div style={{ padding: '0.5rem', width: '400px', minWidth: '400px' }}>
-      {/* Internal Endpoint Section */}
-      <div style={{ marginBottom: model.externalEndpoint ? '1rem' : '0.75rem' }}>
-        <label style={{ fontWeight: 'bold', fontSize: '0.875rem', display: 'block', marginBottom: '0.5rem' }}>
-          Internal Endpoint URL
-        </label>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-          <TextInput
-            value={model.internalEndpoint || ''}
-            readOnly
-            aria-label="Internal Endpoint URL"
-            style={{ fontSize: '0.75rem', height: '28px', fontFamily: 'monospace' }}
-          />
-          <Tooltip content={copiedItems.has(internalEndpointId) ? 'Copied' : 'Copy endpoint'}>
-            <Button
-              variant="plain"
-              size="sm"
-              aria-label="Copy internal endpoint"
-              onClick={() => handleCopyWithFeedback(model.internalEndpoint!, internalEndpointId)}
-              style={{ padding: '4px' }}
-            >
-              {copiedItems.has(internalEndpointId) ? <CheckCircleIcon style={{ fontSize: '12px' }} /> : <CopyIcon style={{ fontSize: '12px' }} />}
-            </Button>
-          </Tooltip>
-        </div>
-      </div>
 
       {/* External Endpoint Section (if available) */}
       {model.externalEndpoint && (
@@ -394,9 +370,9 @@ const CombinedEndpointsPopover: React.FunctionComponent<{
             </div>
           </div>
 
-          <div>
+          <div style={{ marginBottom: '0.75rem' }}>
             <label style={{ fontWeight: 'bold', fontSize: '0.875rem', display: 'block', marginBottom: '0.25rem' }}>
-              API Token
+              API Key
             </label>
             {(model.name === 'llama-3.1-8b-instruct' || model.name === 'Pixtral-Large-Instruct-2411-hf-quantized.w8a8') ? (
               // MaaS model token generation
@@ -414,7 +390,7 @@ const CombinedEndpointsPopover: React.FunctionComponent<{
                     <TextInput
                       value={generatedTokens.get(model.id) || ''}
                       readOnly
-                      aria-label="Generated API Token"
+                      aria-label="Generated API Key"
                       style={{ fontSize: '0.75rem', height: '28px', fontFamily: 'monospace' }}
                     />
                     <Tooltip content={copiedItems.has(externalTokenId) ? 'Copied' : 'Copy token'}>
@@ -438,7 +414,7 @@ const CombinedEndpointsPopover: React.FunctionComponent<{
                   isLoading={isGeneratingToken?.has(model.id)}
                   isDisabled={isGeneratingToken?.has(model.id)}
                 >
-                  {isGeneratingToken?.has(model.id) ? 'Generating...' : 'Generate API token'}
+                  {isGeneratingToken?.has(model.id) ? 'Generating...' : 'Generate API Key'}
                 </Button>
               )
             ) : (
@@ -447,7 +423,7 @@ const CombinedEndpointsPopover: React.FunctionComponent<{
                 <TextInput
                   value={model.externalToken || ''}
                   readOnly
-                  aria-label="API Token"
+                  aria-label="API Key"
                   style={{ fontSize: '0.75rem', height: '28px', fontFamily: 'monospace' }}
                 />
                 <Tooltip content={copiedItems.has(externalTokenId) ? 'Copied' : 'Copy token'}>
@@ -466,6 +442,47 @@ const CombinedEndpointsPopover: React.FunctionComponent<{
           </div>
         </>
       )}
+      {/* Internal Endpoint Section */}
+      <div style={{ marginBottom: model.externalEndpoint ? '1rem' : '0.75rem' }}>
+        <ExpandableSection
+          toggleText="Internal endpoint"
+          id={`internal-endpoint-expandable-${model.id}`}
+        >
+          <div style={{ marginTop: '0.5rem' }}>
+            <FormHelperText>
+              <HelperText>
+                <HelperTextItem variant="indeterminate">
+                  The internal endpoint is accessible only within the cluster. When possible, use the external endpoint with your API token for better security and access control.
+                </HelperTextItem>
+              </HelperText>
+            </FormHelperText>
+            <div style={{ marginTop: '0.75rem' }}>
+              <label style={{ fontWeight: 'bold', fontSize: '0.875rem', display: 'block', marginBottom: '0.5rem' }}>
+                Internal Endpoint URL
+              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                <TextInput
+                  value={model.internalEndpoint || ''}
+                  readOnly
+                  aria-label="Internal Endpoint URL"
+                  style={{ fontSize: '0.75rem', height: '28px', fontFamily: 'monospace' }}
+                />
+                <Tooltip content={copiedItems.has(internalEndpointId) ? 'Copied' : 'Copy endpoint'}>
+                  <Button
+                    variant="plain"
+                    size="sm"
+                    aria-label="Copy internal endpoint"
+                    onClick={() => handleCopyWithFeedback(model.internalEndpoint!, internalEndpointId)}
+                    style={{ padding: '4px' }}
+                  >
+                    {copiedItems.has(internalEndpointId) ? <CheckCircleIcon style={{ fontSize: '12px' }} /> : <CopyIcon style={{ fontSize: '12px' }} />}
+                  </Button>
+                </Tooltip>
+              </div>
+            </div>
+          </div>
+        </ExpandableSection>
+      </div>
     </div>
   );
 
@@ -530,20 +547,20 @@ const MCPEndpointPopover: React.FunctionComponent<{
       {token && (
         <div>
           <label style={{ fontWeight: 'bold', fontSize: '0.875rem', display: 'block', marginBottom: '0.25rem' }}>
-            API Token
+            API Key
           </label>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
             <TextInput
               value={token || ''}
               readOnly
-              aria-label="API Token"
+              aria-label="API Key"
               style={{ fontSize: '0.75rem', height: '28px', fontFamily: 'monospace' }}
             />
             <Tooltip content={copiedItems.has(tokenId) ? 'Copied' : 'Copy token'}>
               <Button
                 variant="plain"
                 size="sm"
-                aria-label="Copy token"
+                aria-label="Copy key"
                 onClick={() => handleCopyWithFeedback(token!, tokenId)}
                 style={{ padding: '4px' }}
               >
