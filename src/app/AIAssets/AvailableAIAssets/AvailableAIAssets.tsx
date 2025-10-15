@@ -17,6 +17,7 @@ import {
   EmptyStateActions,
   EmptyStateBody,
   EmptyStateFooter,
+  ExpandableSection,
   Flex,
   FlexItem,
   Form,
@@ -68,6 +69,7 @@ import {
 import {
   CheckCircleIcon,
   CopyIcon,
+  EllipsisVIcon,
   ExclamationCircleIcon,
   FilterIcon,
   InfoCircleIcon,
@@ -87,6 +89,12 @@ import { useUserProfile } from '../../utils/UserProfileContext';
 import { mcpServerLogos } from '../MVPServers/mcpServerLogos';
 import { modelLogos } from '../Models/modelLogos';
 import { ModelDeploymentModal } from './ModelDeploymentModal';
+import { EndpointCreationProgressModal } from './EndpointCreationProgressModal';
+import { TokenCopyModal } from './TokenCopyModal';
+import { ToolsModal } from './ToolsModal';
+import { ModelSelectionModal } from './ModelSelectionModal';
+import { AutoConfigModal } from './AutoConfigModal';
+import { AddAssetModal } from './AddAssetModal';
 
 // Types
 interface PlaygroundModel {
@@ -213,7 +221,7 @@ const EndpointPopover: React.FunctionComponent<{
       {type === 'external' && (
         <div>
           <label style={{ fontWeight: 'bold', fontSize: '0.875rem', display: 'block', marginBottom: '0.25rem' }}>
-            API Token
+            API Key
           </label>
           {(model.name === 'llama-3.1-8b-instruct' || model.name === 'Pixtral-Large-Instruct-2411-hf-quantized.w8a8') ? (
             // MaaS model token generation
@@ -231,7 +239,7 @@ const EndpointPopover: React.FunctionComponent<{
                   <TextInput
                     value={generatedTokens.get(model.id) || ''}
                     readOnly
-                    aria-label="Generated API Token"
+                    aria-label="Generated API Key"
                     style={{ fontSize: '0.75rem', height: '28px', fontFamily: 'monospace' }}
                   />
                   <Tooltip content={copiedItems.has(tokenId) ? 'Copied' : 'Copy token'}>
@@ -255,7 +263,7 @@ const EndpointPopover: React.FunctionComponent<{
                 isLoading={isGeneratingToken?.has(model.id)}
                 isDisabled={isGeneratingToken?.has(model.id)}
               >
-                {isGeneratingToken?.has(model.id) ? 'Generating...' : 'Generate API token'}
+                {isGeneratingToken?.has(model.id) ? 'Generating...' : 'Generate API Key'}
               </Button>
             )
           ) : (
@@ -264,7 +272,7 @@ const EndpointPopover: React.FunctionComponent<{
             <TextInput
               value={token || ''}
               readOnly
-              aria-label="API Token"
+              aria-label="API Key"
               style={{ fontSize: '0.75rem', height: '28px', fontFamily: 'monospace' }}
             />
             <Tooltip content={copiedItems.has(tokenId) ? 'Copied' : 'Copy token'}>
@@ -305,12 +313,242 @@ const EndpointPopover: React.FunctionComponent<{
   );
 };
 
+// Combined Endpoints Popover Component (shows both internal and external)
+const CombinedEndpointsPopover: React.FunctionComponent<{
+  model: ModelAsset;
+  copiedItems: Set<string>;
+  handleCopyWithFeedback: (text: string, itemId: string) => void;
+  generatedTokens?: Map<string, string>;
+  isGeneratingToken?: Set<string>;
+  onGenerateToken?: (modelId: string) => void;
+  onClearGeneratedToken?: (modelId: string) => void;
+  isMaaS?: boolean;
+}> = ({ model, copiedItems, handleCopyWithFeedback, generatedTokens, isGeneratingToken, onGenerateToken, onClearGeneratedToken, isMaaS }) => {
+  const [isPopoverOpen, setIsPopoverOpen] = React.useState(false);
+  const [isUsageModalOpen, setIsUsageModalOpen] = React.useState(false);
+  
+  const internalEndpointId = `internal-endpoint-${model.id}`;
+  const internalTokenId = `internal-token-${model.id}`;
+  const externalEndpointId = `external-endpoint-${model.id}`;
+  const externalTokenId = `external-token-${model.id}`;
+
+  const handlePopoverClose = () => {
+    setIsPopoverOpen(false);
+    // Clear generated token for MaaS models when popover closes
+    if ((model.name === 'llama-3.1-8b-instruct' || model.name === 'Pixtral-Large-Instruct-2411-hf-quantized.w8a8') && model.externalEndpoint) {
+      onClearGeneratedToken?.(model.id);
+    }
+  };
+
+  const popoverContent = (
+    <div style={{ padding: '0.5rem', width: '400px', minWidth: '400px' }}>
+
+      {/* External Endpoint Section (if available) */}
+      {model.externalEndpoint && (
+        <>
+          <div style={{ marginBottom: '0.75rem' }}>
+            <label style={{ fontWeight: 'bold', fontSize: '0.875rem', display: 'block', marginBottom: '0.5rem' }}>
+              {isMaaS ? 'MaaS route' : 'External Endpoint URL'}
+            </label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <TextInput
+                value={model.externalEndpoint || ''}
+                readOnly
+                aria-label="External Endpoint URL"
+                style={{ fontSize: '0.75rem', height: '28px', fontFamily: 'monospace' }}
+              />
+              <Tooltip content={copiedItems.has(externalEndpointId) ? 'Copied' : 'Copy endpoint'}>
+                <Button
+                  variant="plain"
+                  size="sm"
+                  aria-label="Copy external endpoint"
+                  onClick={() => handleCopyWithFeedback(model.externalEndpoint!, externalEndpointId)}
+                  style={{ padding: '4px' }}
+                >
+                  {copiedItems.has(externalEndpointId) ? <CheckCircleIcon style={{ fontSize: '12px' }} /> : <CopyIcon style={{ fontSize: '12px' }} />}
+                </Button>
+              </Tooltip>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '0.75rem' }}>
+            <label style={{ fontWeight: 'bold', fontSize: '0.875rem', display: 'block', marginBottom: '0.25rem' }}>
+              API Key
+            </label>
+            {(model.name === 'llama-3.1-8b-instruct' || model.name === 'Pixtral-Large-Instruct-2411-hf-quantized.w8a8') ? (
+              // MaaS model token generation
+              generatedTokens?.has(model.id) ? (
+                <div>
+                  <Alert
+                    variant="info"
+                    title="Important: Copy and store this token"
+                    isInline
+                    style={{ marginBottom: '0.5rem' }}
+                  >
+                    This token cannot be viewed again after you close this dialog.
+                  </Alert>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                    <TextInput
+                      value={generatedTokens.get(model.id) || ''}
+                      readOnly
+                      aria-label="Generated API Key"
+                      style={{ fontSize: '0.75rem', height: '28px', fontFamily: 'monospace' }}
+                    />
+                    <Tooltip content={copiedItems.has(externalTokenId) ? 'Copied' : 'Copy token'}>
+                      <Button
+                        variant="plain"
+                        size="sm"
+                        aria-label="Copy token"
+                        onClick={() => handleCopyWithFeedback(generatedTokens.get(model.id)!, externalTokenId)}
+                        style={{ padding: '4px' }}
+                      >
+                        {copiedItems.has(externalTokenId) ? <CheckCircleIcon style={{ fontSize: '12px' }} /> : <CopyIcon style={{ fontSize: '12px' }} />}
+                      </Button>
+                    </Tooltip>
+                  </div>
+                  <div style={{ marginTop: '0.5rem' }}>
+                    <Button
+                      variant="link"
+                      isInline
+                      onClick={() => setIsUsageModalOpen(true)}
+                      id={`view-usage-example-${model.id}-generated`}
+                      style={{ padding: 0, fontSize: '0.875rem', color: 'var(--pf-t--global--color--brand--default)' }}
+                    >
+                      View usage example
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => onGenerateToken?.(model.id)}
+                  isLoading={isGeneratingToken?.has(model.id)}
+                  isDisabled={isGeneratingToken?.has(model.id)}
+                >
+                  {isGeneratingToken?.has(model.id) ? 'Generating...' : 'Generate API Key'}
+                </Button>
+              )
+            ) : (
+              // Regular model token display
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                  <TextInput
+                    value={model.externalToken || ''}
+                    readOnly
+                    aria-label="API Key"
+                    style={{ fontSize: '0.75rem', height: '28px', fontFamily: 'monospace' }}
+                  />
+                  <Tooltip content={copiedItems.has(externalTokenId) ? 'Copied' : 'Copy token'}>
+                    <Button
+                      variant="plain"
+                      size="sm"
+                      aria-label="Copy token"
+                      onClick={() => handleCopyWithFeedback(model.externalToken!, externalTokenId)}
+                      style={{ padding: '4px' }}
+                    >
+                      {copiedItems.has(externalTokenId) ? <CheckCircleIcon style={{ fontSize: '12px' }} /> : <CopyIcon style={{ fontSize: '12px' }} />}
+                    </Button>
+                  </Tooltip>
+                </div>
+                <div style={{ marginTop: '0.5rem' }}>
+                  <Button
+                    variant="link"
+                    isInline
+                    onClick={() => setIsUsageModalOpen(true)}
+                    id={`view-usage-example-${model.id}-regular`}
+                    style={{ padding: 0, fontSize: '0.875rem', color: 'var(--pf-t--global--color--brand--default)' }}
+                  >
+                    View usage example
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+        </>
+      )}
+      {/* Internal Endpoint Section */}
+      <div style={{ marginBottom: model.externalEndpoint ? '1rem' : '0.75rem' }}>
+        <ExpandableSection
+          toggleText="Internal endpoint"
+          id={`internal-endpoint-expandable-${model.id}`}
+        >
+          <div style={{ marginTop: '0.5rem' }}>
+            <FormHelperText>
+              <HelperText>
+                <HelperTextItem variant="indeterminate">
+                  The internal endpoint is accessible only within the cluster. When possible, use the external endpoint with your API token for better security and access control.
+                </HelperTextItem>
+              </HelperText>
+            </FormHelperText>
+            <div style={{ marginTop: '0.75rem' }}>
+              <label style={{ fontWeight: 'bold', fontSize: '0.875rem', display: 'block', marginBottom: '0.5rem' }}>
+                Internal Endpoint URL
+              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                <TextInput
+                  value={model.internalEndpoint || ''}
+                  readOnly
+                  aria-label="Internal Endpoint URL"
+                  style={{ fontSize: '0.75rem', height: '28px', fontFamily: 'monospace' }}
+                />
+                <Tooltip content={copiedItems.has(internalEndpointId) ? 'Copied' : 'Copy endpoint'}>
+                  <Button
+                    variant="plain"
+                    size="sm"
+                    aria-label="Copy internal endpoint"
+                    onClick={() => handleCopyWithFeedback(model.internalEndpoint!, internalEndpointId)}
+                    style={{ padding: '4px' }}
+                  >
+                    {copiedItems.has(internalEndpointId) ? <CheckCircleIcon style={{ fontSize: '12px' }} /> : <CopyIcon style={{ fontSize: '12px' }} />}
+                  </Button>
+                </Tooltip>
+              </div>
+            </div>
+          </div>
+        </ExpandableSection>
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      <Popover
+        bodyContent={popoverContent}
+        position="right"
+        hasAutoWidth
+        enableFlip={false}
+        isVisible={isPopoverOpen}
+        shouldOpen={() => setIsPopoverOpen(true)}
+        shouldClose={handlePopoverClose}
+      >
+        <Button
+          variant="link"
+          onClick={() => setIsPopoverOpen(true)}
+        >
+          View
+        </Button>
+      </Popover>
+      {model.externalEndpoint && (model.externalToken || generatedTokens?.has(model.id)) && (
+        <UsageExampleModal
+          isOpen={isUsageModalOpen}
+          onClose={() => setIsUsageModalOpen(false)}
+          endpoint={model.externalEndpoint}
+          apiKey={generatedTokens?.get(model.id) || model.externalToken || ''}
+          isModel={true}
+        />
+      )}
+    </>
+  );
+};
+
 // MCP Endpoint Popover Component
 const MCPEndpointPopover: React.FunctionComponent<{
   server: MCPServer;
   copiedItems: Set<string>;
   handleCopyWithFeedback: (text: string, itemId: string) => void;
 }> = ({ server, copiedItems, handleCopyWithFeedback }) => {
+  const [isUsageModalOpen, setIsUsageModalOpen] = React.useState(false);
   const endpoint = server.streamableEndpoint;
   const token = server.streamableToken;
   const endpointId = `streamable-endpoint-${server.id}`;
@@ -346,20 +584,20 @@ const MCPEndpointPopover: React.FunctionComponent<{
       {token && (
         <div>
           <label style={{ fontWeight: 'bold', fontSize: '0.875rem', display: 'block', marginBottom: '0.25rem' }}>
-            API Token
+            API Key
           </label>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
             <TextInput
               value={token || ''}
               readOnly
-              aria-label="API Token"
+              aria-label="API Key"
               style={{ fontSize: '0.75rem', height: '28px', fontFamily: 'monospace' }}
             />
             <Tooltip content={copiedItems.has(tokenId) ? 'Copied' : 'Copy token'}>
               <Button
                 variant="plain"
                 size="sm"
-                aria-label="Copy token"
+                aria-label="Copy key"
                 onClick={() => handleCopyWithFeedback(token!, tokenId)}
                 style={{ padding: '4px' }}
               >
@@ -367,22 +605,111 @@ const MCPEndpointPopover: React.FunctionComponent<{
               </Button>
             </Tooltip>
           </div>
+          <div style={{ marginTop: '0.5rem' }}>
+            <Button
+              variant="link"
+              isInline
+              onClick={() => setIsUsageModalOpen(true)}
+              id={`view-usage-example-mcp-${server.id}`}
+              style={{ padding: 0, fontSize: '0.875rem', color: 'var(--pf-t--global--color--brand--default)' }}
+            >
+              View usage example
+            </Button>
+          </div>
         </div>
       )}
     </div>
   );
 
   return (
-    <Popover
-      bodyContent={popoverContent}
-      position="right"
-    >
-      <Button
-        variant="link"
+    <>
+      <Popover
+        bodyContent={popoverContent}
+        position="right"
       >
-        View
-      </Button>
-    </Popover>
+        <Button
+          variant="link"
+        >
+          View
+        </Button>
+      </Popover>
+      {endpoint && token && (
+        <UsageExampleModal
+          isOpen={isUsageModalOpen}
+          onClose={() => setIsUsageModalOpen(false)}
+          endpoint={endpoint}
+          apiKey={token}
+          isModel={false}
+        />
+      )}
+    </>
+  );
+};
+
+// Usage Example Modal Component
+const UsageExampleModal: React.FunctionComponent<{
+  isOpen: boolean;
+  onClose: () => void;
+  endpoint: string;
+  apiKey: string;
+  isModel?: boolean;
+}> = ({ isOpen, onClose, endpoint, apiKey, isModel = true }) => {
+  const curlExample = isModel 
+    ? `curl -X POST ${endpoint}/chat/completions \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer ${apiKey}" \\
+  -d '{
+    "model": "model-name",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Hello, how are you?"
+      }
+    ],
+    "temperature": 0.7,
+    "max_tokens": 150
+  }'`
+    : `curl -X POST ${endpoint} \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer ${apiKey}" \\
+  -d '{
+    "action": "query",
+    "parameters": {}
+  }'`;
+
+  return (
+    <Modal
+      variant={ModalVariant.medium}
+      isOpen={isOpen}
+      onClose={onClose}
+      aria-labelledby="usage-example-modal-title"
+      aria-describedby="usage-example-modal-description"
+    >
+      <ModalHeader 
+        title="Usage example" 
+        labelId="usage-example-modal-title" 
+      />
+      <ModalBody id="usage-example-modal-description">
+        <p style={{ marginBottom: '1rem' }}>
+          Use this cURL command to connect to the endpoint with your API key:
+        </p>
+        <CodeBlock id="usage-example-code-block">
+          <CodeBlockCode>
+            {curlExample}
+          </CodeBlockCode>
+        </CodeBlock>
+      </ModalBody>
+      <ModalFooter>
+        <Button 
+          key="close" 
+          variant="primary" 
+          onClick={onClose}
+          id="usage-example-modal-close-button"
+        >
+          Close
+        </Button>
+      </ModalFooter>
+    </Modal>
   );
 };
 
@@ -688,12 +1015,20 @@ const AvailableAIAssets: React.FunctionComponent = () => {
   const [mcpCurrentPage, setMcpCurrentPage] = React.useState(1);
   const [mcpPerPage, setMcpPerPage] = React.useState(10);
   const [isProjectSelectOpen, setIsProjectSelectOpen] = React.useState(false);
+  const [openKebabMenus, setOpenKebabMenus] = React.useState<Set<string>>(new Set());
   
   // Add Asset modal state
   type AssetType = 'Model' | 'MCP Server' | '';
+  type ModelLocation = 'Internal' | 'External' | '';
   const [isAddAssetModalOpen, setIsAddAssetModalOpen] = React.useState(false);
   const [assetType, setAssetType] = React.useState<AssetType>('');
   const [isAssetTypeOpen, setIsAssetTypeOpen] = React.useState(false);
+  const [modelLocation, setModelLocation] = React.useState<ModelLocation>('');
+  const [isModelLocationOpen, setIsModelLocationOpen] = React.useState(false);
+  const [externalProvider, setExternalProvider] = React.useState('');
+  const [isExternalProviderOpen, setIsExternalProviderOpen] = React.useState(false);
+  const [externalProviderAPIKey, setExternalProviderAPIKey] = React.useState('');
+  const [selectedExternalModels, setSelectedExternalModels] = React.useState<Set<string>>(new Set());
   const [project, setProject] = React.useState('');
   const [isAddAssetProjectOpen, setIsAddAssetProjectOpen] = React.useState(false);
   const [modelDeployment, setModelDeployment] = React.useState('');
@@ -1148,11 +1483,11 @@ const AvailableAIAssets: React.FunctionComponent = () => {
     if (!assetType || !assetDescription.trim()) return false;
     
     if (assetType === 'Model') {
-      return project && modelDeployment;
+      return !!(project && modelDeployment);
     }
     
     if (assetType === 'MCP Server') {
-      return mcpServer && tools;
+      return !!(mcpServer && tools);
     }
     
     return false;
@@ -1269,7 +1604,14 @@ const AvailableAIAssets: React.FunctionComponent = () => {
 
     console.log('All models:', mockModels.map(m => ({ id: m.id, name: m.name, llsStatus: m.llsStatus })));
     console.log('getFilteredModalModels result:', filteredModels.map(m => ({ id: m.id, name: m.name })));
-    return filteredModels;
+    
+    // Map to ensure description is always a string (not optional)
+    return filteredModels.map(m => ({
+      id: m.id,
+      name: m.name,
+      description: m.description || '',
+      useCase: m.useCase
+    }));
   };
 
   const startAutoConfiguration = () => {
@@ -1618,20 +1960,21 @@ const AvailableAIAssets: React.FunctionComponent = () => {
                   textOverflow: 'ellipsis', 
                   whiteSpace: 'nowrap',
                   minWidth: 0
-                }}>Model deployment name</div>
+                }}>Model name</div>
               </Th>
-              <Th width={10}>Internal endpoint</Th>
-              <Th width={10}>External endpoint</Th>
-              <Th width={10}>Use Case</Th>
-              <Th width={10}>Status</Th>
-              <Th width={10}>Playground</Th>
+              <Th>Model ID</Th>
+              <Th>Endpoints</Th>
+              <Th>Use Case</Th>
+              <Th>Status</Th>
+              <Th>Playground</Th>
+              <Th></Th>
             </Tr>
           </Thead>
           <Tbody>
             {getPaginatedModels().map((model) => (
               <Tr key={model.id}>
                 <Td>
-                                  <div>
+                  <div>
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                       <div style={{ display: 'flex', alignItems: 'center' }}>
                         {flags.enableModelDescriptionPages ? (
@@ -1673,70 +2016,19 @@ const AvailableAIAssets: React.FunctionComponent = () => {
                     </div>
                   </div>
                 </Td>
-                <Td dataLabel="Internal endpoint">
-                  <EndpointPopover 
+                <Td dataLabel="Model ID">
+                  {model.slug}
+                </Td>
+                <Td dataLabel="Endpoints">
+                  <CombinedEndpointsPopover 
                     model={model}
                     copiedItems={copiedItems}
                     handleCopyWithFeedback={handleCopyWithFeedback}
-                    type="internal"
                     generatedTokens={generatedTokens}
                     isGeneratingToken={isGeneratingToken}
                     onGenerateToken={handleGenerateToken}
                     onClearGeneratedToken={handleClearGeneratedToken}
                   />
-                </Td>
-                <Td dataLabel="External endpoint">
-                  {/* Mistral always shows View regardless of user role */}
-                  {model.name === 'mistral-7b-instruct:9.1.1' && (
-                    <EndpointPopover 
-                      model={model}
-                      copiedItems={copiedItems}
-                      handleCopyWithFeedback={handleCopyWithFeedback}
-                      type="external"
-                      generatedTokens={generatedTokens}
-                      isGeneratingToken={isGeneratingToken}
-                      onGenerateToken={handleGenerateToken}
-                      onClearGeneratedToken={handleClearGeneratedToken}
-                    />
-                  )}
-                  {/* For other models, show based on user role */}
-                  {(model.name === 'granite-7b-code:1.1' || model.name === 'gpt-oss-120b-FP8-Dynamic:1.4.0') && (
-                    userProfile === 'AI Engineer' ? (
-                      <Popover
-                        bodyContent={
-                          <div>
-                            <div>No external endpoint has been configured</div>
-                            <div>for this model.</div>
-                          </div>
-                        }
-                        triggerAction="hover"
-                      >
-                        <Label variant="filled" color="grey" icon={<InfoCircleIcon />}>Not available</Label>
-                      </Popover>
-                    ) : (
-                      !modelsWithEndpoints.has(model.id) && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                      <Button 
-                        variant="link" 
-                        onClick={() => handleCreateEndpoint(model.id, model.name)}
-                      >
-                            Edit deployment
-                      </Button>
-                          <Popover
-                            bodyContent={
-                              <div>
-                                Edit your deployment and select &apos;Make deployed models available through an external route&apos;.
-                              </div>
-                            }
-                          >
-                            <Button variant="plain" aria-label="More info">
-                              <OutlinedQuestionCircleIcon style={{ fontSize: '14px', color: '#6a6e73' }} />
-                            </Button>
-                          </Popover>
-                        </div>
-                      )
-                    )
-                  )}
                 </Td>
                 <Td>
                   <div>
@@ -1777,6 +2069,62 @@ const AvailableAIAssets: React.FunctionComponent = () => {
                       </FlexItem>
                     )}
                   </Flex>
+                </Td>
+                <Td 
+                  dataLabel="Actions" 
+                  style={{ textAlign: 'right', width: '60px' }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Dropdown
+                    id={`model-actions-${model.id}`}
+                    isOpen={openKebabMenus.has(`model-${model.id}`)}
+                    onOpenChange={(isOpen) => {
+                      if (!isOpen) {
+                        setOpenKebabMenus(prev => {
+                          const newSet = new Set(prev);
+                          newSet.delete(`model-${model.id}`);
+                          return newSet;
+                        });
+                      }
+                    }}
+                    popperProps={{ position: 'right' }}
+                    toggle={(toggleRef) => (
+                      <MenuToggle
+                        id={`model-menu-toggle-${model.id}`}
+                        ref={toggleRef}
+                        onClick={() => {
+                          setOpenKebabMenus(prev => {
+                            const newSet = new Set(prev);
+                            if (newSet.has(`model-${model.id}`)) {
+                              newSet.delete(`model-${model.id}`);
+                            } else {
+                              newSet.add(`model-${model.id}`);
+                            }
+                            return newSet;
+                          });
+                        }}
+                        variant="plain"
+                        aria-label={`Actions for ${model.name}`}
+                        isExpanded={openKebabMenus.has(`model-${model.id}`)}
+                      >
+                        <EllipsisVIcon />
+                      </MenuToggle>
+                    )}
+                  >
+                    <DropdownList>
+                      <DropdownItem
+                        id={`remove-asset-${model.id}`}
+                        key="remove"
+                        onClick={() => {
+                          console.log('Removing asset:', model.id);
+                          setOpenKebabMenus(new Set());
+                          // TODO: Implement actual remove functionality
+                        }}
+                      >
+                        Remove asset
+                      </DropdownItem>
+                    </DropdownList>
+                  </Dropdown>
                 </Td>
               </Tr>
             ))}
@@ -2123,8 +2471,9 @@ const AvailableAIAssets: React.FunctionComponent = () => {
                   textOverflow: 'ellipsis', 
                   whiteSpace: 'nowrap',
                   minWidth: 0
-                }}>Model deployment name</div>
+                }}>Model name</div>
               </Th>
+              <Th width={10}>Model ID</Th>
               <Th width={10}>External endpoint</Th>
               <Th width={10}>Status</Th>
               <Th width={10}>Playground</Th>
@@ -2468,7 +2817,7 @@ const AvailableAIAssets: React.FunctionComponent = () => {
         >
           <Tab
             eventKey={0}
-            title={<TabTitleText>Models ({getRegularModels().length})</TabTitleText>}
+            title={<TabTitleText>Models</TabTitleText>}
             aria-label="Models tab"
           >
             <div style={{ paddingTop: '1rem' }}>
@@ -2606,45 +2955,6 @@ const AvailableAIAssets: React.FunctionComponent = () => {
                     )}
                     <ToolbarGroup align={{ default: 'alignEnd' }}>
                       <ToolbarItem>
-                        {/* Deployment Help Link */}
-                        <Popover
-                          isVisible={isDeploymentHelpPopoverOpen}
-                          shouldClose={() => setIsDeploymentHelpPopoverOpen(false)}
-                          bodyContent={
-                            <div style={{ padding: '1rem', maxWidth: '300px' }}>
-                              <div style={{ fontWeight: 'bold', marginBottom: '0.75rem', fontSize: '0.875rem' }}>
-                                To make a model deployment available:
-                              </div>
-                              <ol style={{ 
-                                margin: 0, 
-                                paddingLeft: '1.25rem',
-                                fontSize: '0.875rem',
-                                lineHeight: '1.4'
-                              }}>
-                                <li style={{ marginBottom: '0.5rem' }}>
-                                  Go to your <strong>model deployments</strong> page
-                                </li>
-                                <li style={{ marginBottom: '0.5rem' }}>
-                                  Select <strong>&apos;Edit&apos;</strong> to update your deployment
-                                </li>
-                                <li>
-                                  Check the box: <strong>&apos;Make this deployment available as an AI Asset&apos;</strong>
-                                </li>
-                              </ol>
-                            </div>
-                          }
-                          position="bottom"
-                        >
-                          <Button
-                            variant="link"
-                            onClick={() => setIsDeploymentHelpPopoverOpen(!isDeploymentHelpPopoverOpen)}
-                            style={{ fontSize: '0.875rem', padding: 0 }}
-                          >
-                            Don&apos;t see the model you&apos;re looking for?
-                          </Button>
-                        </Popover>
-                      </ToolbarItem>
-                      <ToolbarItem>
                         <Pagination
                           itemCount={getSortedModels().length}
                           perPage={perPage}
@@ -2723,7 +3033,7 @@ const AvailableAIAssets: React.FunctionComponent = () => {
           </Tab>
           <Tab
             eventKey={1}
-            title={<TabTitleText>MCP Servers ({mockMCPServers.length})</TabTitleText>}
+            title={<TabTitleText>MCP servers</TabTitleText>}
             aria-label="MCP Servers tab"
           >
             <div style={{ paddingTop: '1rem' }}>
@@ -2978,16 +3288,36 @@ const AvailableAIAssets: React.FunctionComponent = () => {
               </div>
             </div>
           </Tab>
-          <Tab
-            eventKey={2}
-            title={
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <TabTitleText>Models as a service ({getMaaSModels().length})</TabTitleText>
-                <Label color="orange" variant="outline" style={{ fontSize: '10px' }}>Developer Preview</Label>
-              </div>
-            }
-            aria-label="Models as a service tab"
-          >
+        </Tabs>
+      </PageSection>
+
+      {/* Endpoint Creation Progress Modal */}
+      <Modal
+        variant={ModalVariant.small}
+        title="Creating Endpoint"
+        isOpen={isCreatingEndpoint}
+        onClose={() => {}} // Prevent closing during creation
+      >
+        <ModalHeader>
+          <Title headingLevel="h2" size="xl">
+            Creating Endpoint
+          </Title>
+        </ModalHeader>
+        <ModalBody>
+          <div className="pf-v5-u-mb-lg">
+            <div className="pf-v5-u-mb-md">{currentProgressMessage}</div>
+            <Progress value={creationProgress} />
+          </div>
+        </ModalBody>
+      </Modal>
+
+      {/* Model Selection Modal */}
+      <Modal
+        variant={ModalVariant.large}
+        title="Configure playground"
+        isOpen={isModelSelectionModalOpen}
+        onClose={handleCancelModelSelection}
+      >
             <div style={{ paddingTop: '1rem' }}>
               {/* Filters and Controls for MaaS Models */}
               <div 
@@ -3217,285 +3547,54 @@ const AvailableAIAssets: React.FunctionComponent = () => {
                 </div>
               )}
               
-              <div style={{ paddingTop: '1rem' }}>
-              </div>
-              <div style={{ marginTop: modelsViewMode === 'cards' ? '1.5rem' : '0' }}>
-                {modelsViewMode === 'table' ? renderMaaSModelsTable() : renderMaaSModelsCards()}
+              <div style={{ marginTop: '1.5rem' }}>
+                {renderMCPCards()}
               </div>
             </div>
-          </Tab>
-        </Tabs>
-      </PageSection>
+      </Modal>
 
       {/* Endpoint Creation Progress Modal */}
-      <Modal
-        variant={ModalVariant.small}
-        title="Creating Endpoint"
+      <EndpointCreationProgressModal
         isOpen={isCreatingEndpoint}
-        onClose={() => {}} // Prevent closing during creation
-      >
-        <ModalHeader>
-          <Title headingLevel="h2" size="xl">
-            Creating Endpoint
-          </Title>
-        </ModalHeader>
-        <ModalBody>
-          <div className="pf-v5-u-mb-lg">
-            <div className="pf-v5-u-mb-md">{currentProgressMessage}</div>
-            <Progress value={creationProgress} />
-          </div>
-        </ModalBody>
-      </Modal>
+        progressMessage={currentProgressMessage}
+        progressValue={creationProgress}
+      />
 
       {/* Model Selection Modal */}
-      <Modal
-        variant={ModalVariant.large}
-        title="Configure playground"
+      <ModelSelectionModal
         isOpen={isModelSelectionModalOpen}
         onClose={handleCancelModelSelection}
-      >
-        <ModalHeader>
-          <Title headingLevel="h2" size="xl">
-            Configure playground
-          </Title>
-        </ModalHeader>
-        <ModalBody>
-          <div style={{ marginBottom: '1.5rem' }}>
-            <p>
-              Choose the models you want to make available in this playground from your AI available assets. You can add additional models by making them available from the{' '}
-              <Button 
-                variant="link" 
-                isInline 
-                style={{ padding: 0, fontSize: 'inherit' }}
-                onClick={() => navigate('/ai-assets/models')}
-              >
-                Model deployments page
-              </Button>
-              .
-            </p>
-          </div>
-
-          <div style={{ marginBottom: '1rem' }}>
-            {/* Filter and Selection Row */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-              <Checkbox 
-                id="select-all-models"
-                isChecked={selectedModelsForPlayground.size === getFilteredModalModels().length && getFilteredModalModels().length > 0}
-                onChange={() => {
-                  const availableModels = getFilteredModalModels();
-                  if (selectedModelsForPlayground.size === availableModels.length) {
-                    setSelectedModelsForPlayground(new Set());
-                  } else {
-                    setSelectedModelsForPlayground(new Set(availableModels.map(m => m.id)));
-                  }
-                }}
-              />
-              
-              <Dropdown
-                isOpen={isModalFilterDropdownOpen}
-                onSelect={(event, value) => {
-                  setModalFilterBy(value as string);
-                  setIsModalFilterDropdownOpen(false);
-                }}
-                onOpenChange={(isOpen) => setIsModalFilterDropdownOpen(isOpen)}
-                toggle={(toggleRef) => (
-                  <MenuToggle
-                    ref={toggleRef}
-                    onClick={() => setIsModalFilterDropdownOpen(!isModalFilterDropdownOpen)}
-                    isExpanded={isModalFilterDropdownOpen}
-                    icon={<FilterIcon />}
-                    style={{ minWidth: '120px' }}
-                  >
-                    {modalFilterBy === 'name' ? 'Name' : 'Use Case'}
-                  </MenuToggle>
-                )}
-              >
-                <DropdownList>
-                  <DropdownItem value="name">Name</DropdownItem>
-                  <DropdownItem value="useCase">Use Case</DropdownItem>
-                </DropdownList>
-              </Dropdown>
-              
-              <div style={{ width: '200px' }}>
-                <TextInput
-                  type="search"
-                  placeholder={modalFilterBy === 'name' ? 'Filter by name' : 'Filter by use case...'}
-                  value={modalSearchText}
-                  onChange={(_event, value) => setModalSearchText(value)}
-                />
-              </div>
-              
-              <span style={{ fontSize: '0.875rem', color: '#6a6e73' }}>
-                {selectedModelsForPlayground.size} of {getFilteredModalModels().length} items selected
-              </span>
-              
-              <div style={{ marginLeft: 'auto' }}>
-                <Pagination
-                  itemCount={getFilteredModalModels().length}
-                  perPage={4}
-                  page={1}
-                  onSetPage={() => {}}
-                  onPerPageSelect={() => {}}
-                  isCompact
-                />
-              </div>
-            </div>
-          </div>
-
-          <div style={{ marginBottom: '1.5rem' }}>
-            <Title headingLevel="h3" size="md" style={{ marginBottom: '1rem' }}>
-              Available models
-            </Title>
-            
-            <Table variant="compact">
-              <Thead>
-                <Tr>
-                  <Th width={10}></Th>
-                  <Th>Model deployment name</Th>
-                  <Th>Description</Th>
-                  <Th>Use Case</Th>
-                  <Th>Status</Th>
-                </Tr>
-              </Thead>
-              <Tbody>
-                {getFilteredModalModels()
-                  .slice(0, 4)
-                  .map((model) => (
-                  <Tr key={model.id}>
-                    <Td>
-                      <Checkbox
-                        id={`model-${model.id}`}
-                        isChecked={selectedModelsForPlayground.has(model.id)}
-                        onChange={() => handleModelSelectionToggle(model.id)}
-                      />
-                    </Td>
-                    <Td>{model.name}</Td>
-                    <Td style={{ maxWidth: '300px' }}>
-                      <div style={{ 
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical'
-                      }}>
-                        {model.description}
-                      </div>
-                    </Td>
-                    <Td>{model.useCase}</Td>
-                    <Td>
-                      <Label color="green" icon={<CheckCircleIcon />}>
-                        Active
-                      </Label>
-                    </Td>
-                  </Tr>
-                ))}
-              </Tbody>
-            </Table>
-          </div>
-        </ModalBody>
-        <ModalFooter>
-          <Button 
-            variant="primary" 
-            onClick={handleConfigurePlayground}
-            isDisabled={selectedModelsForPlayground.size === 0}
-          >
-            Configure
-          </Button>
-          <Button variant="link" onClick={handleCancelModelSelection}>
-            Cancel
-          </Button>
-        </ModalFooter>
-      </Modal>
+        onConfigure={handleConfigurePlayground}
+        selectedModels={selectedModelsForPlayground}
+        onModelToggle={handleModelSelectionToggle}
+        onSelectAll={() => {
+          const availableModels = getFilteredModalModels();
+          if (selectedModelsForPlayground.size === availableModels.length) {
+            setSelectedModelsForPlayground(new Set());
+          } else {
+            setSelectedModelsForPlayground(new Set(availableModels.map(m => m.id)));
+          }
+        }}
+        filteredModels={getFilteredModalModels()}
+        filterBy={modalFilterBy}
+        onFilterByChange={(value) => setModalFilterBy(value)}
+        searchText={modalSearchText}
+        onSearchTextChange={(value) => setModalSearchText(value)}
+        isFilterDropdownOpen={isModalFilterDropdownOpen}
+        onFilterDropdownToggle={(isOpen) => setIsModalFilterDropdownOpen(isOpen)}
+        onNavigateToModels={() => navigate('/ai-assets/models')}
+      />
 
       {/* Auto Config Modal */}
-      <Modal
-        variant={ModalVariant.medium}
-        title="Configuring playground"
+      <AutoConfigModal
         isOpen={isAddingToPlayground}
         onClose={configProgress === 100 ? handleConfirmAddToPlayground : undefined}
-      >
-        <ModalHeader>
-          <Title headingLevel="h2" size="xl">
-            Configuring playground
-          </Title>
-        </ModalHeader>
-        <ModalBody>
-          <div style={{ marginBottom: '2rem' }}>
-            <p style={{ fontSize: '1rem', color: '#6a6e73', marginBottom: '2rem' }}>
-              Please wait while we automatically configure your playground
-            </p>
-          </div>
-
-
-          {/* Completed steps */}
-          <div style={{ marginBottom: '2rem' }}>
-            {configSteps.map((step, index) => (
-              <div key={index} style={{ marginBottom: '0.75rem' }}>
-                {index < currentConfigStep ? (
-                  <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
-                    <FlexItem>
-                      <CheckCircleIcon style={{ color: '#3E8635' }} />
-                    </FlexItem>
-                    <FlexItem>
-                      <span style={{ color: '#6a6e73' }}>{step.label}</span>
-                    </FlexItem>
-                  </Flex>
-                ) : index === currentConfigStep ? (
-                  <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
-                    <FlexItem>
-                      <Spinner size="sm" />
-                    </FlexItem>
-                    <FlexItem>
-                      <span style={{ color: '#151515', fontWeight: '500' }}>{step.label}</span>
-                    </FlexItem>
-                  </Flex>
-                ) : (
-                  <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
-                    <FlexItem>
-                      <span style={{ 
-                        width: '16px', 
-                        height: '16px', 
-                        borderRadius: '50%', 
-                        backgroundColor: '#f0f0f0',
-                        display: 'inline-block'
-                      }}></span>
-                    </FlexItem>
-                    <FlexItem>
-                      <span style={{ color: '#6a6e73' }}>{step.label}</span>
-                    </FlexItem>
-                  </Flex>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {/* Progress status */}
-          <div style={{ marginBottom: '1.5rem' }}>
-            <p style={{ 
-              fontSize: '0.875rem', 
-              color: '#151515', 
-              marginBottom: '1rem',
-              fontWeight: '500'
-            }}>
-              Configuring {Array.from(selectedModelsForPlayground).map(id => mockModels.find(m => m.id === id)?.name).filter(name => name).join(', ')} for playground - 2 minutes remaining
-            </p>
-            
-            <Progress 
-              value={configProgress}
-              size="lg"
-            />
-          </div>
-        </ModalBody>
-        <ModalFooter>
-          <Button 
-            variant="secondary" 
-            onClick={handleCancelAddToPlayground}
-            isDisabled={configProgress > 0 && configProgress < 100}
-          >
-            Cancel
-          </Button>
-        </ModalFooter>
-      </Modal>
+        onCancel={handleCancelAddToPlayground}
+        configProgress={configProgress}
+        currentConfigStep={currentConfigStep}
+        configSteps={configSteps}
+        modelNames={Array.from(selectedModelsForPlayground).map(id => mockModels.find(m => m.id === id)?.name).filter(name => name).join(', ')}
+      />
 
       {/* Deploy Model Modal */}
       <ModelDeploymentModal
@@ -3506,377 +3605,62 @@ const AvailableAIAssets: React.FunctionComponent = () => {
       />
 
       {/* Token Copy Modal */}
-      <Modal
-        variant={ModalVariant.small}
-        title="Token Copied"
+      <TokenCopyModal
         isOpen={isTokenModalOpen}
         onClose={() => setIsTokenModalOpen(false)}
-      >
-        <ModalHeader>
-          <Title headingLevel="h2" size="xl">
-            <CheckCircleIcon className="pf-v5-u-mr-sm pf-v5-u-success-color-100" />
-            {tokenType} Copied
-          </Title>
-        </ModalHeader>
-        <ModalBody>
-          <div className="pf-v5-u-mb-md">
-            The {tokenType.toLowerCase()} has been copied to your clipboard.
-          </div>
-          <CodeBlock>
-            <CodeBlockCode>{selectedToken}</CodeBlockCode>
-          </CodeBlock>
-        </ModalBody>
-        <ModalFooter>
-          <Button variant="primary" onClick={() => setIsTokenModalOpen(false)}>
-            Close
-          </Button>
-        </ModalFooter>
-      </Modal>
+        tokenType={tokenType}
+        token={selectedToken}
+      />
 
       {/* Tools Modal */}
-      <Modal
-        variant={ModalVariant.medium}
-        title={selectedServerForTools ? `Available tools on the ${selectedServerForTools.name}` : 'Tools'}
+      <ToolsModal
         isOpen={isToolsModalOpen}
         onClose={() => setIsToolsModalOpen(false)}
-      >
-        <ModalHeader>
-          <Title headingLevel="h2" size="xl">
-            {selectedServerForTools ? `Available tools on the ${selectedServerForTools.name}` : 'Tools'}
-          </Title>
-        </ModalHeader>
-        <ModalBody>
-          {selectedServerForTools && (
-            <>
-              {(() => {
-                const tools = getServerTools(selectedServerForTools.slug);
-                if (tools.length === 0) {
-                  return (
-                    <EmptyState>
-                      <Title headingLevel="h4" size="lg">
-                        <ToolsIcon className="pf-v5-u-mr-sm" />
-                        No tools available
-                      </Title>
-                      <EmptyStateBody>
-                        This server doesn&apos;t have any tools configured.
-                      </EmptyStateBody>
-                    </EmptyState>
-                  );
-                }
-                
-                return (
-                  <Flex direction={{ default: 'column' }}>
-                    {tools.map((tool, index) => (
-                      <React.Fragment key={index}>
-                        <Flex 
-                          alignItems={{ default: 'alignItemsCenter' }}
-                          gap={{ default: 'gapMd' }}
-                          style={{ padding: '0.5rem 0' }}
-                        >
-                          <FlexItem flex={{ default: 'flexNone' }} style={{ width: '200px' }}>
-                            <div style={{ 
-                              fontFamily: 'var(--pf-v5-global--FontFamily--monospace)', 
-                              fontWeight: 'bold',
-                              fontSize: '0.875rem'
-                            }}>
-                              {tool.name}
-                            </div>
-                          </FlexItem>
-                          <FlexItem grow={{ default: 'grow' }}>
-                            <div style={{ 
-                              fontSize: '0.875rem', 
-                              color: 'var(--pf-v5-global--Color--200)' 
-                            }}>
-                              {tool.description}
-                            </div>
-                          </FlexItem>
-                        </Flex>
-                        {index < tools.length - 1 && (
-                          <Divider />
-                        )}
-                      </React.Fragment>
-                    ))}
-                  </Flex>
-                );
-              })()}
-            </>
-          )}
-        </ModalBody>
-        <ModalFooter>
-          <Button variant="primary" onClick={() => setIsToolsModalOpen(false)}>
-            Close
-          </Button>
-        </ModalFooter>
-      </Modal>
+        selectedServer={selectedServerForTools}
+        tools={selectedServerForTools ? getServerTools(selectedServerForTools.slug) : []}
+      />
 
       {/* Add Asset Modal */}
-      <Modal
+      <AddAssetModal
         isOpen={isAddAssetModalOpen}
         onClose={handleCloseAddAssetModal}
-        aria-labelledby="add-asset-modal-title"
-        aria-describedby="add-asset-modal-body"
-        ouiaId="AddAssetModal"
-        className="pf-m-md"
-        appendTo={document.body}
-      >
-        <ModalHeader 
-          title="Add asset" 
-          labelId="add-asset-modal-title"
-        />
-        <ModalBody id="add-asset-modal-body">
-          <Form>
-            <FormGroup 
-              label="Asset type" 
-              fieldId="asset-type-select"
-              isRequired
-            >
-              <Select
-                id="asset-type-select"
-                isOpen={isAssetTypeOpen}
-                selected={assetType}
-                onSelect={(_event, value) => {
-                  setAssetType(value as AssetType);
-                  setIsAssetTypeOpen(false);
-                  // Reset conditional fields when asset type changes
-                  setProject('');
-                  setModelDeployment('');
-                  setMcpServer('');
-                  setTools('');
-                }}
-                onOpenChange={(isOpen) => setIsAssetTypeOpen(isOpen)}
-                toggle={(toggleRef) => (
-                  <MenuToggle
-                    ref={toggleRef}
-                    onClick={() => setIsAssetTypeOpen(!isAssetTypeOpen)}
-                    isExpanded={isAssetTypeOpen}
-                    style={{ width: '100%' }}
-                    id="asset-type-toggle"
-                  >
-                    {assetType || 'Select asset type'}
-                  </MenuToggle>
-                )}
-              >
-                <SelectList>
-                  <SelectOption value="Model" id="asset-type-model">
-                    Model
-                  </SelectOption>
-                  <SelectOption value="MCP Server" id="asset-type-mcp-server">
-                    MCP Server
-                  </SelectOption>
-                </SelectList>
-              </Select>
-            </FormGroup>
-
-            {assetType === 'Model' && (
-              <>
-                <FormGroup 
-                  label="Project" 
-                  fieldId="add-asset-project-select"
-                  isRequired
-                >
-                  <Select
-                    id="add-asset-project-select"
-                    isOpen={isAddAssetProjectOpen}
-                    selected={project}
-                    onSelect={(_event, value) => {
-                      setProject(value as string);
-                      setIsAddAssetProjectOpen(false);
-                    }}
-                    onOpenChange={(isOpen) => setIsAddAssetProjectOpen(isOpen)}
-                    toggle={(toggleRef) => (
-                      <MenuToggle
-                        ref={toggleRef}
-                        onClick={() => setIsAddAssetProjectOpen(!isAddAssetProjectOpen)}
-                        isExpanded={isAddAssetProjectOpen}
-                        style={{ width: '100%' }}
-                        id="add-asset-project-toggle"
-                      >
-                        {project || 'Select project'}
-                      </MenuToggle>
-                    )}
-                  >
-                    <SelectList>
-                      <SelectOption value="Project 1" id="add-asset-project-1">
-                        Project 1
-                      </SelectOption>
-                      <SelectOption value="Project 2" id="add-asset-project-2">
-                        Project 2
-                      </SelectOption>
-                      <SelectOption value="Project 3" id="add-asset-project-3">
-                        Project 3
-                      </SelectOption>
-                    </SelectList>
-                  </Select>
-                </FormGroup>
-
-                <FormGroup 
-                  label="Model deployment" 
-                  fieldId="add-asset-model-deployment-select"
-                  isRequired
-                >
-                  <Select
-                    id="add-asset-model-deployment-select"
-                    isOpen={isModelDeploymentOpen}
-                    selected={modelDeployment}
-                    onSelect={(_event, value) => {
-                      setModelDeployment(value as string);
-                      setIsModelDeploymentOpen(false);
-                    }}
-                    onOpenChange={(isOpen) => setIsModelDeploymentOpen(isOpen)}
-                    toggle={(toggleRef) => (
-                      <MenuToggle
-                        ref={toggleRef}
-                        onClick={() => setIsModelDeploymentOpen(!isModelDeploymentOpen)}
-                        isExpanded={isModelDeploymentOpen}
-                        style={{ width: '100%' }}
-                        id="add-asset-model-deployment-toggle"
-                      >
-                        {modelDeployment || 'Select model deployment'}
-                      </MenuToggle>
-                    )}
-                  >
-                    <SelectList>
-                      <SelectOption value="Model Deployment 1" id="add-asset-deployment-1">
-                        Model Deployment 1
-                      </SelectOption>
-                      <SelectOption value="Model Deployment 2" id="add-asset-deployment-2">
-                        Model Deployment 2
-                      </SelectOption>
-                      <SelectOption value="Model Deployment 3" id="add-asset-deployment-3">
-                        Model Deployment 3
-                      </SelectOption>
-                    </SelectList>
-                  </Select>
-                  <FormHelperText>
-                    <HelperText>
-                      <HelperTextItem>
-                        Adding this as an AI asset will make it available to other users outside of the namespace/project.
-                      </HelperTextItem>
-                    </HelperText>
-                  </FormHelperText>
-                </FormGroup>
-              </>
-            )}
-
-            {assetType === 'MCP Server' && (
-              <>
-                <FormGroup 
-                  label="MCP Server" 
-                  fieldId="add-asset-mcp-server-select"
-                  isRequired
-                >
-                  <Select
-                    id="add-asset-mcp-server-select"
-                    isOpen={isMcpServerOpen}
-                    selected={mcpServer}
-                    onSelect={(_event, value) => {
-                      setMcpServer(value as string);
-                      setIsMcpServerOpen(false);
-                    }}
-                    onOpenChange={(isOpen) => setIsMcpServerOpen(isOpen)}
-                    toggle={(toggleRef) => (
-                      <MenuToggle
-                        ref={toggleRef}
-                        onClick={() => setIsMcpServerOpen(!isMcpServerOpen)}
-                        isExpanded={isMcpServerOpen}
-                        style={{ width: '100%' }}
-                        id="add-asset-mcp-server-toggle"
-                      >
-                        {mcpServer || 'Select MCP server'}
-                      </MenuToggle>
-                    )}
-                  >
-                    <SelectList>
-                      <SelectOption value="MCP Server 1" id="add-asset-mcp-server-1">
-                        MCP Server 1
-                      </SelectOption>
-                      <SelectOption value="MCP Server 2" id="add-asset-mcp-server-2">
-                        MCP Server 2
-                      </SelectOption>
-                      <SelectOption value="MCP Server 3" id="add-asset-mcp-server-3">
-                        MCP Server 3
-                      </SelectOption>
-                    </SelectList>
-                  </Select>
-                </FormGroup>
-
-                <FormGroup 
-                  label="Tools" 
-                  fieldId="add-asset-tools-select"
-                  isRequired
-                >
-                  <Select
-                    id="add-asset-tools-select"
-                    isOpen={isToolsOpen}
-                    selected={tools}
-                    onSelect={(_event, value) => {
-                      setTools(value as string);
-                      setIsToolsOpen(false);
-                    }}
-                    onOpenChange={(isOpen) => setIsToolsOpen(isOpen)}
-                    toggle={(toggleRef) => (
-                      <MenuToggle
-                        ref={toggleRef}
-                        onClick={() => setIsToolsOpen(!isToolsOpen)}
-                        isExpanded={isToolsOpen}
-                        style={{ width: '100%' }}
-                        id="add-asset-tools-toggle"
-                      >
-                        {tools || 'Select tools'}
-                      </MenuToggle>
-                    )}
-                  >
-                    <SelectList>
-                      <SelectOption value="Tool 1" id="add-asset-tool-1">
-                        Tool 1
-                      </SelectOption>
-                      <SelectOption value="Tool 2" id="add-asset-tool-2">
-                        Tool 2
-                      </SelectOption>
-                      <SelectOption value="Tool 3" id="add-asset-tool-3">
-                        Tool 3
-                      </SelectOption>
-                    </SelectList>
-                  </Select>
-                </FormGroup>
-              </>
-            )}
-
-            <FormGroup 
-              label="Description" 
-              fieldId="add-asset-description-input"
-              isRequired
-            >
-              <TextArea
-                id="add-asset-description-input"
-                value={assetDescription}
-                onChange={(_event, value) => setAssetDescription(value)}
-                placeholder="Provide details about the asset, relevant settings, quality of service details, contact information, etc."
-                rows={4}
-              />
-            </FormGroup>
-          </Form>
-        </ModalBody>
-        <ModalFooter>
-          <Button
-            key="add"
-            variant="primary"
-            onClick={handleAddAsset}
-            isDisabled={!isAddAssetFormValid()}
-            id="add-asset-submit-button"
-          >
-            Add AI asset
-          </Button>
-          <Button
-            key="cancel"
-            variant="link"
-            onClick={handleCloseAddAssetModal}
-            id="add-asset-cancel-button"
-          >
-            Cancel
-          </Button>
-        </ModalFooter>
-      </Modal>
+        onSubmit={handleAddAsset}
+        isFormValid={isAddAssetFormValid}
+        assetType={assetType}
+        setAssetType={setAssetType}
+        isAssetTypeOpen={isAssetTypeOpen}
+        setIsAssetTypeOpen={setIsAssetTypeOpen}
+        modelLocation={modelLocation}
+        setModelLocation={setModelLocation}
+        isModelLocationOpen={isModelLocationOpen}
+        setIsModelLocationOpen={setIsModelLocationOpen}
+        project={project}
+        setProject={setProject}
+        isProjectOpen={isAddAssetProjectOpen}
+        setIsProjectOpen={setIsAddAssetProjectOpen}
+        modelDeployment={modelDeployment}
+        setModelDeployment={setModelDeployment}
+        isModelDeploymentOpen={isModelDeploymentOpen}
+        setIsModelDeploymentOpen={setIsModelDeploymentOpen}
+        externalProvider={externalProvider}
+        setExternalProvider={setExternalProvider}
+        isExternalProviderOpen={isExternalProviderOpen}
+        setIsExternalProviderOpen={setIsExternalProviderOpen}
+        externalProviderAPIKey={externalProviderAPIKey}
+        setExternalProviderAPIKey={setExternalProviderAPIKey}
+        selectedExternalModels={selectedExternalModels}
+        setSelectedExternalModels={setSelectedExternalModels}
+        mcpServer={mcpServer}
+        setMcpServer={setMcpServer}
+        isMcpServerOpen={isMcpServerOpen}
+        setIsMcpServerOpen={setIsMcpServerOpen}
+        tools={tools}
+        setTools={setTools}
+        isToolsOpen={isToolsOpen}
+        setIsToolsOpen={setIsToolsOpen}
+        assetDescription={assetDescription}
+        setAssetDescription={setAssetDescription}
+      />
 
     </>
   );

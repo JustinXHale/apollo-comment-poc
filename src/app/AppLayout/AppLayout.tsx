@@ -32,6 +32,7 @@ import { useFeatureFlags } from '@app/utils/FeatureFlagsContext';
 // Import custom logos
 import LightLogo from '@app/bgimages/Product_Logos_Light.svg';
 import DarkLogo from '@app/bgimages/Product-Logos_Dark.svg';
+import ApolloCanvasMasthead from '@app/components/ApolloCanvasMasthead';
 
 interface IAppLayout {
   children: React.ReactNode;
@@ -377,6 +378,9 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
   );
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+      {/* Apollo Canvas Masthead */}
+      {/* <ApolloCanvasMasthead /> */}
+      
       {/* UXD Prototype Banner */}
       <div style={{
         backgroundColor: '#FF6F00',

@@ -1,8 +1,12 @@
+export type PolicyType = 'AuthPolicy' | 'RateLimitPolicy' | 'TLSPolicy' | 'DNSPolicy';
+
 export interface Policy {
   id: string;
   name: string;
   description: string;
+  type: PolicyType;
   status: 'Active' | 'Inactive';
+  gitSource?: string;
   targets: {
     groups: string[];
     users: string[];
@@ -25,9 +29,15 @@ export interface Policy {
       start: Date;
       end: Date;
     };
+    quotaRenewalSchedule?: {
+      startTime: 'dateCreated' | Date;
+    };
+    overLimitBehavior?: 'hard' | 'soft';
+    softThrottlePercentage?: number;
   };
   dateCreated: Date;
   createdBy: string;
+  yaml?: string;
 }
 
 export interface CreatePolicyForm {

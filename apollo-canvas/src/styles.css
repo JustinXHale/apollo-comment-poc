@@ -1,0 +1,134 @@
+/* Apollo Canvas Custom Styles */
+
+/* Ensure full height layout */
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* Custom Apollo Canvas overrides */
+.apollo-canvas .pf-v6-c-page__main-container {
+  margin-left: 0px;
+  margin-right: 0px;
+  max-height: 100%;
+  border: none;
+  border-radius: 0px;
+}
+
+.apollo-canvas .pf-v6-c-drawer__splitter::after {
+  display: none;
+}
+
+.apollo-canvas .pf-v6-c-toolbar__item span {
+  align-self: center;
+}
+
+.apollo-canvas .pf-v6-c-expandable-section__content:where([hidden]) {
+  display: none;
+}
+
+/* Junk CSS for the Discussion panel alignment of avatars */
+#pf-drawer-panel-1 button {
+  align-items: center;
+}
+
+/* Junk CSS to make alerts look right */
+.apollo-canvas :is(.pf-v6-c-content--h4, .pf-v6-c-content h4) {
+  margin-block-start: 0px;
+}
+
+
+
+/* Custom styling for the main content area */
+.apollo-canvas-main-content {
+  height: calc(100vh - 69px); /* Subtract masthead height */
+  background: var(--pf-v6-global--BackgroundColor--100);
+  /* padding: 1rem; */
+  overflow: hidden;
+  position: relative;
+}
+
+/* Iframe container styling */
+.apollo-canvas-main-content iframe {
+  display: block;
+}
+
+/* Chat message styling improvements */
+.chat-message-user {
+  align-self: flex-end;
+  background-color: var(--pf-v6-global--primary-color--100);
+  color: white;
+}
+
+.chat-message-assistant {
+  align-self: flex-start;
+  background-color: var(--pf-v6-global--BackgroundColor--200);
+  border: 1px solid var(--pf-v6-global--BorderColor--100);
+}
+
+/* Improve drawer panel styling */
+.apollo-drawer-panel {
+  border-left: 1px solid var(--pf-v6-global--BorderColor--100);
+  background-color: var(--pf-v6-global--BackgroundColor--100);
+}
+
+/* Enhance tab content area */
+.apollo-tab-content {
+  height: calc(100% - 40px); /* Subtract tab header height */
+  overflow: auto;
+}
+
+/* Context links styling */
+.context-link-item {
+  padding: 0.25rem 0;
+}
+
+.context-link-item .pf-v6-c-button {
+  text-align: left;
+  justify-content: flex-start;
+  white-space: normal;
+  word-wrap: break-word;
+}
+
+/* Select element button active state */
+.select-element-active {
+  background-color: var(--pf-v6-global--success-color--100);
+  border-color: var(--pf-v6-global--success-color--100);
+}
+
+/* Selection mode cursor override for iframe */
+.apollo-canvas-main-content iframe[data-selection-mode="true"] {
+  cursor: crosshair !important;
+}
+
+/* Additional support styles for iframe selection highlighting */
+.apollo-canvas-selection-active {
+  position: relative;
+}
+
+.apollo-canvas-selection-active::before {
+  content: "Selection Mode Active";
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(255, 20, 147, 0.9);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  z-index: 1000000;
+  pointer-events: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .apollo-canvas-main-content {
+    padding: 1rem;
+  }
+  
+  .apollo-canvas-main-content h1 {
+    font-size: 1.5rem;
+  }
+}

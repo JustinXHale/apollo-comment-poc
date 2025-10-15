@@ -629,25 +629,9 @@ const DeployModelWizard: React.FunctionComponent = () => {
       <FormGroup label="Model availability">
         <Checkbox
           id="make-available-ai-asset"
-          label={
-            <span>
-              Make this deployment available as an AI asset{' '}
-              <Label variant="outline" color="orange" style={{ fontSize: '10px' }}>Tech Preview</Label>
-            </span>
-          }
+          label="Make this deployment available as an AI asset"
           isChecked={wizardData.makeAvailableAsAIAsset}
           onChange={(_event, checked) => updateWizardData({ makeAvailableAsAIAsset: checked })}
-        />
-        <Checkbox
-          id="make-available-globally"
-          label={
-            <span>
-              Make this deployment available globally for models as a service{' '}
-              <Label variant="outline" color="orange" style={{ fontSize: '10px' }}>Developer Preview</Label>
-            </span>
-          }
-          isChecked={wizardData.makeAvailableGlobally}
-          onChange={(_event, checked) => updateWizardData({ makeAvailableGlobally: checked })}
         />
       </FormGroup>
     </Form>
@@ -774,15 +758,8 @@ const DeployModelWizard: React.FunctionComponent = () => {
           <DescriptionListGroup>
             <DescriptionListTerm>Available as AI asset</DescriptionListTerm>
             <DescriptionListDescription>
-              Yes <Label variant="outline" color="blue" style={{ fontSize: '10px' }}>Tech Preview</Label>
+              Yes
             </DescriptionListDescription>
-          </DescriptionListGroup>
-        )}
-
-        {wizardData.makeAvailableGlobally && (
-          <DescriptionListGroup>
-            <DescriptionListTerm>Available globally</DescriptionListTerm>
-            <DescriptionListDescription>Yes (Developer Preview)</DescriptionListDescription>
           </DescriptionListGroup>
         )}
       </DescriptionList>

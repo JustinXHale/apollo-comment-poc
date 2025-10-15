@@ -66,6 +66,28 @@ export const mockPolicies: Policy[] = [
 // Mock API keys
 export const mockAPIKeys: APIKey[] = [
   {
+    id: 'key-0',
+    name: 'Personal Key',
+    description: 'Personal API key for individual development and testing',
+    apiKey: 'sk-personal0123456789abcdefghijklmn',
+    status: 'Active',
+    owner: { type: 'User', name: 'jane.smith' },
+    dateCreated: new Date('2025-10-01T08:00:00Z'),
+    dateLastUsed: new Date('2025-10-14T09:15:00Z'),
+    limits: {
+      tokenRateLimit: 10000,
+      requestRateLimit: 100,
+      budgetLimit: 100,
+      expirationDate: new Date('2026-01-20T08:00:00Z'),
+    },
+    assets: {
+      modelEndpoints: ['gpt-oss-20b'],
+      mcpServers: ['git'],
+      vectorDatabases: [],
+      agents: [],
+    },
+  },
+  {
     id: 'key-1',
     name: 'Development Team Key',
     description: 'Main API key for the development team to access models and tools',
@@ -131,6 +153,50 @@ export const mockAPIKeys: APIKey[] = [
       agents: ['agent-4'],
     },
   },
+  {
+    id: 'key-4',
+    name: 'Legacy Integration Key',
+    description: 'Expired API key from previous integration project',
+    apiKey: 'sk-expired123456789abcdefghijklmno',
+    status: 'Expired',
+    owner: { type: 'Service Account', name: 'legacy-service-account' },
+    dateCreated: new Date('2024-08-10T10:00:00Z'),
+    dateLastUsed: new Date('2025-01-15T08:45:00Z'),
+    limits: {
+      tokenRateLimit: 15000,
+      requestRateLimit: 300,
+      budgetLimit: 150,
+      expirationDate: new Date('2025-02-10T10:00:00Z'),
+    },
+    assets: {
+      modelEndpoints: ['llama-7b'],
+      mcpServers: [],
+      vectorDatabases: [],
+      agents: [],
+    },
+  },
+  {
+    id: 'key-5',
+    name: 'Playground (free)',
+    description: 'Free playground API key with access to all models and MCPs',
+    apiKey: 'sk-playground0987654321fedcbafedcba',
+    status: 'Active',
+    owner: { type: 'Group', name: 'All' },
+    dateCreated: new Date('2025-10-10T14:00:00Z'),
+    dateLastUsed: new Date(Date.now() - 30000), // 30 seconds ago
+    limits: {
+      tokenRateLimit: 100000,
+      requestRateLimit: 2000,
+      budgetLimit: 1000,
+      expirationDate: undefined, // No expiration
+    },
+    assets: {
+      modelEndpoints: ['gpt-oss-20b', 'granite-3.1b', 'llama-7b'],
+      mcpServers: ['openshift', 'rhel'],
+      vectorDatabases: [],
+      agents: [],
+    },
+  },
 ];
 
 // Generate mock metrics data
@@ -147,6 +213,13 @@ const generateMetricsOverTime = (days: number): { timestamp: Date; value: number
 
 // Mock metrics for each API key
 export const mockMetrics: Record<string, APIKeyMetrics> = {
+  'key-0': {
+    totalRequests: 5423,
+    successRate: 99.1,
+    totalTokens: 234890,
+    totalCost: 23.49,
+    requestsOverTime: generateMetricsOverTime(30),
+  },
   'key-1': {
     totalRequests: 45892,
     successRate: 98.2,
@@ -168,17 +241,37 @@ export const mockMetrics: Record<string, APIKeyMetrics> = {
     totalCost: 56.79,
     requestsOverTime: generateMetricsOverTime(30),
   },
+  'key-4': {
+    totalRequests: 8234,
+    successRate: 96.5,
+    totalTokens: 423456,
+    totalCost: 42.34,
+    requestsOverTime: generateMetricsOverTime(30),
+  },
+  'key-5': {
+    totalRequests: 15678,
+    successRate: 99.5,
+    totalTokens: 789234,
+    totalCost: 78.92,
+    requestsOverTime: generateMetricsOverTime(30),
+  },
 };
 
 // Get policies applied to an API key
 export const getAPIKeyPolicies = (keyId: string): Policy[] => {
   switch (keyId) {
+    case 'key-0':
+      return [mockPolicies[0]]; // dev-rate-limit
     case 'key-1':
       return [mockPolicies[0], mockPolicies[1], mockPolicies[3]]; // dev-rate-limit, dev-budget, security
     case 'key-2':
       return [mockPolicies[2], mockPolicies[4], mockPolicies[5]]; // prod-rate-limit, audit-logging, cost-optimization
     case 'key-3':
       return [mockPolicies[0], mockPolicies[1]]; // dev-rate-limit, dev-budget
+    case 'key-4':
+      return []; // no policies (expired)
+    case 'key-5':
+      return [mockPolicies[0]]; // dev-rate-limit
     default:
       return [];
   }
