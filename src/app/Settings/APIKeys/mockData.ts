@@ -175,6 +175,28 @@ export const mockAPIKeys: APIKey[] = [
       agents: [],
     },
   },
+  {
+    id: 'key-5',
+    name: 'Playground (free)',
+    description: 'Free playground API key with access to all models and MCPs',
+    apiKey: 'sk-playground0987654321fedcbafedcba',
+    status: 'Active',
+    owner: { type: 'Group', name: 'All' },
+    dateCreated: new Date('2025-10-10T14:00:00Z'),
+    dateLastUsed: new Date(Date.now() - 30000), // 30 seconds ago
+    limits: {
+      tokenRateLimit: 100000,
+      requestRateLimit: 2000,
+      budgetLimit: 1000,
+      expirationDate: undefined, // No expiration
+    },
+    assets: {
+      modelEndpoints: ['gpt-oss-20b', 'granite-3.1b', 'llama-7b'],
+      mcpServers: ['openshift', 'rhel'],
+      vectorDatabases: [],
+      agents: [],
+    },
+  },
 ];
 
 // Generate mock metrics data
@@ -226,6 +248,13 @@ export const mockMetrics: Record<string, APIKeyMetrics> = {
     totalCost: 42.34,
     requestsOverTime: generateMetricsOverTime(30),
   },
+  'key-5': {
+    totalRequests: 15678,
+    successRate: 99.5,
+    totalTokens: 789234,
+    totalCost: 78.92,
+    requestsOverTime: generateMetricsOverTime(30),
+  },
 };
 
 // Get policies applied to an API key
@@ -241,6 +270,8 @@ export const getAPIKeyPolicies = (keyId: string): Policy[] => {
       return [mockPolicies[0], mockPolicies[1]]; // dev-rate-limit, dev-budget
     case 'key-4':
       return []; // no policies (expired)
+    case 'key-5':
+      return [mockPolicies[0]]; // dev-rate-limit
     default:
       return [];
   }

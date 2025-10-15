@@ -219,9 +219,59 @@ const CreatePolicyModal: React.FunctionComponent<CreatePolicyModalProps> = ({ is
             />
           </FormGroup>
 
+
+          {/* Targets */}
+          <Content component={ContentVariants.h3} style={{ marginTop: '1.5rem', marginBottom: '1rem' }}>
+            Targets
+          </Content>
+
+          <FormGroup label="Groups">
+            <FormHelperText>
+              <HelperText>
+                <HelperTextItem>
+                  This policy will apply to all users in these groups.
+                </HelperTextItem>
+              </HelperText>
+            </FormHelperText>
+            <AIAssetSelect
+              options={groupOptions}
+              selected={formData.targets.groups}
+              onSelect={(selectedIds) => handleNestedInputChange('targets', 'groups', selectedIds)}
+              placeholder="Select groups"
+              ariaLabel="Groups selection"
+              id="policy-groups-select"
+              isDisabled={isSubmitting}
+            />
+          </FormGroup>
+
+          <FormGroup label="Users">
+            <AIAssetSelect
+              options={userOptions}
+              selected={formData.targets.users}
+              onSelect={(selectedIds) => handleNestedInputChange('targets', 'users', selectedIds)}
+              placeholder="Select users"
+              ariaLabel="Users selection"
+              id="policy-users-select"
+              isDisabled={isSubmitting}
+            />
+          </FormGroup>
+
+          <FormGroup label="Service Accounts">
+            <AIAssetSelect
+              options={serviceAccountOptions}
+              selected={formData.targets.serviceAccounts}
+              onSelect={(selectedIds) => handleNestedInputChange('targets', 'serviceAccounts', selectedIds)}
+              placeholder="Select service accounts"
+              ariaLabel="Service accounts selection"
+              id="policy-service-accounts-select"
+              isDisabled={isSubmitting}
+            />
+          </FormGroup>
+
+
           {/* Available Assets */}
           <Content component={ContentVariants.h3} style={{ marginTop: '1.5rem', marginBottom: '1rem' }}>
-            Available assets
+            AI assets
           </Content>
 
           <FormGroup label="Models">
@@ -446,54 +496,6 @@ const CreatePolicyModal: React.FunctionComponent<CreatePolicyModalProps> = ({ is
               </FlexItem>
             </Flex>
           )}
-
-          {/* Targets */}
-          <Content component={ContentVariants.h3} style={{ marginTop: '1.5rem', marginBottom: '1rem' }}>
-            Targets
-          </Content>
-
-          <FormGroup label="Groups">
-            <FormHelperText>
-              <HelperText>
-                <HelperTextItem>
-                  This policy will apply to all users in these groups.
-                </HelperTextItem>
-              </HelperText>
-            </FormHelperText>
-            <AIAssetSelect
-              options={groupOptions}
-              selected={formData.targets.groups}
-              onSelect={(selectedIds) => handleNestedInputChange('targets', 'groups', selectedIds)}
-              placeholder="Select groups"
-              ariaLabel="Groups selection"
-              id="policy-groups-select"
-              isDisabled={isSubmitting}
-            />
-          </FormGroup>
-
-          <FormGroup label="Users">
-            <AIAssetSelect
-              options={userOptions}
-              selected={formData.targets.users}
-              onSelect={(selectedIds) => handleNestedInputChange('targets', 'users', selectedIds)}
-              placeholder="Select users"
-              ariaLabel="Users selection"
-              id="policy-users-select"
-              isDisabled={isSubmitting}
-            />
-          </FormGroup>
-
-          <FormGroup label="Service Accounts">
-            <AIAssetSelect
-              options={serviceAccountOptions}
-              selected={formData.targets.serviceAccounts}
-              onSelect={(selectedIds) => handleNestedInputChange('targets', 'serviceAccounts', selectedIds)}
-              placeholder="Select service accounts"
-              ariaLabel="Service accounts selection"
-              id="policy-service-accounts-select"
-              isDisabled={isSubmitting}
-            />
-          </FormGroup>
 
         </Form>
       </ModalBody>

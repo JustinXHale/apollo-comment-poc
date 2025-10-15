@@ -111,6 +111,7 @@ import { IDELayout } from './layouts/IDELayout';
 import { WorkflowLayout } from './layouts/WorkflowLayout';
 import { mcpServerLogos } from '@app/AIAssets/MVPServers/mcpServerLogos';
 import EmptyPlaygroundSvg from '@app/assets/empty-playground.svg';
+import { mockAPIKeys } from '@app/Settings/APIKeys/mockData';
 import '@app/app.css';
 
 // Interfaces
@@ -272,6 +273,10 @@ const AgentBuilder: React.FunctionComponent = () => {
   
   // Model select dropdown state
   const [isModelSelectOpen, setIsModelSelectOpen] = useState(false);
+  
+  // API key select dropdown state
+  const [isApiKeySelectOpen, setIsApiKeySelectOpen] = useState(false);
+  const [selectedApiKey, setSelectedApiKey] = useState('Playground (free)');
   
   // Project select dropdown state
   const [isProjectSelectOpen, setIsProjectSelectOpen] = useState(false);
@@ -1938,6 +1943,43 @@ spec:
               </SelectList>
             </Select>
             </FormGroup>
+
+          <FormGroup label="API key" fieldId="api-key-select">
+            <Select
+              isOpen={isApiKeySelectOpen}
+              selected={selectedApiKey}
+              onSelect={(_event, value) => {
+                setSelectedApiKey(value as string);
+                setIsApiKeySelectOpen(false);
+              }}
+              onOpenChange={(isOpen) => setIsApiKeySelectOpen(isOpen)}
+              id="api-key-select"
+              toggle={(toggleRef) => (
+                <MenuToggle
+                  ref={toggleRef}
+                  onClick={() => setIsApiKeySelectOpen(!isApiKeySelectOpen)}
+                  isExpanded={isApiKeySelectOpen}
+                  style={{ width: '100%' }}
+                >
+                  {selectedApiKey}
+                </MenuToggle>
+              )}
+              shouldFocusToggleOnSelect
+            >
+              <SelectList>
+                <SelectOption key="playground-free" value="Playground (free)">
+                  Playground (free)
+                </SelectOption>
+                {mockAPIKeys
+                  .filter(key => key.status === 'Active')
+                  .map(key => (
+                    <SelectOption key={key.id} value={key.name}>
+                      {key.name}
+                    </SelectOption>
+                  ))}
+              </SelectList>
+            </Select>
+          </FormGroup>
 
           <FormGroup label="System Prompt" fieldId="system-prompt">
             <TextArea
