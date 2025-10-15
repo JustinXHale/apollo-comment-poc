@@ -325,6 +325,7 @@ const CombinedEndpointsPopover: React.FunctionComponent<{
   isMaaS?: boolean;
 }> = ({ model, copiedItems, handleCopyWithFeedback, generatedTokens, isGeneratingToken, onGenerateToken, onClearGeneratedToken, isMaaS }) => {
   const [isPopoverOpen, setIsPopoverOpen] = React.useState(false);
+  const [isUsageModalOpen, setIsUsageModalOpen] = React.useState(false);
   
   const internalEndpointId = `internal-endpoint-${model.id}`;
   const internalTokenId = `internal-token-${model.id}`;
@@ -405,6 +406,17 @@ const CombinedEndpointsPopover: React.FunctionComponent<{
                       </Button>
                     </Tooltip>
                   </div>
+                  <div style={{ marginTop: '0.5rem' }}>
+                    <Button
+                      variant="link"
+                      isInline
+                      onClick={() => setIsUsageModalOpen(true)}
+                      id={`view-usage-example-${model.id}-generated`}
+                      style={{ padding: 0, fontSize: '0.875rem', color: 'var(--pf-t--global--color--brand--default)' }}
+                    >
+                      View usage example
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <Button
@@ -419,25 +431,38 @@ const CombinedEndpointsPopover: React.FunctionComponent<{
               )
             ) : (
               // Regular model token display
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                <TextInput
-                  value={model.externalToken || ''}
-                  readOnly
-                  aria-label="API Key"
-                  style={{ fontSize: '0.75rem', height: '28px', fontFamily: 'monospace' }}
-                />
-                <Tooltip content={copiedItems.has(externalTokenId) ? 'Copied' : 'Copy token'}>
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                  <TextInput
+                    value={model.externalToken || ''}
+                    readOnly
+                    aria-label="API Key"
+                    style={{ fontSize: '0.75rem', height: '28px', fontFamily: 'monospace' }}
+                  />
+                  <Tooltip content={copiedItems.has(externalTokenId) ? 'Copied' : 'Copy token'}>
+                    <Button
+                      variant="plain"
+                      size="sm"
+                      aria-label="Copy token"
+                      onClick={() => handleCopyWithFeedback(model.externalToken!, externalTokenId)}
+                      style={{ padding: '4px' }}
+                    >
+                      {copiedItems.has(externalTokenId) ? <CheckCircleIcon style={{ fontSize: '12px' }} /> : <CopyIcon style={{ fontSize: '12px' }} />}
+                    </Button>
+                  </Tooltip>
+                </div>
+                <div style={{ marginTop: '0.5rem' }}>
                   <Button
-                    variant="plain"
-                    size="sm"
-                    aria-label="Copy token"
-                    onClick={() => handleCopyWithFeedback(model.externalToken!, externalTokenId)}
-                    style={{ padding: '4px' }}
+                    variant="link"
+                    isInline
+                    onClick={() => setIsUsageModalOpen(true)}
+                    id={`view-usage-example-${model.id}-regular`}
+                    style={{ padding: 0, fontSize: '0.875rem', color: 'var(--pf-t--global--color--brand--default)' }}
                   >
-                    {copiedItems.has(externalTokenId) ? <CheckCircleIcon style={{ fontSize: '12px' }} /> : <CopyIcon style={{ fontSize: '12px' }} />}
+                    View usage example
                   </Button>
-                </Tooltip>
-              </div>
+                </div>
+              </>
             )}
           </div>
         </>
@@ -487,22 +512,33 @@ const CombinedEndpointsPopover: React.FunctionComponent<{
   );
 
   return (
-    <Popover
-      bodyContent={popoverContent}
-      position="right"
-      hasAutoWidth
-      enableFlip={false}
-      isVisible={isPopoverOpen}
-      shouldOpen={() => setIsPopoverOpen(true)}
-      shouldClose={handlePopoverClose}
-    >
-      <Button
-        variant="link"
-        onClick={() => setIsPopoverOpen(true)}
+    <>
+      <Popover
+        bodyContent={popoverContent}
+        position="right"
+        hasAutoWidth
+        enableFlip={false}
+        isVisible={isPopoverOpen}
+        shouldOpen={() => setIsPopoverOpen(true)}
+        shouldClose={handlePopoverClose}
       >
-        View
-      </Button>
-    </Popover>
+        <Button
+          variant="link"
+          onClick={() => setIsPopoverOpen(true)}
+        >
+          View
+        </Button>
+      </Popover>
+      {model.externalEndpoint && (model.externalToken || generatedTokens?.has(model.id)) && (
+        <UsageExampleModal
+          isOpen={isUsageModalOpen}
+          onClose={() => setIsUsageModalOpen(false)}
+          endpoint={model.externalEndpoint}
+          apiKey={generatedTokens?.get(model.id) || model.externalToken || ''}
+          isModel={true}
+        />
+      )}
+    </>
   );
 };
 
@@ -512,6 +548,7 @@ const MCPEndpointPopover: React.FunctionComponent<{
   copiedItems: Set<string>;
   handleCopyWithFeedback: (text: string, itemId: string) => void;
 }> = ({ server, copiedItems, handleCopyWithFeedback }) => {
+  const [isUsageModalOpen, setIsUsageModalOpen] = React.useState(false);
   const endpoint = server.streamableEndpoint;
   const token = server.streamableToken;
   const endpointId = `streamable-endpoint-${server.id}`;
@@ -568,22 +605,111 @@ const MCPEndpointPopover: React.FunctionComponent<{
               </Button>
             </Tooltip>
           </div>
+          <div style={{ marginTop: '0.5rem' }}>
+            <Button
+              variant="link"
+              isInline
+              onClick={() => setIsUsageModalOpen(true)}
+              id={`view-usage-example-mcp-${server.id}`}
+              style={{ padding: 0, fontSize: '0.875rem', color: 'var(--pf-t--global--color--brand--default)' }}
+            >
+              View usage example
+            </Button>
+          </div>
         </div>
       )}
     </div>
   );
 
   return (
-    <Popover
-      bodyContent={popoverContent}
-      position="right"
-    >
-      <Button
-        variant="link"
+    <>
+      <Popover
+        bodyContent={popoverContent}
+        position="right"
       >
-        View
-      </Button>
-    </Popover>
+        <Button
+          variant="link"
+        >
+          View
+        </Button>
+      </Popover>
+      {endpoint && token && (
+        <UsageExampleModal
+          isOpen={isUsageModalOpen}
+          onClose={() => setIsUsageModalOpen(false)}
+          endpoint={endpoint}
+          apiKey={token}
+          isModel={false}
+        />
+      )}
+    </>
+  );
+};
+
+// Usage Example Modal Component
+const UsageExampleModal: React.FunctionComponent<{
+  isOpen: boolean;
+  onClose: () => void;
+  endpoint: string;
+  apiKey: string;
+  isModel?: boolean;
+}> = ({ isOpen, onClose, endpoint, apiKey, isModel = true }) => {
+  const curlExample = isModel 
+    ? `curl -X POST ${endpoint}/chat/completions \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer ${apiKey}" \\
+  -d '{
+    "model": "model-name",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Hello, how are you?"
+      }
+    ],
+    "temperature": 0.7,
+    "max_tokens": 150
+  }'`
+    : `curl -X POST ${endpoint} \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer ${apiKey}" \\
+  -d '{
+    "action": "query",
+    "parameters": {}
+  }'`;
+
+  return (
+    <Modal
+      variant={ModalVariant.medium}
+      isOpen={isOpen}
+      onClose={onClose}
+      aria-labelledby="usage-example-modal-title"
+      aria-describedby="usage-example-modal-description"
+    >
+      <ModalHeader 
+        title="Usage example" 
+        labelId="usage-example-modal-title" 
+      />
+      <ModalBody id="usage-example-modal-description">
+        <p style={{ marginBottom: '1rem' }}>
+          Use this cURL command to connect to the endpoint with your API key:
+        </p>
+        <CodeBlock id="usage-example-code-block">
+          <CodeBlockCode>
+            {curlExample}
+          </CodeBlockCode>
+        </CodeBlock>
+      </ModalBody>
+      <ModalFooter>
+        <Button 
+          key="close" 
+          variant="primary" 
+          onClick={onClose}
+          id="usage-example-modal-close-button"
+        >
+          Close
+        </Button>
+      </ModalFooter>
+    </Modal>
   );
 };
 
@@ -1357,11 +1483,11 @@ const AvailableAIAssets: React.FunctionComponent = () => {
     if (!assetType || !assetDescription.trim()) return false;
     
     if (assetType === 'Model') {
-      return project && modelDeployment;
+      return !!(project && modelDeployment);
     }
     
     if (assetType === 'MCP Server') {
-      return mcpServer && tools;
+      return !!(mcpServer && tools);
     }
     
     return false;
@@ -1478,7 +1604,14 @@ const AvailableAIAssets: React.FunctionComponent = () => {
 
     console.log('All models:', mockModels.map(m => ({ id: m.id, name: m.name, llsStatus: m.llsStatus })));
     console.log('getFilteredModalModels result:', filteredModels.map(m => ({ id: m.id, name: m.name })));
-    return filteredModels;
+    
+    // Map to ensure description is always a string (not optional)
+    return filteredModels.map(m => ({
+      id: m.id,
+      name: m.name,
+      description: m.description || '',
+      useCase: m.useCase
+    }));
   };
 
   const startAutoConfiguration = () => {

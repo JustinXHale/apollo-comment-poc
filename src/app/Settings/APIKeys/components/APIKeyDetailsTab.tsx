@@ -35,7 +35,7 @@ const APIKeyDetailsTab: React.FunctionComponent<APIKeyDetailsTabProps> = ({ apiK
 
   return (
     <PageSection>
-      <Card>
+      <Card style={{ marginBottom: '1rem', marginTop: '0.5rem' }}>
         <CardBody>
           <DescriptionList isHorizontal columnModifier={{ default: '2Col' }}>
             <DescriptionListGroup>

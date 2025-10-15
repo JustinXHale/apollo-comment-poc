@@ -19,6 +19,7 @@ import {
   HelperText,
   HelperTextItem,
   Alert,
+  Title,
 } from '@patternfly/react-core';
 import { CreateAPIKeyForm } from '../types';
 import { 
@@ -284,7 +285,6 @@ const CreateAPIKeyModal: React.FunctionComponent<CreateAPIKeyModalProps> = ({ is
               fontSize: '0.875rem'
             }}
           >
-            <option value="">{`Select a ${formData.owner.type.toLowerCase()}`}</option>
             {ownerNames.map(name => (
               <option key={name} value={name}>
                 {name}
@@ -397,11 +397,12 @@ const CreateAPIKeyModal: React.FunctionComponent<CreateAPIKeyModalProps> = ({ is
         </ExpandableSection>
 
         {/* AI Asset Access */}
+        <Title headingLevel="h2">Available AI assets</Title>
         <FormGroup>
           <FormHelperText>
             <HelperText>
               <HelperTextItem>
-                Select the AI assets this API key should have access to. You can modify these selections later.
+                Select the AI assets that this API key should provide access to. You can modify these selections later.
               </HelperTextItem>
             </HelperText>
           </FormHelperText>
