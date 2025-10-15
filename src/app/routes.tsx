@@ -390,6 +390,13 @@ const routes: AppRouteConfig[] = [
     icon: createFontAwesomeIcon('fa-light fa-gear'),
     routes: [
       {
+        element: <FeatureFlags />,
+        exact: true,
+        label: 'Feature flags',
+        path: '/settings',
+        title: 'RHOAI 3.1 Console | Settings - Feature Flags',
+      },
+      {
         label: 'Cluster settings',
         routes: [
           {
