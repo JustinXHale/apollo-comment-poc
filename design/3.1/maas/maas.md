@@ -7,6 +7,7 @@ Journey map: https://miro.com/app/board/uXjVIgQDVWw=/
 
 ## Design TODOs
 
+- In the Endpoints popover, display Internal Endpoint optionally with less emphasis, default to External endpoint and API key toggle, also include link button to view code examples in various languages
 - Add the ability to connect an external model provider's API endpoint as an AI Asset potentially
 - Integration of multiple API Keys in the AI Assets area
 - Tiers
@@ -243,6 +244,8 @@ source: https://github.com/rh-aiservices-bu/litemaas
 
 ### Jira
 
+source: https://issues.redhat.com/browse/RHAIRFE-476
+- title: AI Available Assets -  Implement Quota Management and Visibility for Model Deployments
 source: https://issues.redhat.com/browse/RHOAISTRAT-638
 - title: MaaS UI for Admin
 source: https://issues.redhat.com/browse/RHOAIUX-996
