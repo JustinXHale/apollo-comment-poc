@@ -5,8 +5,10 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const Dotenv = require('dotenv-webpack');
+
 const BG_IMAGES_DIRNAME = 'bgimages';
 const ASSET_PATH = process.env.ASSET_PATH || '/';
+
 module.exports = (env) => {
   return {
     module: {
@@ -26,8 +28,6 @@ module.exports = (env) => {
         {
           test: /\.(svg|ttf|eot|woff|woff2)$/,
           type: 'asset/resource',
-          // only process modules with this loader
-          // if they live under a 'fonts' or 'pficon' directory
           include: [
             path.resolve(__dirname, 'node_modules/patternfly/dist/fonts'),
             path.resolve(__dirname, 'node_modules/@patternfly/react-core/dist/styles/assets/fonts'),
@@ -43,15 +43,11 @@ module.exports = (env) => {
         },
         {
           test: /\.svg$/,
-          // only process SVG modules with this loader if they live under a 'bgimages' directory
-          // this is primarily useful when applying a CSS background using an SVG
           include: (input) => input.indexOf(BG_IMAGES_DIRNAME) > -1,
           type: 'asset/inline',
         },
         {
           test: /\.svg$/,
-          // only process SVG modules with this loader when they don't live under a 'bgimages',
-          // 'fonts', or 'pficon' directory, those are handled with other loaders
           include: (input) =>
             input.indexOf(BG_IMAGES_DIRNAME) === -1 &&
             input.indexOf('fonts') === -1 &&
@@ -87,11 +83,13 @@ module.exports = (env) => {
         },
       ],
     },
+
     output: {
       filename: '[name].bundle.js',
       path: path.resolve(__dirname, 'dist'),
       publicPath: ASSET_PATH,
     },
+
     plugins: [
       new HtmlWebpackPlugin({
         template: path.resolve(__dirname, 'src', 'index.html'),
@@ -100,14 +98,17 @@ module.exports = (env) => {
         template: path.resolve(__dirname, 'src', 'index.html'),
         filename: '404.html',
       }),
+      // 👇 Add dotenv-webpack here
       new Dotenv({
-        systemvars: true,
-        silent: true,
+        path: path.resolve(__dirname, '.env.local'), // explicitly load from your .env.local
+        systemvars: true, // allow shell overrides (useful for CI)
+        silent: false, // show warnings if the file is missing
       }),
       new CopyPlugin({
         patterns: [{ from: './src/favicon.png', to: 'images' }],
       }),
     ],
+
     resolve: {
       extensions: ['.js', '.ts', '.tsx', '.jsx'],
       plugins: [

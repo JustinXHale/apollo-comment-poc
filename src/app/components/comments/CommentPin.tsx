@@ -50,10 +50,12 @@ export const CommentPin: React.FunctionComponent<CommentPinProps> = ({
         fontSize: commentCount > 1 ? '0.7rem' : undefined
       }}
     >
-      {commentCount > 1 ? (
-        <span style={{ fontWeight: 'bold' }}>{commentCount}</span>
-      ) : (
+      {commentCount === 0 ? (
+        <span style={{ fontWeight: 'bold', fontSize: '0.75rem' }}>0</span>
+      ) : commentCount === 1 ? (
         <CommentIcon />
+      ) : (
+        <span style={{ fontWeight: 'bold' }}>{commentCount}</span>
       )}
     </Button>
   );

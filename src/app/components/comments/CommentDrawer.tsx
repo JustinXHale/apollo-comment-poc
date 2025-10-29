@@ -15,11 +15,14 @@ import {
   CardTitle,
   EmptyState,
   EmptyStateBody,
-  Divider
+  Divider,
+  Label,
+  Spinner
 } from '@patternfly/react-core';
-import { CommentIcon, TimesIcon, PlusCircleIcon } from '@patternfly/react-icons';
+import { CommentIcon, TimesIcon, PlusCircleIcon, SyncAltIcon, GithubIcon, ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { useComments } from '@app/context/CommentContext';
 import { useLocation } from 'react-router-dom';
+import { isGitHubConfigured } from '@app/services/githubAdapter';
 
 interface CommentDrawerProps {
   children: React.ReactNode;
@@ -39,38 +42,102 @@ export const CommentDrawer: React.FunctionComponent<CommentDrawerProps> = ({
     updateComment, 
     deleteComment,
     deleteThread,
-    enableCommenting 
+    enableCommenting,
+    syncFromGitHub,
+    isSyncing
   } = useComments();
   
   const [editingCommentId, setEditingCommentId] = React.useState<string | null>(null);
   const [editText, setEditText] = React.useState('');
   const [replyText, setReplyText] = React.useState('');
+  const replyTextAreaRef = React.useRef<HTMLTextAreaElement>(null);
 
   const currentRouteThreads = getThreadsForRoute(location.pathname);
   const selectedThread = currentRouteThreads.find(t => t.id === selectedThreadId);
   const isDrawerOpen = selectedThreadId !== null && selectedThread !== undefined;
+
+  // Auto-focus reply textarea when drawer opens and commenting is enabled
+  React.useEffect(() => {
+    if (!isDrawerOpen || !enableCommenting) return;
+    
+    // Small delay to ensure drawer animation completes
+    const timer = setTimeout(() => {
+      replyTextAreaRef.current?.focus();
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, [isDrawerOpen, enableCommenting, selectedThreadId]);
+
+  // Sync from GitHub on mount if configured
+  React.useEffect(() => {
+    if (isGitHubConfigured()) {
+      syncFromGitHub(location.pathname).catch(err => {
+        console.error('Failed to sync from GitHub:', err);
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]); // Only re-run when route changes
 
   const handleEdit = (commentId: string, text: string) => {
     setEditingCommentId(commentId);
     setEditText(text);
   };
 
-  const handleSave = (threadId: string, commentId: string) => {
-    updateComment(threadId, commentId, editText);
+  const handleSave = async (threadId: string, commentId: string) => {
+    await updateComment(threadId, commentId, editText);
     setEditingCommentId(null);
   };
 
-  const handleAddReply = () => {
+  const handleAddReply = async () => {
     if (selectedThreadId && replyText.trim()) {
-      addReply(selectedThreadId, replyText);
+      await addReply(selectedThreadId, replyText);
       setReplyText('');
     }
   };
 
-  const handleDeleteThread = () => {
+  const handleDeleteThread = async () => {
     if (selectedThreadId && window.confirm('Delete this entire thread and all its comments?')) {
-      deleteThread(selectedThreadId);
+      await deleteThread(selectedThreadId);
       onThreadSelect(null);
+    }
+  };
+
+  const handleDeleteComment = async (threadId: string, commentId: string) => {
+    if (window.confirm('Delete this comment?')) {
+      await deleteComment(threadId, commentId);
+    }
+  };
+
+  const handleSync = async () => {
+    await syncFromGitHub(location.pathname);
+  };
+
+  const getSyncStatusLabel = (status?: 'synced' | 'local' | 'pending' | 'syncing' | 'error') => {
+    switch (status) {
+      case 'synced':
+        return <Label color="green" icon={<GithubIcon />}>Synced</Label>;
+      case 'local':
+        return <Label color="grey">Local Only</Label>;
+      case 'pending':
+        return <Label color="blue" icon={<Spinner size="sm" />}>Pending...</Label>;
+      case 'syncing':
+        return <Label color="blue" icon={<Spinner size="sm" />}>Syncing...</Label>;
+      case 'error':
+        return <Label color="red">Sync Error</Label>;
+      default:
+        return null;
+    }
+  };
+
+  const getGitHubLink = (issueNumber?: number) => {
+    if (!issueNumber) return null;
+    try {
+      const owner = import.meta.env?.VITE_GITHUB_OWNER;
+      const repo = import.meta.env?.VITE_GITHUB_REPO;
+      if (!owner || !repo) return null;
+      return `https://github.com/${owner}/${repo}/issues/${issueNumber}`;
+    } catch (error) {
+      return null;
     }
   };
 
@@ -87,10 +154,26 @@ export const CommentDrawer: React.FunctionComponent<CommentDrawerProps> = ({
   const panelContent = (
     <DrawerPanelContent isResizable defaultSize="400px" minSize="300px">
       <DrawerHead>
-        <Title headingLevel="h2" size="xl">
-          <CommentIcon style={{ marginRight: '0.5rem', color: '#C9190B' }} />
-          Thread
-        </Title>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1 }}>
+          <Title headingLevel="h2" size="xl">
+            <CommentIcon style={{ marginRight: '0.5rem', color: '#C9190B' }} />
+            Thread
+          </Title>
+          {isGitHubConfigured() && (
+            <Button
+              id="sync-github-button"
+              variant="plain"
+              size="sm"
+              icon={<SyncAltIcon />}
+              onClick={handleSync}
+              isDisabled={isSyncing}
+              aria-label="Sync with GitHub"
+              title="Sync with GitHub"
+            >
+              {isSyncing ? <Spinner size="sm" /> : null}
+            </Button>
+          )}
+        </div>
         <DrawerActions>
           <DrawerCloseButton onClick={() => onThreadSelect(null)} />
         </DrawerActions>
@@ -114,9 +197,27 @@ export const CommentDrawer: React.FunctionComponent<CommentDrawerProps> = ({
                 <div style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>
                   <strong>Location:</strong> ({Math.round(selectedThread.x)}, {Math.round(selectedThread.y)})
                 </div>
-                <div style={{ fontSize: '0.875rem' }}>
+                <div style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>
                   <strong>Comments:</strong> {selectedThread.comments.length}
                 </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                  <strong style={{ fontSize: '0.875rem' }}>Status:</strong>
+                  {getSyncStatusLabel(selectedThread.syncStatus)}
+                </div>
+                {selectedThread.issueNumber && (
+                  <div style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>
+                    <a 
+                      href={getGitHubLink(selectedThread.issueNumber) || '#'} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                    >
+                      <GithubIcon />
+                      Issue #{selectedThread.issueNumber}
+                      <ExternalLinkAltIcon style={{ fontSize: '0.75rem' }} />
+                    </a>
+                  </div>
+                )}
                 {enableCommenting && (
                   <Button
                     id={`delete-thread-${selectedThread.id}`}
@@ -136,14 +237,27 @@ export const CommentDrawer: React.FunctionComponent<CommentDrawerProps> = ({
 
             {/* Comments List */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {selectedThread.comments.map((comment, index) => (
-                <Card key={comment.id} isCompact>
-                  <CardTitle>
-                    Comment #{index + 1}
-                    <div style={{ fontSize: '0.75rem', color: 'var(--pf-v6-global--Color--200)', fontWeight: 'normal' }}>
-                      {formatDate(comment.createdAt)}
-                    </div>
-                  </CardTitle>
+              {selectedThread.comments.length === 0 ? (
+                <EmptyState>
+                  <Title headingLevel="h4" size="md">
+                    No comments yet
+                  </Title>
+                  <EmptyStateBody>
+                    {enableCommenting 
+                      ? 'Add a reply below to start the conversation.'
+                      : 'Enable commenting to add replies.'}
+                  </EmptyStateBody>
+                </EmptyState>
+              ) : (
+                selectedThread.comments.map((comment, index) => (
+                  <Card key={comment.id} isCompact>
+                    <CardTitle>
+                      Comment #{index + 1}
+                      <div style={{ fontSize: '0.75rem', color: 'var(--pf-v6-global--Color--200)', fontWeight: 'normal' }}>
+                        {comment.author && <span style={{ marginRight: '0.5rem' }}>@{comment.author}</span>}
+                        {formatDate(comment.createdAt)}
+                      </div>
+                    </CardTitle>
                   <CardBody>
                     {editingCommentId === comment.id ? (
                       <>
@@ -197,28 +311,23 @@ export const CommentDrawer: React.FunctionComponent<CommentDrawerProps> = ({
                             >
                               Edit
                             </Button>
-                            {selectedThread.comments.length > 1 && (
-                              <Button
-                                id={`delete-comment-btn-${comment.id}`}
-                                variant="danger"
-                                size="sm"
-                                icon={<TimesIcon />}
-                                onClick={() => {
-                                  if (window.confirm('Delete this comment?')) {
-                                    deleteComment(selectedThread.id, comment.id);
-                                  }
-                                }}
-                              >
-                                Delete
-                              </Button>
-                            )}
+                            <Button
+                              id={`delete-comment-btn-${comment.id}`}
+                              variant="danger"
+                              size="sm"
+                              icon={<TimesIcon />}
+                              onClick={() => handleDeleteComment(selectedThread.id, comment.id)}
+                            >
+                              Delete
+                            </Button>
                           </div>
                         )}
                       </>
                     )}
                   </CardBody>
                 </Card>
-              ))}
+              ))
+              )}
             </div>
 
             {/* Add Reply */}
@@ -232,6 +341,7 @@ export const CommentDrawer: React.FunctionComponent<CommentDrawerProps> = ({
                   </CardTitle>
                   <CardBody>
                     <TextArea
+                      ref={replyTextAreaRef}
                       id={`reply-textarea-${selectedThread.id}`}
                       value={replyText}
                       onChange={(_event, value) => setReplyText(value)}

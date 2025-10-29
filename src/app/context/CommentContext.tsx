@@ -1,10 +1,14 @@
 import * as React from 'react';
+import { githubAdapter, isGitHubConfigured, GitHubResult } from '@app/services/githubAdapter';
+
+export type SyncStatus = 'synced' | 'local' | 'pending' | 'syncing' | 'error';
 
 export interface Comment {
   id: string;
   author?: string;
   text: string;
   createdAt: string;
+  githubCommentId?: number; // GitHub comment ID for syncing
 }
 
 export interface Thread {
@@ -13,6 +17,9 @@ export interface Thread {
   y: number;
   route: string;
   comments: Comment[];
+  issueNumber?: number; // GitHub Issue number
+  syncStatus: SyncStatus; // Sync state
+  syncError?: string; // Error message if sync failed
 }
 
 interface CommentContextType {
@@ -22,12 +29,16 @@ interface CommentContextType {
   toggleShowPins: () => void;
   toggleEnableCommenting: () => void;
   addThread: (x: number, y: number, route: string) => string;
-  addReply: (threadId: string, text: string) => void;
-  updateComment: (threadId: string, commentId: string, text: string) => void;
-  deleteComment: (threadId: string, commentId: string) => void;
-  deleteThread: (threadId: string) => void;
+  addReply: (threadId: string, text: string) => Promise<void>;
+  updateComment: (threadId: string, commentId: string, text: string) => Promise<void>;
+  deleteComment: (threadId: string, commentId: string) => Promise<void>;
+  deleteThread: (threadId: string) => Promise<void>;
   clearAllThreads: () => void;
   getThreadsForRoute: (route: string) => Thread[];
+  syncFromGitHub: (route: string) => Promise<void>;
+  retrySync: () => Promise<void>;
+  isSyncing: boolean;
+  hasPendingSync: boolean;
 }
 
 const CommentContext = React.createContext<CommentContextType | undefined>(undefined);
@@ -102,6 +113,8 @@ export const CommentProvider: React.FunctionComponent<{ children: React.ReactNod
     }
   });
 
+  const [isSyncing, setIsSyncing] = React.useState<boolean>(false);
+
   // Persist threads to localStorage whenever they change
   React.useEffect(() => {
     try {
@@ -144,70 +157,187 @@ export const CommentProvider: React.FunctionComponent<{ children: React.ReactNod
       x,
       y,
       route,
-      comments: [
-        {
-          id: `${threadId}-comment-0`,
-          text: '',
-          createdAt: new Date().toISOString()
-        }
-      ]
+      comments: [], // Start with no comments
+      syncStatus: 'local'
     };
     setThreads(prev => [...prev, newThread]);
+
+    // Async GitHub sync (non-blocking)
+    if (isGitHubConfigured()) {
+      (async () => {
+        setThreads(prev => prev.map(t => 
+          t.id === threadId ? { ...t, syncStatus: 'syncing' as const } : t
+        ));
+
+        const issue = await githubAdapter.createIssue(
+          `Comment Thread at (${Math.round(x)}, ${Math.round(y)})`,
+          `Thread created on route: ${route}\n\n(Initial comment will be added as a reply)`,
+          route,
+          x,
+          y
+        );
+
+        if (issue.success && issue.data) {
+          setThreads(prev => prev.map(t => 
+            t.id === threadId 
+              ? { ...t, issueNumber: issue.data.number, syncStatus: 'synced' as const }
+              : t
+          ));
+        } else {
+          setThreads(prev => prev.map(t => 
+            t.id === threadId ? { ...t, syncStatus: 'error' as const, syncError: issue.error } : t
+          ));
+        }
+      })();
+    }
+
     return threadId;
   }, []);
 
-  const addReply = React.useCallback((threadId: string, text: string) => {
+  const addReply = React.useCallback(async (threadId: string, text: string) => {
+    const commentId = `${threadId}-comment-${Date.now()}`;
+    const newComment: Comment = {
+      id: commentId,
+      text,
+      createdAt: new Date().toISOString()
+    };
+
+    // Find thread BEFORE optimistic update (to get issueNumber)
+    const thread = threads.find(t => t.id === threadId);
+
+    // Optimistically add comment locally
     setThreads(prev =>
-      prev.map(thread => {
-        if (thread.id === threadId) {
-          const newComment: Comment = {
-            id: `${threadId}-comment-${thread.comments.length}`,
-            text,
-            createdAt: new Date().toISOString()
-          };
+      prev.map(t => {
+        if (t.id === threadId) {
           return {
-            ...thread,
-            comments: [...thread.comments, newComment]
+            ...t,
+            comments: [...t.comments, newComment],
+            syncStatus: 'pending' as const // Mark as pending sync
           };
         }
-        return thread;
+        return t;
       })
     );
-  }, []);
 
-  const updateComment = React.useCallback((threadId: string, commentId: string, text: string) => {
+    // Sync to GitHub if configured and thread has an issue number
+    if (isGitHubConfigured() && thread?.issueNumber) {
+      const result = await githubAdapter.createComment(thread.issueNumber, text);
+      if (result.success && result.data) {
+        // Update comment with GitHub ID and mark synced
+        setThreads(prev =>
+          prev.map(t => {
+            if (t.id === threadId) {
+              return {
+                ...t,
+                syncStatus: 'synced' as const,
+                comments: t.comments.map(c =>
+                  c.id === commentId ? { ...c, githubCommentId: result.data.id } : c
+                )
+              };
+            }
+            return t;
+          })
+        );
+      } else {
+        // Mark as error if sync failed
+        setThreads(prev =>
+          prev.map(t =>
+            t.id === threadId ? { ...t, syncStatus: 'error' as const, syncError: result.error } : t
+          )
+        );
+      }
+    }
+  }, [threads]);
+
+  const updateComment = React.useCallback(async (threadId: string, commentId: string, text: string) => {
+    // Find thread and comment BEFORE optimistic update
+    const thread = threads.find(t => t.id === threadId);
+    const comment = thread?.comments.find(c => c.id === commentId);
+
+    // Optimistically update locally
     setThreads(prev =>
-      prev.map(thread => {
-        if (thread.id === threadId) {
+      prev.map(t => {
+        if (t.id === threadId) {
           return {
-            ...thread,
-            comments: thread.comments.map(comment =>
-              comment.id === commentId ? { ...comment, text } : comment
+            ...t,
+            syncStatus: 'pending' as const,
+            comments: t.comments.map(c =>
+              c.id === commentId ? { ...c, text } : c
             )
           };
         }
-        return thread;
+        return t;
       })
     );
-  }, []);
 
-  const deleteComment = React.useCallback((threadId: string, commentId: string) => {
+    // Sync to GitHub if configured
+    if (isGitHubConfigured() && comment?.githubCommentId) {
+      const result = await githubAdapter.updateComment(comment.githubCommentId, text);
+      if (result.success) {
+        setThreads(prev =>
+          prev.map(t => t.id === threadId ? { ...t, syncStatus: 'synced' as const } : t)
+        );
+      } else {
+        setThreads(prev =>
+          prev.map(t =>
+            t.id === threadId ? { ...t, syncStatus: 'error' as const, syncError: result.error } : t
+          )
+        );
+      }
+    }
+  }, [threads]);
+
+  const deleteComment = React.useCallback(async (threadId: string, commentId: string) => {
+    // Get thread and comment BEFORE deleting
+    const thread = threads.find(t => t.id === threadId);
+    const comment = thread?.comments.find(c => c.id === commentId);
+
+    // Optimistically delete locally
     setThreads(prev =>
-      prev.map(thread => {
-        if (thread.id === threadId) {
+      prev.map(t => {
+        if (t.id === threadId) {
           return {
-            ...thread,
-            comments: thread.comments.filter(comment => comment.id !== commentId)
+            ...t,
+            syncStatus: 'pending' as const,
+            comments: t.comments.filter(c => c.id !== commentId)
           };
         }
-        return thread;
+        return t;
       })
     );
-  }, []);
 
-  const deleteThread = React.useCallback((threadId: string) => {
-    setThreads(prev => prev.filter(thread => thread.id !== threadId));
-  }, []);
+    // Sync to GitHub if configured
+    if (isGitHubConfigured() && comment?.githubCommentId) {
+      const result = await githubAdapter.deleteComment(comment.githubCommentId);
+      if (result.success) {
+        setThreads(prev =>
+          prev.map(t => t.id === threadId ? { ...t, syncStatus: 'synced' as const } : t)
+        );
+      } else {
+        setThreads(prev =>
+          prev.map(t =>
+            t.id === threadId ? { ...t, syncStatus: 'error' as const, syncError: result.error } : t
+          )
+        );
+      }
+    }
+  }, [threads]);
+
+  const deleteThread = React.useCallback(async (threadId: string) => {
+    // Get thread BEFORE deleting
+    const thread = threads.find(t => t.id === threadId);
+
+    // Optimistically delete locally
+    setThreads(prev => prev.filter(t => t.id !== threadId));
+
+    // Close GitHub Issue if configured
+    if (isGitHubConfigured() && thread?.issueNumber) {
+      const result = await githubAdapter.closeIssue(thread.issueNumber);
+      if (!result.success) {
+        console.error('Failed to close GitHub issue:', result.error);
+      }
+    }
+  }, [threads]);
 
   const clearAllThreads = React.useCallback(() => {
     setThreads([]);
@@ -215,6 +345,117 @@ export const CommentProvider: React.FunctionComponent<{ children: React.ReactNod
 
   const getThreadsForRoute = React.useCallback((route: string): Thread[] => {
     return threads.filter(thread => thread.route === route);
+  }, [threads]);
+
+  const syncFromGitHub = React.useCallback(async (route: string) => {
+    if (!isGitHubConfigured()) {
+      console.log('GitHub not configured. Skipping sync.');
+      return;
+    }
+
+    setIsSyncing(true);
+    console.log(`🔄 Syncing threads from GitHub for route: ${route}`);
+
+    try {
+      const issues = await githubAdapter.fetchIssues(route);
+      const newThreads: Thread[] = [];
+
+      for (const issue of issues) {
+        // Parse coordinates from issue body metadata or labels (for backward compatibility)
+        let coords: number[] | null = null;
+        
+        // Try to parse from body metadata first
+        if (issue.body) {
+          const coordMatch = issue.body.match(/Coordinates: `\((\d+),\s*(\d+)\)`/);
+          if (coordMatch) {
+            coords = [parseInt(coordMatch[1]), parseInt(coordMatch[2])];
+          }
+        }
+        
+        // Fallback: try to parse from labels
+        if (!coords) {
+          const coordLabel = issue.labels.find((l: any) => 
+            typeof l === 'string' ? l.startsWith('coords:') : l.name?.startsWith('coords:')
+          );
+          const coordString = typeof coordLabel === 'string' ? coordLabel : coordLabel?.name;
+          if (coordString) {
+            const coordParts = coordString.replace('coords:', '').split(',').map(Number);
+            if (coordParts.length === 2) {
+              coords = coordParts;
+            }
+          }
+        }
+        
+        if (!coords || coords.length !== 2 || isNaN(coords[0]) || isNaN(coords[1])) {
+          console.warn(`Skipping issue #${issue.number}: invalid or missing coords`);
+          continue;
+        }
+
+        // Fetch comments for this issue
+        const ghComments = await githubAdapter.fetchComments(issue.number);
+
+        // Convert GitHub issue body to first comment
+        const comments: Comment[] = [];
+        
+        // Add issue body as first comment if it exists
+        if (issue.body) {
+          comments.push({
+            id: `issue-${issue.number}-body`,
+            text: issue.body,
+            createdAt: issue.created_at,
+            author: issue.user?.login,
+            githubCommentId: undefined // Body is not a comment
+          });
+        }
+
+        // Add all GitHub comments
+        ghComments.forEach((ghComment: any) => {
+          comments.push({
+            id: `comment-${ghComment.id}`,
+            text: ghComment.body,
+            createdAt: ghComment.created_at,
+            author: ghComment.user?.login,
+            githubCommentId: ghComment.id
+          });
+        });
+
+        newThreads.push({
+          id: `github-${issue.number}`,
+          x: coords[0],
+          y: coords[1],
+          route,
+          comments,
+          issueNumber: issue.number,
+          syncStatus: 'synced'
+        });
+      }
+
+      // Merge with existing local-only threads
+      setThreads(prev => {
+        const localOnlyThreads = prev.filter(t => t.route === route && !t.issueNumber);
+        const mergedThreads = [
+          ...prev.filter(t => t.route !== route), // Keep threads from other routes
+          ...newThreads, // Add synced threads
+          ...localOnlyThreads // Keep local-only threads
+        ];
+        return mergedThreads;
+      });
+
+      console.log(`✅ Synced ${newThreads.length} threads from GitHub`);
+    } catch (error) {
+      console.error('Failed to sync from GitHub:', error);
+    } finally {
+      setIsSyncing(false);
+    }
+  }, []);
+
+  const retrySync = React.useCallback(async () => {
+    // TODO: Implement retry logic for failed syncs
+    console.log('Retry sync not yet implemented');
+  }, []);
+
+  const hasPendingSync = React.useMemo(() => {
+    return threads.some(t => t.syncStatus === 'pending' || t.syncStatus === 'error');
   }, [threads]);
 
   const value = React.useMemo(
@@ -230,9 +471,13 @@ export const CommentProvider: React.FunctionComponent<{ children: React.ReactNod
       deleteComment,
       deleteThread,
       clearAllThreads,
-      getThreadsForRoute
+      getThreadsForRoute,
+      syncFromGitHub,
+      retrySync,
+      isSyncing,
+      hasPendingSync
     }),
-    [threads, showPins, enableCommenting, toggleShowPins, toggleEnableCommenting, addThread, addReply, updateComment, deleteComment, deleteThread, clearAllThreads, getThreadsForRoute]
+    [threads, showPins, enableCommenting, toggleShowPins, toggleEnableCommenting, addThread, addReply, updateComment, deleteComment, deleteThread, clearAllThreads, getThreadsForRoute, syncFromGitHub, retrySync, isSyncing, hasPendingSync]
   );
 
   return <CommentContext.Provider value={value}>{children}</CommentContext.Provider>;

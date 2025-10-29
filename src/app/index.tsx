@@ -8,19 +8,22 @@ import { ThemeProvider } from '@app/utils/ThemeContext';
 import { FeatureFlagsProvider } from '@app/utils/FeatureFlagsContext';
 import { UserProfileProvider } from '@app/utils/UserProfileContext';
 import { CommentProvider } from '@app/context/CommentContext';
+import { ToasterProvider } from '@app/utils/ToasterContext';
 import '@app/app.css';
 
 const App: React.FunctionComponent = () => (
   <FeatureFlagsProvider>
     <UserProfileProvider>
       <ThemeProvider>
-        <CommentProvider>
-          <Router>
-            <AppLayout>
-              <AppRoutes />
-            </AppLayout>
-          </Router>
-        </CommentProvider>
+        <ToasterProvider>
+          <CommentProvider>
+            <Router>
+              <AppLayout>
+                <AppRoutes />
+              </AppLayout>
+            </Router>
+          </CommentProvider>
+        </ToasterProvider>
       </ThemeProvider>
     </UserProfileProvider>
   </FeatureFlagsProvider>
