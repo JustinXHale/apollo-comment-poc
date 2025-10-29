@@ -8,7 +8,8 @@ import { useFeatureFlags } from '@app/utils/FeatureFlagsContext';
 
 // New components
 import { Home } from '@app/Home/Home';
-import { Projects } from '@app/Projects/Projects';
+import { DataScienceProjects } from '@app/DataScienceProjects/DataScienceProjects';
+import { DataScienceProjectDetail } from '@app/DataScienceProjects/DataScienceProjectDetail';
 
 // AIAssets - imported from migrated src-3.0
 import { Models } from '@app/AIAssets/Models/Models';
@@ -111,12 +112,18 @@ const routes: AppRouteConfig[] = [
     icon: createFontAwesomeIcon('fa-light fa-house'),
   },
   {
-    element: <Projects />,
+    element: <DataScienceProjects />,
     exact: true,
-    label: 'Projects',
+    label: 'Data science projects',
     path: '/projects',
-    title: 'RHOAI 3.1 Console | Projects',
+    title: 'RHOAI 3.1 Console | Data Science Projects',
     icon: createFontAwesomeIcon('fa-light fa-folder'),
+  },
+  {
+    element: <DataScienceProjectDetail />,
+    exact: true,
+    path: '/projects/:projectName',
+    title: 'RHOAI 3.1 Console | Project Detail',
   },
   {
     label: 'AI hub',

@@ -2,6 +2,7 @@ import * as React from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   Button,
+  Checkbox,
   Divider,
   Dropdown,
   DropdownItem,
@@ -25,10 +26,13 @@ import {
   Tooltip
 } from '@patternfly/react-core';
 import { IAppRoute, IAppRouteGroup, routes, AppRouteConfig, filterRoutesByFlags } from '@app/routes';
-import { BarsIcon, BellIcon, CaretDownIcon, CogIcon, FlagIcon, InfoCircleIcon, MoonIcon, SunIcon, TrashIcon, UserIcon } from '@patternfly/react-icons';
+import { BarsIcon, BellIcon, CaretDownIcon, CogIcon, CommentIcon, FlagIcon, InfoCircleIcon, MoonIcon, SunIcon, TrashIcon, UserIcon } from '@patternfly/react-icons';
 import { useTheme } from '@app/utils/ThemeContext';
 import { useUserProfile } from '@app/utils/UserProfileContext';
 import { useFeatureFlags } from '@app/utils/FeatureFlagsContext';
+import { useComments } from '@app/context/CommentContext';
+import { CommentOverlay } from '@app/components/comments/CommentOverlay';
+import { CommentDrawer } from '@app/components/comments/CommentDrawer';
 // Import custom logos
 import LightLogo from '@app/bgimages/Product_Logos_Light.svg';
 import DarkLogo from '@app/bgimages/Product-Logos_Dark.svg';
@@ -41,9 +45,11 @@ interface IAppLayout {
 const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = React.useState(true);
   const [userDropdownOpen, setUserDropdownOpen] = React.useState(false);
+  const [selectedThreadId, setSelectedThreadId] = React.useState<string | null>(null);
   const { userProfile, setUserProfile } = useUserProfile();
   const { theme, toggleTheme } = useTheme();
   const { flags } = useFeatureFlags();
+  const { showPins, enableCommenting, toggleShowPins, toggleEnableCommenting, clearAllThreads, threads } = useComments();
   const navigate = useNavigate();
   
   // Clear local storage handler
@@ -112,6 +118,35 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
               variant="plain"
               aria-label="Information"
             />
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              padding: '0 0.5rem',
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              borderRadius: '4px'
+            }}>
+              <Checkbox
+                id="show-pins-toggle"
+                label="Show Pins"
+                isChecked={showPins}
+                onChange={(_event, checked) => toggleShowPins()}
+                style={{
+                  '--pf-v6-c-check__input--checked--BackgroundColor': '#C9190B',
+                  '--pf-v6-c-check__input--checked--BorderColor': '#C9190B'
+                } as React.CSSProperties}
+              />
+              <Checkbox
+                id="enable-commenting-toggle"
+                label="Enable Commenting"
+                isChecked={enableCommenting}
+                onChange={(_event, checked) => toggleEnableCommenting()}
+                style={{
+                  '--pf-v6-c-check__input--checked--BackgroundColor': '#C9190B',
+                  '--pf-v6-c-check__input--checked--BorderColor': '#C9190B'
+                } as React.CSSProperties}
+              />
+            </div>
             {flags.displayMode && (
               <Button
                 icon={theme === 'light' ? <MoonIcon /> : <SunIcon />}
@@ -214,6 +249,19 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
                 >
                   Clear local storage
                 </DropdownItem>
+                {threads.length > 0 && (
+                  <DropdownItem 
+                    key="clear-threads"
+                    icon={<CommentIcon />}
+                    onClick={() => {
+                      if (window.confirm(`Delete all ${threads.length} thread${threads.length === 1 ? '' : 's'}?`)) {
+                        clearAllThreads();
+                      }
+                    }}
+                  >
+                    Clear all threads ({threads.length})
+                  </DropdownItem>
+                )}
               </DropdownList>
             </Dropdown>
           </div>
@@ -421,9 +469,20 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
         masthead={masthead}
         sidebar={sidebarOpen && Sidebar}
         skipToContent={PageSkipToContent}
-        style={{ flex: 1, minHeight: 0 }}
+        style={{ flex: 1, minHeight: 0, position: 'relative' }}
       >
-        {children}
+        <CommentDrawer
+          selectedThreadId={selectedThreadId}
+          onThreadSelect={setSelectedThreadId}
+        >
+          <div style={{ position: 'relative', height: '100%', width: '100%' }}>
+            {children}
+            <CommentOverlay
+              selectedThreadId={selectedThreadId}
+              onThreadSelect={setSelectedThreadId}
+            />
+          </div>
+        </CommentDrawer>
       </Page>
     </div>
   );

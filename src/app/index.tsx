@@ -7,17 +7,20 @@ import { AppRoutes } from '@app/routes';
 import { ThemeProvider } from '@app/utils/ThemeContext';
 import { FeatureFlagsProvider } from '@app/utils/FeatureFlagsContext';
 import { UserProfileProvider } from '@app/utils/UserProfileContext';
+import { CommentProvider } from '@app/context/CommentContext';
 import '@app/app.css';
 
 const App: React.FunctionComponent = () => (
   <FeatureFlagsProvider>
     <UserProfileProvider>
       <ThemeProvider>
-        <Router>
-          <AppLayout>
-            <AppRoutes />
-          </AppLayout>
-        </Router>
+        <CommentProvider>
+          <Router>
+            <AppLayout>
+              <AppRoutes />
+            </AppLayout>
+          </Router>
+        </CommentProvider>
       </ThemeProvider>
     </UserProfileProvider>
   </FeatureFlagsProvider>
