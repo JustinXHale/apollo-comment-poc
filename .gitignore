@@ -12,3 +12,18 @@ storybook-static
 .vscode
 # Local Netlify folder
 .netlify
+
+# Additional local environment variants
+.env.local
+.env.development
+.env.production
+.env.test
+.env.*.local
+
+# Cursor / AI-generated metadata (if you use Cursor regularly)
+.cursor/
+__cursor_history__/
+
+# Optional: personal screenshots, logs, etc.
+screenshots/
+logs/
