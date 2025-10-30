@@ -1,8 +1,10 @@
 import * as React from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
+  Alert,
+  AlertActionCloseButton,
+  AlertGroup,
   Button,
-  Checkbox,
   Divider,
   Dropdown,
   DropdownItem,
@@ -34,6 +36,7 @@ import { useComments } from '@app/context/CommentContext';
 import { CommentOverlay } from '@app/components/comments/CommentOverlay';
 import { CommentDrawer } from '@app/components/comments/CommentDrawer';
 import { GitHubAuthButton } from '@app/components/GitHubAuthButton';
+import { useGitHubAuth } from '@app/contexts/GitHubAuthContext';
 // Import custom logos
 import LightLogo from '@app/bgimages/Product_Logos_Light.svg';
 import DarkLogo from '@app/bgimages/Product-Logos_Dark.svg';
@@ -47,10 +50,12 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = React.useState(true);
   const [userDropdownOpen, setUserDropdownOpen] = React.useState(false);
   const [selectedThreadId, setSelectedThreadId] = React.useState<string | null>(null);
+  const [bannerDismissed, setBannerDismissed] = React.useState(false);
   const { userProfile, setUserProfile } = useUserProfile();
   const { theme, toggleTheme } = useTheme();
   const { flags } = useFeatureFlags();
   const { showPins, enableCommenting, toggleShowPins, toggleEnableCommenting, clearAllThreads, threads, hasPendingSync, isSyncing } = useComments();
+  const { isAuthenticated } = useGitHubAuth();
   const navigate = useNavigate();
   
   // Clear local storage handler
@@ -120,50 +125,40 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
               variant="plain"
               aria-label="Information"
             />
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.75rem',
-              padding: '0 0.5rem',
-              backgroundColor: 'rgba(255, 255, 255, 0.1)',
-              borderRadius: '4px'
-            }}>
-              <Checkbox
-                id="show-pins-toggle"
-                label="Show Pins"
-                isChecked={showPins}
-                onChange={(_event, checked) => toggleShowPins()}
-                style={{
-                  '--pf-v6-c-check__input--checked--BackgroundColor': '#C9190B',
-                  '--pf-v6-c-check__input--checked--BorderColor': '#C9190B'
-                } as React.CSSProperties}
-              />
-              <Checkbox
-                id="enable-commenting-toggle"
-                label="Enable Commenting"
-                isChecked={enableCommenting}
-                onChange={(_event, checked) => toggleEnableCommenting()}
-                style={{
-                  '--pf-v6-c-check__input--checked--BackgroundColor': '#C9190B',
-                  '--pf-v6-c-check__input--checked--BorderColor': '#C9190B'
-                } as React.CSSProperties}
-              />
-              {(hasPendingSync || isSyncing) && (
-                <Tooltip content="Syncing comments with GitHub...">
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--pf-t--global--text--color--on-accent--default)' }}>
-                    <SyncAltIcon style={{ animation: 'spin 2s linear infinite' }} />
-                    <style>
-                      {`
-                        @keyframes spin {
-                          from { transform: rotate(0deg); }
-                          to { transform: rotate(360deg); }
-                        }
-                      `}
-                    </style>
-                  </span>
-                </Tooltip>
-              )}
-            </div>
+            <Tooltip content={enableCommenting ? "Disable commenting" : "Enable commenting"}>
+              <Button
+                variant="plain"
+                onClick={() => {
+                  toggleEnableCommenting();
+                  if (!enableCommenting) {
+                    toggleShowPins(); // Also show pins when enabling
+                  }
+                }}
+                aria-label={enableCommenting ? "Disable commenting" : "Enable commenting"}
+              >
+                <CommentIcon 
+                  style={{ 
+                    color: enableCommenting ? '#C9190B' : '#151515',
+                    fontSize: '1.25rem'
+                  }}
+                />
+              </Button>
+            </Tooltip>
+            {(hasPendingSync || isSyncing) && (
+              <Tooltip content="Syncing comments with GitHub...">
+                <span style={{ display: 'flex', alignItems: 'center' }}>
+                  <SyncAltIcon style={{ animation: 'spin 2s linear infinite', color: 'var(--pf-t--global--icon--color--subtle)' }} />
+                  <style>
+                    {`
+                      @keyframes spin {
+                        from { transform: rotate(0deg); }
+                        to { transform: rotate(360deg); }
+                      }
+                    `}
+                  </style>
+                </span>
+              </Tooltip>
+            )}
             {flags.displayMode && (
               <Button
                 icon={theme === 'light' ? <MoonIcon /> : <SunIcon />}
@@ -480,6 +475,23 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
           />
         </Tooltip>
       </div>
+      
+      {/* GitHub Login Banner */}
+      {!isAuthenticated && !bannerDismissed && (
+        <Alert
+          variant="info"
+          isInline
+          title="Sign in with GitHub to enable commenting and save your comments"
+          actionClose={<AlertActionCloseButton onClose={() => setBannerDismissed(true)} />}
+          style={{
+            margin: 0,
+            borderRadius: 0,
+            borderLeft: 'none',
+            borderRight: 'none',
+            borderTop: 'none'
+          }}
+        />
+      )}
       
       <Page
         mainContainerId={pageId}

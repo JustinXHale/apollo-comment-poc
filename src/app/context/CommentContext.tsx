@@ -169,9 +169,12 @@ export const CommentProvider: React.FunctionComponent<{ children: React.ReactNod
           t.id === threadId ? { ...t, syncStatus: 'syncing' as const } : t
         ));
 
+        // Create a readable page name from route
+        const pageName = route === '/' ? 'Home page' : route.split('/').filter(Boolean).join(' > ') || 'Page';
+        
         const issue = await githubAdapter.createIssue(
-          `Comment Thread at (${Math.round(x)}, ${Math.round(y)})`,
-          `Thread created on route: ${route}\n\n(Initial comment will be added as a reply)`,
+          `💬 ${pageName} comment`,
+          `Thread created on route: ${route}\n\nCoordinates: (${Math.round(x)}, ${Math.round(y)})\n\n(Initial comment will be added as a reply)`,
           route,
           x,
           y
