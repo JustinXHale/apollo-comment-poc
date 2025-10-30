@@ -50,7 +50,12 @@ export const GitHubAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   }, []);
 
   const login = () => {
-    window.location.href = '/.netlify/functions/github-oauth-login';
+    // Auto-detect platform: Netlify or Vercel
+    const isNetlify = window.location.hostname.includes('netlify.app');
+    const loginUrl = isNetlify 
+      ? '/.netlify/functions/github-oauth-login' 
+      : '/api/github-oauth-login';
+    window.location.href = loginUrl;
   };
 
   const logout = () => {
