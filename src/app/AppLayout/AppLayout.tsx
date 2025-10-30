@@ -129,10 +129,15 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
               <Button
                 variant="plain"
                 onClick={() => {
-                  toggleEnableCommenting();
-                  if (!enableCommenting) {
-                    toggleShowPins(); // Also show pins when enabling
+                  // If turning commenting ON and pins are OFF, turn pins ON
+                  if (!enableCommenting && !showPins) {
+                    toggleShowPins();
                   }
+                  // If turning commenting OFF and pins are ON, turn pins OFF
+                  if (enableCommenting && showPins) {
+                    toggleShowPins();
+                  }
+                  toggleEnableCommenting();
                 }}
                 aria-label={enableCommenting ? "Disable commenting" : "Enable commenting"}
               >

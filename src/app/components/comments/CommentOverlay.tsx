@@ -39,8 +39,8 @@ export const CommentOverlay: React.FunctionComponent<CommentOverlayProps> = ({
     [enableCommenting, addThread, location.pathname, onThreadSelect]
   );
 
-  // Don't render anything if showPins is false
-  if (!showPins) {
+  // Don't render anything if neither showPins nor enableCommenting are true
+  if (!showPins && !enableCommenting) {
     return null;
   }
 
@@ -60,7 +60,7 @@ export const CommentOverlay: React.FunctionComponent<CommentOverlayProps> = ({
         zIndex: 999
       }}
     >
-      {currentRouteThreads.map((thread) => (
+      {showPins && currentRouteThreads.map((thread) => (
         <div
           key={thread.id}
           style={{ pointerEvents: 'auto' }}
