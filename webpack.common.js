@@ -107,9 +107,9 @@ module.exports = (env) => {
       }),
       // Inject environment variables for Netlify/CI builds
       new webpack.DefinePlugin({
-        'import.meta.env.VITE_GITHUB_OWNER': JSON.stringify(process.env.VITE_GITHUB_OWNER),
-        'import.meta.env.VITE_GITHUB_REPO': JSON.stringify(process.env.VITE_GITHUB_REPO),
-        'import.meta.env.VITE_GITHUB_CLIENT_ID': JSON.stringify(process.env.VITE_GITHUB_CLIENT_ID),
+        'process.env.VITE_GITHUB_OWNER': JSON.stringify(process.env.VITE_GITHUB_OWNER),
+        'process.env.VITE_GITHUB_REPO': JSON.stringify(process.env.VITE_GITHUB_REPO),
+        'process.env.VITE_GITHUB_CLIENT_ID': JSON.stringify(process.env.VITE_GITHUB_CLIENT_ID),
       }),
       new CopyPlugin({
         patterns: [{ from: './src/favicon.png', to: 'images' }],

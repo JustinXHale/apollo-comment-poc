@@ -35,8 +35,9 @@ export const getAuthenticatedUser = () => {
 
 export const isGitHubConfigured = (): boolean => {
   const token = getStoredToken();
-  const owner = import.meta.env?.VITE_GITHUB_OWNER;
-  const repo = import.meta.env?.VITE_GITHUB_REPO;
+  const owner = process.env.VITE_GITHUB_OWNER;
+  const repo = process.env.VITE_GITHUB_REPO;
+  console.log('🔍 isGitHubConfigured check:', { hasToken: !!token, owner, repo });
   return !!(token && owner && repo);
 };
 
@@ -80,8 +81,8 @@ export const githubAdapter = {
       return { success: false, error: 'Please sign in with GitHub' };
     }
 
-    const owner = import.meta.env?.VITE_GITHUB_OWNER;
-    const repo = import.meta.env?.VITE_GITHUB_REPO;
+    const owner = process.env.VITE_GITHUB_OWNER;
+    const repo = process.env.VITE_GITHUB_REPO;
     console.log('🔵 GitHub config:', { owner, repo, hasToken: !!getStoredToken() });
 
     try {
@@ -126,8 +127,8 @@ export const githubAdapter = {
       return { success: false, error: 'Please sign in with GitHub' };
     }
 
-    const owner = import.meta.env?.VITE_GITHUB_OWNER;
-    const repo = import.meta.env?.VITE_GITHUB_REPO;
+    const owner = process.env.VITE_GITHUB_OWNER;
+    const repo = process.env.VITE_GITHUB_REPO;
 
     try {
       const commentData = await makeGitHubRequest(
@@ -153,8 +154,8 @@ export const githubAdapter = {
       return [];
     }
 
-    const owner = import.meta.env?.VITE_GITHUB_OWNER;
-    const repo = import.meta.env?.VITE_GITHUB_REPO;
+    const owner = process.env.VITE_GITHUB_OWNER;
+    const repo = process.env.VITE_GITHUB_REPO;
 
     try {
       const issues = await makeGitHubRequest(
@@ -192,8 +193,8 @@ export const githubAdapter = {
       return [];
     }
 
-    const owner = import.meta.env?.VITE_GITHUB_OWNER;
-    const repo = import.meta.env?.VITE_GITHUB_REPO;
+    const owner = process.env.VITE_GITHUB_OWNER;
+    const repo = process.env.VITE_GITHUB_REPO;
 
     try {
       const comments = await makeGitHubRequest(
@@ -216,8 +217,8 @@ export const githubAdapter = {
       return { success: false, error: 'Please sign in with GitHub' };
     }
 
-    const owner = import.meta.env?.VITE_GITHUB_OWNER;
-    const repo = import.meta.env?.VITE_GITHUB_REPO;
+    const owner = process.env.VITE_GITHUB_OWNER;
+    const repo = process.env.VITE_GITHUB_REPO;
 
     try {
       const issueData = await makeGitHubRequest(
@@ -242,8 +243,8 @@ export const githubAdapter = {
       return { success: false, error: 'Please sign in with GitHub' };
     }
 
-    const owner = import.meta.env?.VITE_GITHUB_OWNER;
-    const repo = import.meta.env?.VITE_GITHUB_REPO;
+    const owner = process.env.VITE_GITHUB_OWNER;
+    const repo = process.env.VITE_GITHUB_REPO;
 
     try {
       const commentData = await makeGitHubRequest(
@@ -268,8 +269,8 @@ export const githubAdapter = {
       return { success: false, error: 'Please sign in with GitHub' };
     }
 
-    const owner = import.meta.env?.VITE_GITHUB_OWNER;
-    const repo = import.meta.env?.VITE_GITHUB_REPO;
+    const owner = process.env.VITE_GITHUB_OWNER;
+    const repo = process.env.VITE_GITHUB_REPO;
 
     try {
       await makeGitHubRequest(
