@@ -9,6 +9,7 @@ import { FeatureFlagsProvider } from '@app/utils/FeatureFlagsContext';
 import { UserProfileProvider } from '@app/utils/UserProfileContext';
 import { CommentProvider } from '@app/context/CommentContext';
 import { ToasterProvider } from '@app/utils/ToasterContext';
+import { GitHubAuthProvider } from '@app/contexts/GitHubAuthContext';
 import '@app/app.css';
 
 const App: React.FunctionComponent = () => (
@@ -16,13 +17,15 @@ const App: React.FunctionComponent = () => (
     <UserProfileProvider>
       <ThemeProvider>
         <ToasterProvider>
-          <CommentProvider>
-            <Router>
-              <AppLayout>
-                <AppRoutes />
-              </AppLayout>
-            </Router>
-          </CommentProvider>
+          <GitHubAuthProvider>
+            <CommentProvider>
+              <Router>
+                <AppLayout>
+                  <AppRoutes />
+                </AppLayout>
+              </Router>
+            </CommentProvider>
+          </GitHubAuthProvider>
         </ToasterProvider>
       </ThemeProvider>
     </UserProfileProvider>

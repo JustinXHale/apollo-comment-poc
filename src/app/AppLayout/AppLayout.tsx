@@ -33,6 +33,7 @@ import { useFeatureFlags } from '@app/utils/FeatureFlagsContext';
 import { useComments } from '@app/context/CommentContext';
 import { CommentOverlay } from '@app/components/comments/CommentOverlay';
 import { CommentDrawer } from '@app/components/comments/CommentDrawer';
+import { GitHubAuthButton } from '@app/components/GitHubAuthButton';
 // Import custom logos
 import LightLogo from '@app/bgimages/Product_Logos_Light.svg';
 import DarkLogo from '@app/bgimages/Product-Logos_Dark.svg';
@@ -108,6 +109,7 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
           gap: '0.25rem',
           zIndex: 10
         }}>
+            <GitHubAuthButton />
             <Button
               icon={<BellIcon />}
               variant="plain"
