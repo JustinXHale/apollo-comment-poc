@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 
 const path = require('path');
+const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
@@ -103,6 +104,12 @@ module.exports = (env) => {
         path: path.resolve(__dirname, '.env.local'), // explicitly load from your .env.local
         systemvars: true, // allow shell overrides (useful for CI)
         silent: false, // show warnings if the file is missing
+      }),
+      // Inject environment variables for Netlify/CI builds
+      new webpack.DefinePlugin({
+        'import.meta.env.VITE_GITHUB_OWNER': JSON.stringify(process.env.VITE_GITHUB_OWNER),
+        'import.meta.env.VITE_GITHUB_REPO': JSON.stringify(process.env.VITE_GITHUB_REPO),
+        'import.meta.env.VITE_GITHUB_CLIENT_ID': JSON.stringify(process.env.VITE_GITHUB_CLIENT_ID),
       }),
       new CopyPlugin({
         patterns: [{ from: './src/favicon.png', to: 'images' }],
