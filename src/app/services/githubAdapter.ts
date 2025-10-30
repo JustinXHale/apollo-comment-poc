@@ -1,11 +1,13 @@
 import axios from 'axios';
 
-// Auto-detect platform: Netlify or Vercel
-const isNetlify = typeof window !== 'undefined' && window.location.hostname.includes('netlify.app');
-const API_BASE = isNetlify ? '/.netlify/functions/github-api' : '/api/github-api';
-if (typeof window !== 'undefined') {
-  console.log('🔍 API detection:', { hostname: window.location.hostname, isNetlify, API_BASE });
-}
+// Auto-detect platform at runtime: Netlify or Vercel
+const getApiBase = (): string => {
+  if (typeof window === 'undefined') return '/api/github-api'; // SSR default
+  const isNetlify = window.location.hostname.includes('netlify.app');
+  const apiBase = isNetlify ? '/.netlify/functions/github-api' : '/api/github-api';
+  console.log('🔍 API detection:', { hostname: window.location.hostname, isNetlify, apiBase });
+  return apiBase;
+};
 
 // Get stored OAuth token from localStorage
 const getStoredToken = (): string | null => {
@@ -64,7 +66,7 @@ async function makeGitHubRequest(
     throw new Error('Not authenticated with GitHub');
   }
 
-  const response = await axios.post(API_BASE, {
+  const response = await axios.post(getApiBase(), {
     token,
     method,
     endpoint,
