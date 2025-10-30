@@ -3,6 +3,9 @@ import axios from 'axios';
 // Auto-detect platform: Netlify or Vercel
 const isNetlify = typeof window !== 'undefined' && window.location.hostname.includes('netlify.app');
 const API_BASE = isNetlify ? '/.netlify/functions/github-api' : '/api/github-api';
+if (typeof window !== 'undefined') {
+  console.log('🔍 API detection:', { hostname: window.location.hostname, isNetlify, API_BASE });
+}
 
 // Get stored OAuth token from localStorage
 const getStoredToken = (): string | null => {
