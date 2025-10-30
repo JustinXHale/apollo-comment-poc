@@ -1,17 +1,19 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import axios from 'axios';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   const code = req.query.code as string;
   const clientId = process.env.GITHUB_CLIENT_ID || process.env.VITE_GITHUB_CLIENT_ID;
   const clientSecret = process.env.GITHUB_CLIENT_SECRET;
 
   if (!code) {
-    return res.status(400).json({ error: 'No code provided' });
+    res.status(400).json({ error: 'No code provided' });
+    return;
   }
 
   if (!clientId || !clientSecret) {
-    return res.status(500).json({ error: 'GitHub OAuth not configured properly' });
+    res.status(500).json({ error: 'GitHub OAuth not configured properly' });
+    return;
   }
 
   try {
@@ -54,7 +56,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.redirect(302, redirectUrl);
   } catch (error: any) {
     console.error('OAuth callback error:', error.response?.data || error.message);
-    return res.status(500).json({
+    res.status(500).json({
       error: 'Failed to exchange code for token',
       details: error.response?.data || error.message,
     });
