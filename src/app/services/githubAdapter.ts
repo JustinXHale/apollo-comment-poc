@@ -1,16 +1,19 @@
 import axios from 'axios';
 
-console.log("🔑 GitHub Token Prefix:", process.env.VITE_GITHUB_TOKEN?.slice(0, 10));
-
 const API_BASE = 'https://api.github.com';
 
-// Safely access environment variables
-const token = process.env.VITE_GITHUB_TOKEN;
-const owner = process.env.VITE_GITHUB_OWNER;
-const repo  = process.env.VITE_GITHUB_REPO;
+// Safely access environment variables using import.meta.env (Vite requirement)
+const token = import.meta.env?.VITE_GITHUB_TOKEN;
+const owner = import.meta.env?.VITE_GITHUB_OWNER;
+const repo  = import.meta.env?.VITE_GITHUB_REPO;
 
-
-console.log("🧩 Token at check:", token ? "exists ✅" : "undefined ❌");
+// Debug logging (safe for production - doesn't expose full token)
+console.log("🔧 GitHub Config Check:", {
+  hasToken: !!token,
+  tokenPrefix: token?.slice(0, 4) + '...',
+  owner: owner || '(missing)',
+  repo: repo || '(missing)'
+});
 
 if (!token && typeof window !== 'undefined') {
   console.warn('⚠️ Missing GitHub token. GitHub sync disabled. Configure .env.local with VITE_GITHUB_TOKEN.');

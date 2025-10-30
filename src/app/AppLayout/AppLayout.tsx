@@ -26,7 +26,7 @@ import {
   Tooltip
 } from '@patternfly/react-core';
 import { IAppRoute, IAppRouteGroup, routes, AppRouteConfig, filterRoutesByFlags } from '@app/routes';
-import { BarsIcon, BellIcon, CaretDownIcon, CogIcon, CommentIcon, FlagIcon, InfoCircleIcon, MoonIcon, SunIcon, TrashIcon, UserIcon } from '@patternfly/react-icons';
+import { BarsIcon, BellIcon, CaretDownIcon, CogIcon, CommentIcon, FlagIcon, InfoCircleIcon, MoonIcon, SunIcon, SyncAltIcon, TrashIcon, UserIcon } from '@patternfly/react-icons';
 import { useTheme } from '@app/utils/ThemeContext';
 import { useUserProfile } from '@app/utils/UserProfileContext';
 import { useFeatureFlags } from '@app/utils/FeatureFlagsContext';
@@ -49,7 +49,7 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
   const { userProfile, setUserProfile } = useUserProfile();
   const { theme, toggleTheme } = useTheme();
   const { flags } = useFeatureFlags();
-  const { showPins, enableCommenting, toggleShowPins, toggleEnableCommenting, clearAllThreads, threads } = useComments();
+  const { showPins, enableCommenting, toggleShowPins, toggleEnableCommenting, clearAllThreads, threads, hasPendingSync, isSyncing } = useComments();
   const navigate = useNavigate();
   
   // Clear local storage handler
@@ -146,6 +146,21 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
                   '--pf-v6-c-check__input--checked--BorderColor': '#C9190B'
                 } as React.CSSProperties}
               />
+              {(hasPendingSync || isSyncing) && (
+                <Tooltip content="Syncing comments with GitHub...">
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--pf-t--global--text--color--on-accent--default)' }}>
+                    <SyncAltIcon style={{ animation: 'spin 2s linear infinite' }} />
+                    <style>
+                      {`
+                        @keyframes spin {
+                          from { transform: rotate(0deg); }
+                          to { transform: rotate(360deg); }
+                        }
+                      `}
+                    </style>
+                  </span>
+                </Tooltip>
+              )}
             </div>
             {flags.displayMode && (
               <Button
