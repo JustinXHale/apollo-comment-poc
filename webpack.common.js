@@ -99,17 +99,11 @@ module.exports = (env) => {
         template: path.resolve(__dirname, 'src', 'index.html'),
         filename: '404.html',
       }),
-      // 👇 Add dotenv-webpack here
+      // Load environment variables from .env.local and system
       new Dotenv({
-        path: path.resolve(__dirname, '.env.local'), // explicitly load from your .env.local
-        systemvars: true, // allow shell overrides (useful for CI)
-        silent: false, // show warnings if the file is missing
-      }),
-      // Inject environment variables for Netlify/CI builds
-      new webpack.DefinePlugin({
-        'process.env.VITE_GITHUB_OWNER': JSON.stringify(process.env.VITE_GITHUB_OWNER),
-        'process.env.VITE_GITHUB_REPO': JSON.stringify(process.env.VITE_GITHUB_REPO),
-        'process.env.VITE_GITHUB_CLIENT_ID': JSON.stringify(process.env.VITE_GITHUB_CLIENT_ID),
+        path: path.resolve(__dirname, '.env.local'),
+        systemvars: true, // allow system env vars to override (useful for CI/Netlify/Vercel)
+        silent: true,
       }),
       new CopyPlugin({
         patterns: [{ from: './src/favicon.png', to: 'images' }],

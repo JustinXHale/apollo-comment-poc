@@ -132,8 +132,8 @@ export const CommentDrawer: React.FunctionComponent<CommentDrawerProps> = ({
   const getGitHubLink = (issueNumber?: number) => {
     if (!issueNumber) return null;
     try {
-      const owner = import.meta.env?.VITE_GITHUB_OWNER;
-      const repo = import.meta.env?.VITE_GITHUB_REPO;
+      const owner = process.env.VITE_GITHUB_OWNER;
+      const repo = process.env.VITE_GITHUB_REPO;
       if (!owner || !repo) return null;
       return `https://github.com/${owner}/${repo}/issues/${issueNumber}`;
     } catch (error) {
