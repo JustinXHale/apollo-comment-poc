@@ -8,6 +8,7 @@ import { ThemeProvider } from '@app/utils/ThemeContext';
 import { FeatureFlagsProvider } from '@app/utils/FeatureFlagsContext';
 import { UserProfileProvider } from '@app/utils/UserProfileContext';
 import { CommentProvider } from '@app/context/CommentContext';
+import { VersionProvider } from '@app/context/VersionContext';
 import { ToasterProvider } from '@app/utils/ToasterContext';
 import { GitHubAuthProvider } from '@app/contexts/GitHubAuthContext';
 import '@app/app.css';
@@ -18,13 +19,15 @@ const App: React.FunctionComponent = () => (
       <ThemeProvider>
         <ToasterProvider>
           <GitHubAuthProvider>
-            <CommentProvider>
-              <Router>
-                <AppLayout>
-                  <AppRoutes />
-                </AppLayout>
-              </Router>
-            </CommentProvider>
+            <VersionProvider>
+              <CommentProvider>
+                <Router>
+                  <AppLayout>
+                    <AppRoutes />
+                  </AppLayout>
+                </Router>
+              </CommentProvider>
+            </VersionProvider>
           </GitHubAuthProvider>
         </ToasterProvider>
       </ThemeProvider>

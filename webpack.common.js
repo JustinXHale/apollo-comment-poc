@@ -106,7 +106,7 @@ module.exports = (env) => {
         silent: true,
       }),
       new CopyPlugin({
-        patterns: [{ from: './src/favicon.png', to: 'images' }],
+        patterns: [{ from: './src/halefavicon.png', to: 'images' }],
       }),
     ],
 

@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useLocation } from 'react-router-dom';
 import { useComments } from '@app/context/CommentContext';
+import { useVersion } from '@app/context/VersionContext';
 import { CommentPin } from './CommentPin';
 
 interface CommentOverlayProps {
@@ -14,11 +15,12 @@ export const CommentOverlay: React.FunctionComponent<CommentOverlayProps> = ({
 }) => {
   const location = useLocation();
   const { showPins, enableCommenting, addThread, getThreadsForRoute } = useComments();
+  const { currentVersion, currentIteration } = useVersion();
   const overlayRef = React.useRef<HTMLDivElement>(null);
 
   const currentRouteThreads = React.useMemo(
-    () => getThreadsForRoute(location.pathname),
-    [getThreadsForRoute, location.pathname]
+    () => getThreadsForRoute(location.pathname, currentVersion, currentIteration),
+    [getThreadsForRoute, location.pathname, currentVersion, currentIteration]
   );
 
   const handleOverlayClick = React.useCallback(
@@ -30,13 +32,13 @@ export const CommentOverlay: React.FunctionComponent<CommentOverlayProps> = ({
         const rect = overlayRef.current.getBoundingClientRect();
         const x = event.clientX - rect.left;
         const y = event.clientY - rect.top;
-        const newThreadId = addThread(x, y, location.pathname);
+        const newThreadId = addThread(x, y, location.pathname, currentVersion, currentIteration);
         
         // Auto-open the drawer for the newly created thread
         onThreadSelect(newThreadId);
       }
     },
-    [enableCommenting, addThread, location.pathname, onThreadSelect]
+    [enableCommenting, addThread, location.pathname, currentVersion, currentIteration, onThreadSelect]
   );
 
   // Don't render anything if neither showPins nor enableCommenting are true

@@ -20,6 +20,8 @@ export interface Thread {
   issueNumber?: number; // GitHub Issue number
   syncStatus: SyncStatus; // Sync state
   syncError?: string; // Error message if sync failed
+  version?: string; // Version (e.g., "1", "2", "3")
+  iteration?: string; // Iteration (e.g., "v1", "v2")
 }
 
 interface CommentContextType {
@@ -28,13 +30,13 @@ interface CommentContextType {
   enableCommenting: boolean;
   toggleShowPins: () => void;
   toggleEnableCommenting: () => void;
-  addThread: (x: number, y: number, route: string) => string;
+  addThread: (x: number, y: number, route: string, version?: string, iteration?: string) => string;
   addReply: (threadId: string, text: string) => Promise<void>;
   updateComment: (threadId: string, commentId: string, text: string) => Promise<void>;
   deleteComment: (threadId: string, commentId: string) => Promise<void>;
   deleteThread: (threadId: string) => Promise<void>;
   clearAllThreads: () => void;
-  getThreadsForRoute: (route: string) => Thread[];
+  getThreadsForRoute: (route: string, version?: string, iteration?: string) => Thread[];
   syncFromGitHub: (route: string) => Promise<void>;
   retrySync: () => Promise<void>;
   isSyncing: boolean;
@@ -150,7 +152,7 @@ export const CommentProvider: React.FunctionComponent<{ children: React.ReactNod
     setEnableCommenting(prev => !prev);
   }, []);
 
-  const addThread = React.useCallback((x: number, y: number, route: string): string => {
+  const addThread = React.useCallback((x: number, y: number, route: string, version?: string, iteration?: string): string => {
     const threadId = `thread-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const newThread: Thread = {
       id: threadId,
@@ -158,7 +160,9 @@ export const CommentProvider: React.FunctionComponent<{ children: React.ReactNod
       y,
       route,
       comments: [], // Start with no comments
-      syncStatus: 'local'
+      syncStatus: 'local',
+      version,
+      iteration
     };
     setThreads(prev => [...prev, newThread]);
 
@@ -171,13 +175,16 @@ export const CommentProvider: React.FunctionComponent<{ children: React.ReactNod
 
         // Create a readable page name from route
         const pageName = route === '/' ? 'Home page' : route.split('/').filter(Boolean).join(' > ') || 'Page';
+        const versionStr = version ? ` [v${version}${iteration ? ` ${iteration}` : ''}]` : '';
         
         const issue = await githubAdapter.createIssue(
-          `💬 ${pageName} comment`,
-          `Thread created on route: ${route}\n\nCoordinates: (${Math.round(x)}, ${Math.round(y)})\n\n(Initial comment will be added as a reply)`,
+          `💬 ${pageName} comment${versionStr}`,
+          `Thread created on route: ${route}\n\nCoordinates: (${Math.round(x)}, ${Math.round(y)})\n\n**Version:** ${version || 'N/A'}\n**Iteration:** ${iteration || 'N/A'}\n\n(Initial comment will be added as a reply)`,
           route,
           x,
-          y
+          y,
+          version,
+          iteration
         );
 
         if (issue.success && issue.data) {
@@ -222,32 +229,118 @@ export const CommentProvider: React.FunctionComponent<{ children: React.ReactNod
       })
     );
 
-    // Sync to GitHub if configured and thread has an issue number
-    if (isGitHubConfigured() && thread?.issueNumber) {
-      const result = await githubAdapter.createComment(thread.issueNumber, text);
-      if (result.success && result.data) {
-        // Update comment with GitHub ID and mark synced
-        setThreads(prev =>
-          prev.map(t => {
-            if (t.id === threadId) {
-              return {
-                ...t,
-                syncStatus: 'synced' as const,
-                comments: t.comments.map(c =>
-                  c.id === commentId ? { ...c, githubCommentId: result.data.id } : c
-                )
-              };
+    // Sync to GitHub if configured
+    if (isGitHubConfigured() && thread) {
+      // If thread doesn't have an issue number, create one first
+      if (!thread.issueNumber) {
+        console.log('🔵 Thread has no issue number, creating GitHub issue first...');
+        setThreads(prev => prev.map(t => 
+          t.id === threadId ? { ...t, syncStatus: 'syncing' as const } : t
+        ));
+
+        // Create a readable page name from route
+        const pageName = thread.route === '/' ? 'Home page' : thread.route.split('/').filter(Boolean).join(' > ') || 'Page';
+        const versionStr = thread.version ? ` [v${thread.version}${thread.iteration ? ` ${thread.iteration}` : ''}]` : '';
+        
+        const issue = await githubAdapter.createIssue(
+          `💬 ${pageName} comment${versionStr}`,
+          `Thread created on route: ${thread.route}\n\nCoordinates: (${Math.round(thread.x)}, ${Math.round(thread.y)})\n\n**Version:** ${thread.version || 'N/A'}\n**Iteration:** ${thread.iteration || 'N/A'}`,
+          thread.route,
+          thread.x,
+          thread.y,
+          thread.version,
+          thread.iteration
+        );
+
+        if (issue.success && issue.data) {
+          console.log('✅ Created GitHub issue #', issue.data.number);
+          // Update thread with issue number
+          setThreads(prev => prev.map(t => 
+            t.id === threadId 
+              ? { ...t, issueNumber: issue.data.number, syncStatus: 'pending' as const }
+              : t
+          ));
+
+          // Now sync all existing comments to the new issue
+          const updatedThread = threads.find(t => t.id === threadId);
+          if (updatedThread) {
+            for (const comment of updatedThread.comments) {
+              if (!comment.githubCommentId) {
+                const commentResult = await githubAdapter.createComment(issue.data.number, comment.text);
+                if (commentResult.success && commentResult.data) {
+                  setThreads(prev => prev.map(t => {
+                    if (t.id === threadId) {
+                      return {
+                        ...t,
+                        comments: t.comments.map(c =>
+                          c.id === comment.id ? { ...c, githubCommentId: commentResult.data.id } : c
+                        )
+                      };
+                    }
+                    return t;
+                  }));
+                }
+              }
             }
-            return t;
-          })
-        );
+          }
+
+          // Now add the new comment
+          const result = await githubAdapter.createComment(issue.data.number, text);
+          if (result.success && result.data) {
+            setThreads(prev =>
+              prev.map(t => {
+                if (t.id === threadId) {
+                  return {
+                    ...t,
+                    syncStatus: 'synced' as const,
+                    comments: t.comments.map(c =>
+                      c.id === commentId ? { ...c, githubCommentId: result.data.id } : c
+                    )
+                  };
+                }
+                return t;
+              })
+            );
+          } else {
+            setThreads(prev =>
+              prev.map(t =>
+                t.id === threadId ? { ...t, syncStatus: 'error' as const, syncError: result.error } : t
+              )
+            );
+          }
+        } else {
+          console.error('❌ Failed to create GitHub issue:', issue.error);
+          setThreads(prev => prev.map(t => 
+            t.id === threadId ? { ...t, syncStatus: 'error' as const, syncError: issue.error } : t
+          ));
+        }
       } else {
-        // Mark as error if sync failed
-        setThreads(prev =>
-          prev.map(t =>
-            t.id === threadId ? { ...t, syncStatus: 'error' as const, syncError: result.error } : t
-          )
-        );
+        // Thread already has an issue number, just add the comment
+        const result = await githubAdapter.createComment(thread.issueNumber, text);
+        if (result.success && result.data) {
+          // Update comment with GitHub ID and mark synced
+          setThreads(prev =>
+            prev.map(t => {
+              if (t.id === threadId) {
+                return {
+                  ...t,
+                  syncStatus: 'synced' as const,
+                  comments: t.comments.map(c =>
+                    c.id === commentId ? { ...c, githubCommentId: result.data.id } : c
+                  )
+                };
+              }
+              return t;
+            })
+          );
+        } else {
+          // Mark as error if sync failed
+          setThreads(prev =>
+            prev.map(t =>
+              t.id === threadId ? { ...t, syncStatus: 'error' as const, syncError: result.error } : t
+            )
+          );
+        }
       }
     }
   }, [threads]);
@@ -346,8 +439,15 @@ export const CommentProvider: React.FunctionComponent<{ children: React.ReactNod
     setThreads([]);
   }, []);
 
-  const getThreadsForRoute = React.useCallback((route: string): Thread[] => {
-    return threads.filter(thread => thread.route === route);
+  const getThreadsForRoute = React.useCallback((route: string, version?: string, iteration?: string): Thread[] => {
+    return threads.filter(thread => {
+      const routeMatch = thread.route === route;
+      // Treat legacy comments (without version) as Version 3 (current)
+      const threadVersion = thread.version || '3';
+      const versionMatch = !version || threadVersion === version;
+      const iterationMatch = !iteration || thread.iteration === iteration;
+      return routeMatch && versionMatch && iterationMatch;
+    });
   }, [threads]);
 
   const syncFromGitHub = React.useCallback(async (route: string) => {
@@ -453,9 +553,87 @@ export const CommentProvider: React.FunctionComponent<{ children: React.ReactNod
   }, []);
 
   const retrySync = React.useCallback(async () => {
-    // TODO: Implement retry logic for failed syncs
-    console.log('Retry sync not yet implemented');
-  }, []);
+    console.log('🔄 Retrying sync for pending/error threads...');
+    const threadsToSync = threads.filter(t => 
+      (t.syncStatus === 'pending' || t.syncStatus === 'error') && !t.issueNumber
+    );
+
+    if (threadsToSync.length === 0) {
+      console.log('No threads to sync');
+      return;
+    }
+
+    if (!isGitHubConfigured()) {
+      console.warn('GitHub not configured. Cannot retry sync.');
+      return;
+    }
+
+    for (const thread of threadsToSync) {
+      console.log(`🔵 Syncing thread ${thread.id}...`);
+      
+      // Set status to syncing
+      setThreads(prev => prev.map(t => 
+        t.id === thread.id ? { ...t, syncStatus: 'syncing' as const } : t
+      ));
+
+      // Create a readable page name from route
+      const pageName = thread.route === '/' ? 'Home page' : thread.route.split('/').filter(Boolean).join(' > ') || 'Page';
+      const versionStr = thread.version ? ` [v${thread.version}${thread.iteration ? ` ${thread.iteration}` : ''}]` : '';
+      
+      const issue = await githubAdapter.createIssue(
+        `💬 ${pageName} comment${versionStr}`,
+        `Thread created on route: ${thread.route}\n\nCoordinates: (${Math.round(thread.x)}, ${Math.round(thread.y)})\n\n**Version:** ${thread.version || 'N/A'}\n**Iteration:** ${thread.iteration || 'N/A'}`,
+        thread.route,
+        thread.x,
+        thread.y,
+        thread.version,
+        thread.iteration
+      );
+
+      if (issue.success && issue.data) {
+        console.log('✅ Created GitHub issue #', issue.data.number);
+        
+        // Update thread with issue number
+        setThreads(prev => prev.map(t => 
+          t.id === thread.id 
+            ? { ...t, issueNumber: issue.data.number }
+            : t
+        ));
+
+        // Sync all comments to the new issue
+        for (const comment of thread.comments) {
+          if (!comment.githubCommentId) {
+            const commentResult = await githubAdapter.createComment(issue.data.number, comment.text);
+            if (commentResult.success && commentResult.data) {
+              setThreads(prev => prev.map(t => {
+                if (t.id === thread.id) {
+                  return {
+                    ...t,
+                    comments: t.comments.map(c =>
+                      c.id === comment.id ? { ...c, githubCommentId: commentResult.data.id } : c
+                    )
+                  };
+                }
+                return t;
+              }));
+            }
+          }
+        }
+
+        // Mark as synced
+        setThreads(prev => prev.map(t => 
+          t.id === thread.id ? { ...t, syncStatus: 'synced' as const } : t
+        ));
+      } else {
+        console.error('❌ Failed to create GitHub issue:', issue.error);
+        setThreads(prev => prev.map(t => 
+          t.id === thread.id ? { ...t, syncStatus: 'error' as const, syncError: issue.error } : t
+        ));
+      }
+    }
+
+    console.log('✅ Retry sync complete');
+  }, [threads]);
 
   const hasPendingSync = React.useMemo(() => {
     return threads.some(t => t.syncStatus === 'pending' || t.syncStatus === 'error');

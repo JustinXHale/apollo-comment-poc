@@ -19,8 +19,9 @@ import {
   Label,
   Spinner
 } from '@patternfly/react-core';
-import { CommentIcon, TimesIcon, PlusCircleIcon, SyncAltIcon, GithubIcon, ExternalLinkAltIcon } from '@patternfly/react-icons';
+import { CommentIcon, TimesIcon, PlusCircleIcon, SyncAltIcon, GithubIcon, ExternalLinkAltIcon, RedoIcon } from '@patternfly/react-icons';
 import { useComments } from '@app/context/CommentContext';
+import { useVersion } from '@app/context/VersionContext';
 import { useLocation } from 'react-router-dom';
 import { isGitHubConfigured } from '@app/services/githubAdapter';
 
@@ -44,15 +45,18 @@ export const CommentDrawer: React.FunctionComponent<CommentDrawerProps> = ({
     deleteThread,
     enableCommenting,
     syncFromGitHub,
-    isSyncing
+    isSyncing,
+    retrySync,
+    hasPendingSync
   } = useComments();
+  const { currentVersion, currentIteration } = useVersion();
   
   const [editingCommentId, setEditingCommentId] = React.useState<string | null>(null);
   const [editText, setEditText] = React.useState('');
   const [replyText, setReplyText] = React.useState('');
   const replyTextAreaRef = React.useRef<HTMLTextAreaElement>(null);
 
-  const currentRouteThreads = getThreadsForRoute(location.pathname);
+  const currentRouteThreads = getThreadsForRoute(location.pathname, currentVersion, currentIteration);
   const selectedThread = currentRouteThreads.find(t => t.id === selectedThreadId);
   const isDrawerOpen = selectedThreadId !== null && selectedThread !== undefined;
 
@@ -112,6 +116,10 @@ export const CommentDrawer: React.FunctionComponent<CommentDrawerProps> = ({
     await syncFromGitHub(location.pathname);
   };
 
+  const handleRetrySync = async () => {
+    await retrySync();
+  };
+
   const getSyncStatusLabel = (status?: 'synced' | 'local' | 'pending' | 'syncing' | 'error') => {
     switch (status) {
       case 'synced':
@@ -160,18 +168,32 @@ export const CommentDrawer: React.FunctionComponent<CommentDrawerProps> = ({
             Thread
           </Title>
           {isGitHubConfigured() && (
-            <Button
-              id="sync-github-button"
-              variant="plain"
-              size="sm"
-              icon={<SyncAltIcon />}
-              onClick={handleSync}
-              isDisabled={isSyncing}
-              aria-label="Sync with GitHub"
-              title="Sync with GitHub"
-            >
-              {isSyncing ? <Spinner size="sm" /> : null}
-            </Button>
+            <>
+              <Button
+                id="sync-github-button"
+                variant="plain"
+                size="sm"
+                icon={<SyncAltIcon />}
+                onClick={handleSync}
+                isDisabled={isSyncing}
+                aria-label="Sync with GitHub"
+                title="Sync with GitHub"
+              >
+                {isSyncing ? <Spinner size="sm" /> : null}
+              </Button>
+              {hasPendingSync && (
+                <Button
+                  id="retry-sync-button"
+                  variant="plain"
+                  size="sm"
+                  icon={<RedoIcon />}
+                  onClick={handleRetrySync}
+                  isDisabled={isSyncing}
+                  aria-label="Retry sync for pending threads"
+                  title="Retry sync for pending threads"
+                />
+              )}
+            </>
           )}
         </div>
         <DrawerActions>
@@ -197,6 +219,12 @@ export const CommentDrawer: React.FunctionComponent<CommentDrawerProps> = ({
                 <div style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>
                   <strong>Location:</strong> ({Math.round(selectedThread.x)}, {Math.round(selectedThread.y)})
                 </div>
+                {selectedThread.version && (
+                  <div style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>
+                    <strong>Version:</strong> {selectedThread.version}
+                    {selectedThread.iteration && ` (${selectedThread.iteration})`}
+                  </div>
+                )}
                 <div style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>
                   <strong>Comments:</strong> {selectedThread.comments.length}
                 </div>

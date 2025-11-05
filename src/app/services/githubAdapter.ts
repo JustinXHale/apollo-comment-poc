@@ -80,8 +80,8 @@ export const githubAdapter = {
   /**
    * Create a new GitHub Issue for a comment thread
    */
-  async createIssue(title: string, body: string, route: string, x: number, y: number): Promise<GitHubResult> {
-    console.log('🔵 createIssue called', { title, route, x, y });
+  async createIssue(title: string, body: string, route: string, x: number, y: number, version?: string, iteration?: string): Promise<GitHubResult> {
+    console.log('🔵 createIssue called', { title, route, x, y, version, iteration });
     
     if (!isGitHubConfigured()) {
       console.warn('⚠️ GitHub not configured. Skipping issue creation.');
@@ -93,9 +93,16 @@ export const githubAdapter = {
     console.log('🔵 GitHub config:', { owner, repo, hasToken: !!getStoredToken() });
 
     try {
+      const metadata = [
+        `- Route: \`${route}\``,
+        version ? `- Version: \`${version}\`` : null,
+        iteration ? `- Iteration: \`${iteration}\`` : null,
+        `- Coordinates: \`(${Math.round(x)}, ${Math.round(y)})\``
+      ].filter(Boolean).join('\n');
+
       const issueBody = {
         title,
-        body: `${body}\n\n---\n**Metadata:**\n- Route: \`${route}\`\n- Coordinates: \`(${Math.round(x)}, ${Math.round(y)})\``,
+        body: `${body}\n\n---\n**Metadata:**\n${metadata}`,
       };
 
       console.log('🔵 Calling makeGitHubRequest...');
@@ -104,10 +111,18 @@ export const githubAdapter = {
 
       // Try to add labels (non-blocking)
       try {
+        const labels = [
+          'apollo-comment',
+          `route:${route}`,
+          `coords:${Math.round(x)},${Math.round(y)}`
+        ];
+        if (version) labels.push(`version:${version}`);
+        if (iteration) labels.push(`iteration:${iteration}`);
+        
         await makeGitHubRequest(
           'POST',
           `/repos/${owner}/${repo}/issues/${issueData.number}/labels`,
-          { labels: ['apollo-comment', `route:${route}`, `coords:${Math.round(x)},${Math.round(y)}`] }
+          { labels }
         );
         console.log('✅ Added labels to Issue #', issueData.number);
       } catch (labelError) {

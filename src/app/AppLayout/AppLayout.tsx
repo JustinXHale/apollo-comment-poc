@@ -33,6 +33,7 @@ import { useTheme } from '@app/utils/ThemeContext';
 import { useUserProfile } from '@app/utils/UserProfileContext';
 import { useFeatureFlags } from '@app/utils/FeatureFlagsContext';
 import { useComments } from '@app/context/CommentContext';
+import { useVersion } from '@app/context/VersionContext';
 import { CommentOverlay } from '@app/components/comments/CommentOverlay';
 import { CommentDrawer } from '@app/components/comments/CommentDrawer';
 import { GitHubAuthButton } from '@app/components/GitHubAuthButton';
@@ -49,13 +50,15 @@ interface IAppLayout {
 const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = React.useState(true);
   const [userDropdownOpen, setUserDropdownOpen] = React.useState(false);
+  const [versionDropdownOpen, setVersionDropdownOpen] = React.useState(false);
   const [selectedThreadId, setSelectedThreadId] = React.useState<string | null>(null);
   const [bannerDismissed, setBannerDismissed] = React.useState(false);
   const { userProfile, setUserProfile } = useUserProfile();
   const { theme, toggleTheme } = useTheme();
   const { flags } = useFeatureFlags();
-  const { showPins, enableCommenting, toggleShowPins, toggleEnableCommenting, clearAllThreads, threads, hasPendingSync, isSyncing } = useComments();
+  const { showPins, enableCommenting, toggleShowPins, toggleEnableCommenting, clearAllThreads, threads, hasPendingSync, isSyncing, getThreadsForRoute } = useComments();
   const { isAuthenticated } = useGitHubAuth();
+  const { currentVersion, currentIteration, setCurrentVersion } = useVersion();
   const navigate = useNavigate();
   
   // Clear local storage handler
@@ -91,7 +94,7 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
             aria-label="Global navigation"
           />
         </MastheadToggle>
-        <MastheadBrand style={{ display: 'flex', alignItems: 'center' }}>
+        <MastheadBrand style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <img 
             src={logoSrc}
             alt={logoAlt}
@@ -101,6 +104,47 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
               maxWidth: '200px' // Prevent logo from being too wide
             }}
           />
+          {/* Version Selector */}
+          <Dropdown
+            id="version-dropdown-masthead"
+            isOpen={versionDropdownOpen}
+            onSelect={() => setVersionDropdownOpen(false)}
+            onOpenChange={(isOpen: boolean) => setVersionDropdownOpen(isOpen)}
+            toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+              <MenuToggle
+                ref={toggleRef}
+                onClick={() => setVersionDropdownOpen(!versionDropdownOpen)}
+                isExpanded={versionDropdownOpen}
+                style={{ minWidth: '160px' }}
+              >
+                Version {currentVersion}{currentVersion === '3' ? ' (Current)' : ''}
+              </MenuToggle>
+            )}
+          >
+            <DropdownList>
+              <DropdownItem
+                key="version-3"
+                onClick={() => setCurrentVersion('3')}
+                isSelected={currentVersion === '3'}
+              >
+                Version 3 (Current)
+              </DropdownItem>
+              <DropdownItem
+                key="version-2"
+                onClick={() => setCurrentVersion('2')}
+                isSelected={currentVersion === '2'}
+              >
+                Version 2
+              </DropdownItem>
+              <DropdownItem
+                key="version-1"
+                onClick={() => setCurrentVersion('1')}
+                isSelected={currentVersion === '1'}
+              >
+                Version 1
+              </DropdownItem>
+            </DropdownList>
+          </Dropdown>
         </MastheadBrand>
       </MastheadMain>
       <MastheadContent>
@@ -292,6 +336,11 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
     const IconComponent = route.icon;
     const itemId = `${groupId ? `${groupId}_` : ''}${route.label}-${index}`;
     
+    // Get comment count for this route (only when commenting features are visible)
+    const routeThreads = showPins ? getThreadsForRoute(route.path, currentVersion, currentIteration) : [];
+    const commentCount = routeThreads.length;
+    const hasComments = commentCount > 0;
+    
     return (
       <NavItem 
         key={itemId} 
@@ -316,16 +365,28 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
               {IconComponent && <IconComponent />}
               {route.label}
             </span>
-            {(route as any).techPreview && (
-              <Label 
-                variant="outline" 
-                color="orange" 
-                isCompact
-                style={{ fontSize: '10px' }}
-              >
-                Tech Preview
-              </Label>
-            )}
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              {showPins && hasComments && (
+                <Tooltip content={`${commentCount} comment${commentCount !== 1 ? 's' : ''}`}>
+                  <CommentIcon 
+                    style={{ 
+                      fontSize: '0.875rem', 
+                      color: '#C9190B'
+                    }} 
+                  />
+                </Tooltip>
+              )}
+              {(route as any).techPreview && (
+                <Label 
+                  variant="outline" 
+                  color="orange" 
+                  isCompact
+                  style={{ fontSize: '10px' }}
+                >
+                  Tech Preview
+                </Label>
+              )}
+            </span>
           </div>
         ) : (
           <NavLink
@@ -336,16 +397,28 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
               {IconComponent && <IconComponent />}
               {route.label}
             </span>
-            {(route as any).techPreview && (
-              <Label 
-                variant="outline" 
-                color="orange" 
-                isCompact
-                style={{ fontSize: '10px' }}
-              >
-                Tech Preview
-              </Label>
-            )}
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              {showPins && hasComments && (
+                <Tooltip content={`${commentCount} comment${commentCount !== 1 ? 's' : ''}`}>
+                  <CommentIcon 
+                    style={{ 
+                      fontSize: '0.875rem', 
+                      color: '#C9190B'
+                    }} 
+                  />
+                </Tooltip>
+              )}
+              {(route as any).techPreview && (
+                <Label 
+                  variant="outline" 
+                  color="orange" 
+                  isCompact
+                  style={{ fontSize: '10px' }}
+                >
+                  Tech Preview
+                </Label>
+              )}
+            </span>
           </NavLink>
         )}
       </NavItem>
