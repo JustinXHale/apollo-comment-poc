@@ -22,7 +22,6 @@ export interface Thread {
   syncStatus: SyncStatus; // Sync state
   syncError?: string; // Error message if sync failed
   version?: string; // Version (e.g., "1", "2", "3")
-  iteration?: string; // Iteration (e.g., "v1", "v2")
   provider?: 'github' | 'gitlab';
 }
 
@@ -32,13 +31,13 @@ interface CommentContextType {
   enableCommenting: boolean;
   toggleShowPins: () => void;
   toggleEnableCommenting: () => void;
-  addThread: (x: number, y: number, route: string, version?: string, iteration?: string) => string;
+  addThread: (x: number, y: number, route: string, version?: string) => string;
   addReply: (threadId: string, text: string) => Promise<void>;
   updateComment: (threadId: string, commentId: string, text: string) => Promise<void>;
   deleteComment: (threadId: string, commentId: string) => Promise<void>;
   deleteThread: (threadId: string) => Promise<void>;
   clearAllThreads: () => void;
-  getThreadsForRoute: (route: string, version?: string, iteration?: string) => Thread[];
+  getThreadsForRoute: (route: string, version?: string) => Thread[];
   syncFromGitHub: (route: string) => Promise<void>;
   retrySync: () => Promise<void>;
   isSyncing: boolean;
@@ -154,7 +153,7 @@ export const CommentProvider: React.FunctionComponent<{ children: React.ReactNod
     setEnableCommenting(prev => !prev);
   }, []);
 
-  const addThread = React.useCallback((x: number, y: number, route: string, version?: string, iteration?: string): string => {
+  const addThread = React.useCallback((x: number, y: number, route: string, version?: string): string => {
     const threadId = `thread-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const newThread: Thread = {
       id: threadId,
@@ -163,8 +162,7 @@ export const CommentProvider: React.FunctionComponent<{ children: React.ReactNod
       route,
       comments: [], // Start with no comments
       syncStatus: 'local',
-      version,
-      iteration
+      version
     };
     setThreads(prev => [...prev, newThread]);
 
@@ -177,7 +175,7 @@ export const CommentProvider: React.FunctionComponent<{ children: React.ReactNod
 
         // Create a readable page name from route
         const pageName = route === '/' ? 'Home page' : route.split('/').filter(Boolean).join(' > ') || 'Page';
-        const versionStr = version ? ` [v${version}${iteration ? ` ${iteration}` : ''}]` : '';
+        const versionStr = version ? ` [v${version}]` : '';
         // Prefer GitHub if configured, otherwise GitLab
         let createdProvider: 'github' | 'gitlab' | undefined;
         let createdNumber: number | undefined;
@@ -186,12 +184,11 @@ export const CommentProvider: React.FunctionComponent<{ children: React.ReactNod
         if (isGitHubConfigured()) {
           const issue = await githubAdapter.createIssue(
             `💬 ${pageName} comment${versionStr}`,
-            `Thread created on route: ${route}\n\nCoordinates: (${Math.round(x)}, ${Math.round(y)})\n\n**Version:** ${version || 'N/A'}\n**Iteration:** ${iteration || 'N/A'}\n\n(Initial comment will be added as a reply)`,
+            `Thread created on route: ${route}\n\nCoordinates: (${Math.round(x)}, ${Math.round(y)})\n\n**Version:** ${version || 'N/A'}\n\n(Initial comment will be added as a reply)`,
             route,
             x,
             y,
-            version,
-            iteration
+            version
           );
           if (issue.success && issue.data) {
             createdProvider = 'github';
@@ -202,12 +199,11 @@ export const CommentProvider: React.FunctionComponent<{ children: React.ReactNod
         } else if (isGitLabConfigured()) {
           const issue = await gitlabAdapter.createIssue(
             `💬 ${pageName} comment${versionStr}`,
-            `Thread created on route: ${route}\n\nCoordinates: (${Math.round(x)}, ${Math.round(y)})\n\n**Version:** ${version || 'N/A'}\n**Iteration:** ${iteration || 'N/A'}\n\n(Initial comment will be added as a reply)`,
+            `Thread created on route: ${route}\n\nCoordinates: (${Math.round(x)}, ${Math.round(y)})\n\n**Version:** ${version || 'N/A'}\n\n(Initial comment will be added as a reply)`,
             route,
             x,
             y,
-            version,
-            iteration
+            version
           );
           if (issue.success && issue.data) {
             createdProvider = 'gitlab';
@@ -531,14 +527,13 @@ export const CommentProvider: React.FunctionComponent<{ children: React.ReactNod
     setThreads([]);
   }, []);
 
-  const getThreadsForRoute = React.useCallback((route: string, version?: string, iteration?: string): Thread[] => {
+  const getThreadsForRoute = React.useCallback((route: string, version?: string): Thread[] => {
     return threads.filter(thread => {
       const routeMatch = thread.route === route;
       // Treat legacy comments (without version) as Version 3 (current)
       const threadVersion = thread.version || '3';
       const versionMatch = !version || threadVersion === version;
-      const iterationMatch = !iteration || thread.iteration === iteration;
-      return routeMatch && versionMatch && iterationMatch;
+      return routeMatch && versionMatch;
     });
   }, [threads]);
 

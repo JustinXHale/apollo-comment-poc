@@ -2,15 +2,12 @@ import * as React from 'react';
 
 interface VersionContextType {
   currentVersion: string;
-  currentIteration: string;
   setCurrentVersion: (version: string) => void;
-  setCurrentIteration: (iteration: string) => void;
 }
 
 const VersionContext = React.createContext<VersionContextType | undefined>(undefined);
 
 const VERSION_STORAGE_KEY = 'apollo-current-version';
-const ITERATION_STORAGE_KEY = 'apollo-current-iteration';
 
 export const VersionProvider: React.FunctionComponent<{ children: React.ReactNode }> = ({ children }) => {
   const [currentVersion, setCurrentVersionState] = React.useState<string>(() => {
@@ -23,16 +20,6 @@ export const VersionProvider: React.FunctionComponent<{ children: React.ReactNod
     }
   });
 
-  const [currentIteration, setCurrentIterationState] = React.useState<string>(() => {
-    try {
-      const stored = localStorage.getItem(ITERATION_STORAGE_KEY);
-      return stored || '';
-    } catch (error) {
-      console.error('Failed to load iteration from localStorage:', error);
-      return '';
-    }
-  });
-
   // Persist version to localStorage
   React.useEffect(() => {
     try {
@@ -42,31 +29,16 @@ export const VersionProvider: React.FunctionComponent<{ children: React.ReactNod
     }
   }, [currentVersion]);
 
-  // Persist iteration to localStorage
-  React.useEffect(() => {
-    try {
-      localStorage.setItem(ITERATION_STORAGE_KEY, currentIteration);
-    } catch (error) {
-      console.error('Failed to save iteration to localStorage:', error);
-    }
-  }, [currentIteration]);
-
   const setCurrentVersion = React.useCallback((version: string) => {
     setCurrentVersionState(version);
-  }, []);
-
-  const setCurrentIteration = React.useCallback((iteration: string) => {
-    setCurrentIterationState(iteration);
   }, []);
 
   const value = React.useMemo(
     () => ({
       currentVersion,
-      currentIteration,
       setCurrentVersion,
-      setCurrentIteration,
     }),
-    [currentVersion, currentIteration, setCurrentVersion, setCurrentIteration]
+    [currentVersion, setCurrentVersion]
   );
 
   return <VersionContext.Provider value={value}>{children}</VersionContext.Provider>;

@@ -80,8 +80,8 @@ export const githubAdapter = {
   /**
    * Create a new GitHub Issue for a comment thread
    */
-  async createIssue(title: string, body: string, route: string, x: number, y: number, version?: string, iteration?: string): Promise<GitHubResult> {
-    console.log('🔵 createIssue called', { title, route, x, y, version, iteration });
+  async createIssue(title: string, body: string, route: string, x: number, y: number, version?: string): Promise<GitHubResult> {
+    console.log('🔵 createIssue called', { title, route, x, y, version });
     
     if (!isGitHubConfigured()) {
       console.warn('⚠️ GitHub not configured. Skipping issue creation.');
@@ -96,7 +96,6 @@ export const githubAdapter = {
       const metadata = [
         `- Route: \`${route}\``,
         version ? `- Version: \`${version}\`` : null,
-        iteration ? `- Iteration: \`${iteration}\`` : null,
         `- Coordinates: \`(${Math.round(x)}, ${Math.round(y)})\``
       ].filter(Boolean).join('\n');
 
@@ -117,7 +116,6 @@ export const githubAdapter = {
           `coords:${Math.round(x)},${Math.round(y)}`
         ];
         if (version) labels.push(`version:${version}`);
-        if (iteration) labels.push(`iteration:${iteration}`);
         
         await makeGitHubRequest(
           'POST',

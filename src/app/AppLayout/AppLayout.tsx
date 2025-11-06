@@ -69,7 +69,7 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
   const { showPins, enableCommenting, toggleShowPins, toggleEnableCommenting, clearAllThreads, threads, hasPendingSync, isSyncing, getThreadsForRoute } = useComments();
   const { isAuthenticated: isGitHubAuthenticated, login: loginGitHub, logout: logoutGitHub, user: githubUser } = useGitHubAuth();
   const { isAuthenticated: isGitLabAuthenticated, login: loginGitLab, logout: logoutGitLab, user: gitlabUser } = useGitLabAuth();
-  const { currentVersion, currentIteration, setCurrentVersion } = useVersion();
+  const { currentVersion, setCurrentVersion } = useVersion();
   const navigate = useNavigate();
   
   // Clear local storage handler
@@ -430,7 +430,7 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
     const itemId = `${groupId ? `${groupId}_` : ''}${route.label}-${index}`;
     
     // Get comment count for this route (only when commenting features are visible)
-    const routeThreads = showPins ? getThreadsForRoute(route.path, currentVersion, currentIteration) : [];
+    const routeThreads = showPins ? getThreadsForRoute(route.path, currentVersion) : [];
     const commentCount = routeThreads.length;
     const hasComments = commentCount > 0;
     

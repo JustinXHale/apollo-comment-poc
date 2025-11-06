@@ -233,7 +233,6 @@ export const CommentDrawer: React.FunctionComponent<CommentDrawerProps> = ({
                 {selectedThread.version && (
                   <div style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>
                     <strong>Version:</strong> {selectedThread.version}
-                    {selectedThread.iteration && ` (${selectedThread.iteration})`}
                   </div>
                 )}
                 <div style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>

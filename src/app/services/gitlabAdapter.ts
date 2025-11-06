@@ -53,8 +53,7 @@ export const gitlabAdapter = {
     route: string,
     x: number,
     y: number,
-    version?: string,
-    iteration?: string
+    version?: string
   ): Promise<GitLabResult> {
     if (!isGitLabConfigured()) {
       return { success: false, error: 'Please sign in with GitLab' };
@@ -64,7 +63,6 @@ export const gitlabAdapter = {
       const projectPath = process.env.VITE_GITLAB_PROJECT_PATH!;
       const labels = ['apollo-comment', `route:${route}`, `coords:${Math.round(x)},${Math.round(y)}`];
       if (version) labels.push(`version:${version}`);
-      if (iteration) labels.push(`iteration:${iteration}`);
 
       const issue = await makeGitLabRequest(
         'POST',
