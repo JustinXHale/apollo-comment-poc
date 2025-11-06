@@ -15,6 +15,10 @@ import {
   MastheadContent,
   MastheadMain,
   MastheadToggle,
+  Menu,
+  MenuContent,
+  MenuList,
+  MenuItem,
   MenuToggle,
   MenuToggleElement,
   Nav,
@@ -24,11 +28,12 @@ import {
   Page,
   PageSidebar,
   PageSidebarBody,
+  Popper,
   SkipToContent,
   Tooltip
 } from '@patternfly/react-core';
 import { IAppRoute, IAppRouteGroup, routes, AppRouteConfig, filterRoutesByFlags } from '@app/routes';
-import { BarsIcon, BellIcon, CaretDownIcon, CogIcon, CommentIcon, FlagIcon, InfoCircleIcon, MoonIcon, SunIcon, SyncAltIcon, TrashIcon, UserIcon } from '@patternfly/react-icons';
+import { BarsIcon, BellIcon, CaretDownIcon, CogIcon, CommentIcon, FlagIcon, InfoCircleIcon, MoonIcon, SunIcon, SyncAltIcon, TrashIcon, UserIcon, GithubIcon, GitlabIcon } from '@patternfly/react-icons';
 import { useTheme } from '@app/utils/ThemeContext';
 import { useUserProfile } from '@app/utils/UserProfileContext';
 import { useFeatureFlags } from '@app/utils/FeatureFlagsContext';
@@ -37,7 +42,9 @@ import { useVersion } from '@app/context/VersionContext';
 import { CommentOverlay } from '@app/components/comments/CommentOverlay';
 import { CommentDrawer } from '@app/components/comments/CommentDrawer';
 import { GitHubAuthButton } from '@app/components/GitHubAuthButton';
+import { GitLabAuthButton } from '@app/components/GitLabAuthButton';
 import { useGitHubAuth } from '@app/contexts/GitHubAuthContext';
+import { useGitLabAuth } from '@app/contexts/GitLabAuthContext';
 // Import custom logos
 import LightLogo from '@app/bgimages/Product_Logos_Light.svg';
 import DarkLogo from '@app/bgimages/Product-Logos_Dark.svg';
@@ -51,13 +58,17 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = React.useState(true);
   const [userDropdownOpen, setUserDropdownOpen] = React.useState(false);
   const [versionDropdownOpen, setVersionDropdownOpen] = React.useState(false);
+  const [signInMenuOpen, setSignInMenuOpen] = React.useState(false);
   const [selectedThreadId, setSelectedThreadId] = React.useState<string | null>(null);
   const [bannerDismissed, setBannerDismissed] = React.useState(false);
+  const signInToggleRef = React.useRef<HTMLButtonElement>(null);
+  const signInMenuRef = React.useRef<HTMLDivElement>(null);
   const { userProfile, setUserProfile } = useUserProfile();
   const { theme, toggleTheme } = useTheme();
   const { flags } = useFeatureFlags();
   const { showPins, enableCommenting, toggleShowPins, toggleEnableCommenting, clearAllThreads, threads, hasPendingSync, isSyncing, getThreadsForRoute } = useComments();
-  const { isAuthenticated } = useGitHubAuth();
+  const { isAuthenticated: isGitHubAuthenticated, login: loginGitHub, logout: logoutGitHub, user: githubUser } = useGitHubAuth();
+  const { isAuthenticated: isGitLabAuthenticated, login: loginGitLab, logout: logoutGitLab, user: gitlabUser } = useGitLabAuth();
   const { currentVersion, currentIteration, setCurrentVersion } = useVersion();
   const navigate = useNavigate();
   
@@ -158,7 +169,88 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
           gap: '0.25rem',
           zIndex: 10
         }}>
-            <GitHubAuthButton />
+            {/* Unified Sign In / User Menu */}
+            <Popper
+              trigger={
+                <MenuToggle
+                  ref={signInToggleRef}
+                  onClick={() => setSignInMenuOpen(!signInMenuOpen)}
+                  isExpanded={signInMenuOpen}
+                  id="sign-in-menu-toggle"
+                >
+                  {isGitHubAuthenticated || isGitLabAuthenticated ? (
+                    <>
+                      {isGitHubAuthenticated && githubUser?.login}
+                      {isGitLabAuthenticated && gitlabUser?.username}
+                    </>
+                  ) : (
+                    'Sign in'
+                  )}
+                </MenuToggle>
+              }
+              popper={
+                <Menu
+                  ref={signInMenuRef}
+                  id="sign-in-menu"
+                  onSelect={() => setSignInMenuOpen(false)}
+                >
+                  <MenuContent>
+                    <MenuList>
+                      {!isGitHubAuthenticated && !isGitLabAuthenticated ? (
+                        <>
+                          <MenuItem
+                            itemId="github-signin"
+                            onClick={loginGitHub}
+                            icon={<GithubIcon />}
+                          >
+                            Sign in with GitHub
+                          </MenuItem>
+                          <MenuItem
+                            itemId="gitlab-signin"
+                            onClick={loginGitLab}
+                            icon={<GitlabIcon />}
+                          >
+                            Sign in with GitLab
+                          </MenuItem>
+                        </>
+                      ) : (
+                        <>
+                          {isGitHubAuthenticated && (
+                            <MenuItem
+                              itemId="github-signout"
+                              onClick={logoutGitHub}
+                              icon={<GithubIcon />}
+                            >
+                              Sign out from GitHub ({githubUser?.login})
+                            </MenuItem>
+                          )}
+                          {isGitLabAuthenticated && (
+                            <MenuItem
+                              itemId="gitlab-signout"
+                              onClick={logoutGitLab}
+                              icon={<GitlabIcon />}
+                            >
+                              Sign out from GitLab ({gitlabUser?.username})
+                            </MenuItem>
+                          )}
+                        </>
+                      )}
+                    </MenuList>
+                  </MenuContent>
+                </Menu>
+              }
+              isVisible={signInMenuOpen}
+              onDocumentClick={(event) => {
+                if (
+                  signInToggleRef.current &&
+                  !signInToggleRef.current.contains(event.target as Node) &&
+                  signInMenuRef.current &&
+                  !signInMenuRef.current.contains(event.target as Node)
+                ) {
+                  setSignInMenuOpen(false);
+                }
+              }}
+            />
             <Button
               icon={<BellIcon />}
               variant="plain"
@@ -554,12 +646,12 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
         </Tooltip>
       </div>
       
-      {/* GitHub Login Banner */}
-      {!isAuthenticated && !bannerDismissed && (
+      {/* Sign In Banner */}
+      {!isGitHubAuthenticated && !isGitLabAuthenticated && !bannerDismissed && (
         <Alert
           variant="info"
           isInline
-          title="Sign in with GitHub to enable commenting and save your comments"
+          title="Sign in with GitHub or GitLab to enable commenting and save your comments"
           actionClose={<AlertActionCloseButton onClose={() => setBannerDismissed(true)} />}
           style={{
             margin: 0,

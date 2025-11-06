@@ -50,14 +50,23 @@ export const GitHubAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   }, []);
 
   const login = () => {
-    // Auto-detect platform: Netlify or Vercel
-    const hostname = window.location.hostname;
-    const isNetlify = hostname.includes('netlify.app');
-    const loginUrl = isNetlify 
-      ? '/.netlify/functions/github-oauth-login' 
-      : '/api/github-oauth-login';
-    console.log('🔍 Login detection:', { hostname, isNetlify, loginUrl });
-    window.location.href = loginUrl;
+    // Build GitHub OAuth URL client-side (works locally and in production)
+    const clientId = process.env.VITE_GITHUB_CLIENT_ID;
+    if (!clientId) {
+      // eslint-disable-next-line no-alert
+      alert('GitHub login is not configured (missing VITE_GITHUB_CLIENT_ID).');
+      return;
+    }
+    
+    const redirectUri = `${window.location.origin}/api/github-oauth-callback`;
+    const scope = 'public_repo'; // Read/write access to public repositories
+    const githubAuthUrl = 
+      `https://github.com/login/oauth/authorize?client_id=${encodeURIComponent(clientId)}` +
+      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+      `&scope=${encodeURIComponent(scope)}`;
+    
+    console.log('🔍 GitHub OAuth redirect:', { clientId: 'present', redirectUri });
+    window.location.href = githubAuthUrl;
   };
 
   const logout = () => {

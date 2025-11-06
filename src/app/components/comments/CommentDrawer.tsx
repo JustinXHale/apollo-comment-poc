@@ -24,6 +24,8 @@ import { useComments } from '@app/context/CommentContext';
 import { useVersion } from '@app/context/VersionContext';
 import { useLocation } from 'react-router-dom';
 import { isGitHubConfigured } from '@app/services/githubAdapter';
+import { isGitLabConfigured } from '@app/services/gitlabAdapter';
+import { useGitLabAuth } from '@app/contexts/GitLabAuthContext';
 
 interface CommentDrawerProps {
   children: React.ReactNode;
@@ -50,6 +52,7 @@ export const CommentDrawer: React.FunctionComponent<CommentDrawerProps> = ({
     hasPendingSync
   } = useComments();
   const { currentVersion, currentIteration } = useVersion();
+  const { isAuthenticated: isGitLabAuthenticated } = useGitLabAuth();
   
   const [editingCommentId, setEditingCommentId] = React.useState<string | null>(null);
   const [editText, setEditText] = React.useState('');
@@ -59,6 +62,7 @@ export const CommentDrawer: React.FunctionComponent<CommentDrawerProps> = ({
   const currentRouteThreads = getThreadsForRoute(location.pathname, currentVersion, currentIteration);
   const selectedThread = currentRouteThreads.find(t => t.id === selectedThreadId);
   const isDrawerOpen = selectedThreadId !== null && selectedThread !== undefined;
+  const isUserAuthenticated = isGitHubConfigured() || isGitLabAuthenticated;
 
   // Auto-focus reply textarea when drawer opens and commenting is enabled
   React.useEffect(() => {
@@ -72,11 +76,11 @@ export const CommentDrawer: React.FunctionComponent<CommentDrawerProps> = ({
     return () => clearTimeout(timer);
   }, [isDrawerOpen, enableCommenting, selectedThreadId]);
 
-  // Sync from GitHub on mount if configured
+  // Sync from providers on mount if configured
   React.useEffect(() => {
-    if (isGitHubConfigured()) {
+    if (isGitHubConfigured() || isGitLabConfigured()) {
       syncFromGitHub(location.pathname).catch(err => {
-        console.error('Failed to sync from GitHub:', err);
+        console.error('Failed to sync from providers:', err);
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -137,13 +141,20 @@ export const CommentDrawer: React.FunctionComponent<CommentDrawerProps> = ({
     }
   };
 
-  const getGitHubLink = (issueNumber?: number) => {
-    if (!issueNumber) return null;
+  const getIssueLink = (provider?: 'github' | 'gitlab', issueNumber?: number) => {
+    if (!issueNumber || !provider) return null;
     try {
-      const owner = process.env.VITE_GITHUB_OWNER;
-      const repo = process.env.VITE_GITHUB_REPO;
-      if (!owner || !repo) return null;
-      return `https://github.com/${owner}/${repo}/issues/${issueNumber}`;
+      if (provider === 'gitlab') {
+        const baseUrl = process.env.VITE_GITLAB_BASE_URL || 'https://gitlab.com';
+        const projectPath = process.env.VITE_GITLAB_PROJECT_PATH;
+        if (!projectPath) return null;
+        return `${baseUrl}/${projectPath}/-/issues/${issueNumber}`;
+      } else {
+        const owner = process.env.VITE_GITHUB_OWNER;
+        const repo = process.env.VITE_GITHUB_REPO;
+        if (!owner || !repo) return null;
+        return `https://github.com/${owner}/${repo}/issues/${issueNumber}`;
+      }
     } catch (error) {
       return null;
     }
@@ -167,7 +178,7 @@ export const CommentDrawer: React.FunctionComponent<CommentDrawerProps> = ({
             <CommentIcon style={{ marginRight: '0.5rem', color: '#C9190B' }} />
             Thread
           </Title>
-          {isGitHubConfigured() && (
+          {(isGitHubConfigured() || isGitLabConfigured()) && (
             <>
               <Button
                 id="sync-github-button"
@@ -176,8 +187,8 @@ export const CommentDrawer: React.FunctionComponent<CommentDrawerProps> = ({
                 icon={<SyncAltIcon />}
                 onClick={handleSync}
                 isDisabled={isSyncing}
-                aria-label="Sync with GitHub"
-                title="Sync with GitHub"
+                aria-label="Sync with remote"
+                title="Sync with remote"
               >
                 {isSyncing ? <Spinner size="sm" /> : null}
               </Button>
@@ -235,7 +246,7 @@ export const CommentDrawer: React.FunctionComponent<CommentDrawerProps> = ({
                 {selectedThread.issueNumber && (
                   <div style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>
                     <a 
-                      href={getGitHubLink(selectedThread.issueNumber) || '#'} 
+                      href={getIssueLink(selectedThread.provider, selectedThread.issueNumber) || '#'} 
                       target="_blank" 
                       rel="noopener noreferrer"
                       style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
@@ -246,7 +257,7 @@ export const CommentDrawer: React.FunctionComponent<CommentDrawerProps> = ({
                     </a>
                   </div>
                 )}
-                {enableCommenting && (
+                {enableCommenting && isUserAuthenticated && (
                   <Button
                     id={`delete-thread-${selectedThread.id}`}
                     variant="danger"
@@ -329,7 +340,7 @@ export const CommentDrawer: React.FunctionComponent<CommentDrawerProps> = ({
                         <div style={{ marginBottom: '0.75rem', whiteSpace: 'pre-wrap' }}>
                           {comment.text || <em style={{ color: 'var(--pf-v6-global--Color--200)' }}>No text</em>}
                         </div>
-                        {enableCommenting && (
+                        {enableCommenting && isUserAuthenticated && (
                           <div style={{ display: 'flex', gap: '0.5rem' }}>
                             <Button
                               id={`edit-comment-btn-${comment.id}`}
@@ -359,7 +370,7 @@ export const CommentDrawer: React.FunctionComponent<CommentDrawerProps> = ({
             </div>
 
             {/* Add Reply */}
-            {enableCommenting && (
+            {enableCommenting && isUserAuthenticated && (
               <>
                 <Divider />
                 <Card isCompact>
