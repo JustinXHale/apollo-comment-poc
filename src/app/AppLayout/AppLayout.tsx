@@ -242,6 +242,7 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
               isVisible={signInMenuOpen}
               onDocumentClick={(event) => {
                 if (
+                  event &&
                   signInToggleRef.current &&
                   !signInToggleRef.current.contains(event.target as Node) &&
                   signInMenuRef.current &&
