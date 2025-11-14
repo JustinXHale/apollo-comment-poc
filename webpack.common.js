@@ -106,7 +106,10 @@ module.exports = (env) => {
         silent: true,
       }),
       new CopyPlugin({
-        patterns: [{ from: './src/halefavicon.png', to: 'images' }],
+        patterns: [
+          { from: './src/halefavicon.png', to: 'images' },
+          { from: './src/user_advatar.jpg', to: 'images' }
+        ],
       }),
     ],
 

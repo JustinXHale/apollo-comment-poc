@@ -3,7 +3,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 /**
  * AI Assistant API Function - Vercel Serverless
  * 
- * Integrates with Red Hat MaaS API (llama-3-2-3b) to provide AI-powered feedback analysis
+ * Integrates with Red Hat MaaS API to provide AI-powered feedback analysis
  * 
  * Expected request body:
  * {
@@ -76,20 +76,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       },
       body: JSON.stringify({
         model: maasModel,
-        prompt: `You are a UX feedback analyzer helping designers understand user comments on their prototypes.
-
-Your tasks:
-- Summarize feedback concisely and actionably
-- Group comments by theme (accessibility, navigation, visual design, etc.)
-- Identify patterns and common issues
-- Prioritize high-impact items
-- Be brief and designer-friendly
+        prompt: `You are a UX feedback analyzer. Analyze user comments and provide actionable insights.
 
 ${formattedPrompt}
 
-Please provide a concise analysis:`,
-        temperature: 0.7,
-        max_tokens: 500
+INSTRUCTIONS:
+1. Answer the user's query directly and concisely
+2. Group feedback by theme (accessibility, navigation, UX, visual design) if applicable
+3. Highlight critical issues first
+4. Keep response under 400 words
+5. Use bullet points for clarity
+6. Do NOT ask questions or prompt for user input
+7. Provide a complete analysis based on available data
+
+RESPONSE:`,
+        temperature: 0.2,
+        max_tokens: 1000
       })
     });
 
