@@ -151,7 +151,7 @@ export const AIChatPanel: React.FunctionComponent = () => {
                   key={msg.id}
                   name={msg.role === 'user' ? 'You' : 'AI Assistant'}
                   role={msg.role === 'user' ? 'user' : 'bot'}
-                  avatar={msg.role === 'user' ? '👤' : '🤖'}
+                  avatar={msg.role === 'user' ? '/images/user_advatar.jpg' : '/images/halefavicon.png'}
                   content={msg.content}
                   timestamp={new Date(msg.timestamp).toLocaleString(undefined, {
                     month: 'short',
@@ -165,7 +165,7 @@ export const AIChatPanel: React.FunctionComponent = () => {
                 <Message 
                   name="AI Assistant" 
                   role="bot" 
-                  avatar="🤖"
+                  avatar="/images/halefavicon.png"
                   content="⏳ Analyzing comments..."
                 />
               )}
