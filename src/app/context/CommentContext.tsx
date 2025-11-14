@@ -266,7 +266,7 @@ export const CommentProvider: React.FunctionComponent<{ children: React.ReactNod
 
         // Create a readable page name from route
         const pageName = thread.route === '/' ? 'Home page' : thread.route.split('/').filter(Boolean).join(' > ') || 'Page';
-        const versionStr = thread.version ? ` [v${thread.version}${thread.iteration ? ` ${thread.iteration}` : ''}]` : '';
+        const versionStr = thread.version ? ` [v${thread.version}]` : '';
 
         let createdProvider: 'github' | 'gitlab' | undefined;
         let createdNumber: number | undefined;
@@ -276,12 +276,11 @@ export const CommentProvider: React.FunctionComponent<{ children: React.ReactNod
         if (providerPref === 'github' && isGitHubConfigured()) {
           const issue = await githubAdapter.createIssue(
             `💬 ${pageName} comment${versionStr}`,
-            `Thread created on route: ${thread.route}\n\nCoordinates: (${Math.round(thread.x)}, ${Math.round(thread.y)})\n\n**Version:** ${thread.version || 'N/A'}\n**Iteration:** ${thread.iteration || 'N/A'}`,
+            `Thread created on route: ${thread.route}\n\nCoordinates: (${Math.round(thread.x)}, ${Math.round(thread.y)})\n\n**Version:** ${thread.version || 'N/A'}`,
             thread.route,
             thread.x,
             thread.y,
-            thread.version,
-            thread.iteration
+            thread.version
           );
           if (issue.success && issue.data) {
             createdProvider = 'github';
@@ -292,12 +291,11 @@ export const CommentProvider: React.FunctionComponent<{ children: React.ReactNod
         } else if (providerPref === 'gitlab' && isGitLabConfigured()) {
           const issue = await gitlabAdapter.createIssue(
             `💬 ${pageName} comment${versionStr}`,
-            `Thread created on route: ${thread.route}\n\nCoordinates: (${Math.round(thread.x)}, ${Math.round(thread.y)})\n\n**Version:** ${thread.version || 'N/A'}\n**Iteration:** ${thread.iteration || 'N/A'}`,
+            `Thread created on route: ${thread.route}\n\nCoordinates: (${Math.round(thread.x)}, ${Math.round(thread.y)})\n\n**Version:** ${thread.version || 'N/A'}`,
             thread.route,
             thread.x,
             thread.y,
-            thread.version,
-            thread.iteration
+            thread.version
           );
           if (issue.success && issue.data) {
             createdProvider = 'gitlab';
@@ -718,16 +716,15 @@ export const CommentProvider: React.FunctionComponent<{ children: React.ReactNod
 
       // Create a readable page name from route
       const pageName = thread.route === '/' ? 'Home page' : thread.route.split('/').filter(Boolean).join(' > ') || 'Page';
-      const versionStr = thread.version ? ` [v${thread.version}${thread.iteration ? ` ${thread.iteration}` : ''}]` : '';
+      const versionStr = thread.version ? ` [v${thread.version}]` : '';
       
       const issue = await githubAdapter.createIssue(
         `💬 ${pageName} comment${versionStr}`,
-        `Thread created on route: ${thread.route}\n\nCoordinates: (${Math.round(thread.x)}, ${Math.round(thread.y)})\n\n**Version:** ${thread.version || 'N/A'}\n**Iteration:** ${thread.iteration || 'N/A'}`,
+        `Thread created on route: ${thread.route}\n\nCoordinates: (${Math.round(thread.x)}, ${Math.round(thread.y)})\n\n**Version:** ${thread.version || 'N/A'}`,
         thread.route,
         thread.x,
         thread.y,
-        thread.version,
-        thread.iteration
+        thread.version
       );
 
       if (issue.success && issue.data) {

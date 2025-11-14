@@ -51,7 +51,7 @@ export const CommentDrawer: React.FunctionComponent<CommentDrawerProps> = ({
     retrySync,
     hasPendingSync
   } = useComments();
-  const { currentVersion, currentIteration } = useVersion();
+  const { currentVersion } = useVersion();
   const { isAuthenticated: isGitLabAuthenticated } = useGitLabAuth();
   
   const [editingCommentId, setEditingCommentId] = React.useState<string | null>(null);
@@ -59,7 +59,7 @@ export const CommentDrawer: React.FunctionComponent<CommentDrawerProps> = ({
   const [replyText, setReplyText] = React.useState('');
   const replyTextAreaRef = React.useRef<HTMLTextAreaElement>(null);
 
-  const currentRouteThreads = getThreadsForRoute(location.pathname, currentVersion, currentIteration);
+  const currentRouteThreads = getThreadsForRoute(location.pathname, currentVersion);
   const selectedThread = currentRouteThreads.find(t => t.id === selectedThreadId);
   const isDrawerOpen = selectedThreadId !== null && selectedThread !== undefined;
   const isUserAuthenticated = isGitHubConfigured() || isGitLabAuthenticated;

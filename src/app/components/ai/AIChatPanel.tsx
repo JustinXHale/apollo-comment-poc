@@ -32,19 +32,11 @@ export const AIChatPanel: React.FunctionComponent = () => {
   const { threads } = useComments();
   const location = useLocation();
   const [inputValue, setInputValue] = React.useState('');
-  const messageBoxRef = React.useRef<HTMLDivElement>(null);
 
   // Count comments in current version
   const commentCount = React.useMemo(() => {
     return threads.filter(t => t.version === currentVersion).reduce((acc, t) => acc + t.comments.length, 0);
   }, [threads, currentVersion]);
-
-  // Auto-scroll to bottom when new messages arrive
-  React.useEffect(() => {
-    if (messageBoxRef.current) {
-      messageBoxRef.current.scrollTop = messageBoxRef.current.scrollHeight;
-    }
-  }, [messages]);
 
   const handleSendMessage = async () => {
     if (inputValue.trim() && !isLoading) {
@@ -69,8 +61,7 @@ export const AIChatPanel: React.FunctionComponent = () => {
   };
 
   return (
-    <Chatbot 
-      displayMode={ChatbotDisplayMode.default}
+    <div
       style={{
         position: 'fixed',
         bottom: '80px',
@@ -81,6 +72,7 @@ export const AIChatPanel: React.FunctionComponent = () => {
         boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
       }}
     >
+      <Chatbot displayMode={ChatbotDisplayMode.default}>
       <ChatbotHeader>
         <ChatbotHeaderMain>
           <ChatbotHeaderTitle>
@@ -108,13 +100,11 @@ export const AIChatPanel: React.FunctionComponent = () => {
       </ChatbotHeader>
 
       <ChatbotContent>
-        <MessageBox ref={messageBoxRef}>
+        <MessageBox>
           {messages.length === 0 ? (
             <ChatbotWelcomePrompt
               title="Welcome to AI Feedback Assistant"
               description="Ask me about comments across your prototype. I can help you:"
-              titleProps={{ style: { fontSize: '1.125rem' } }}
-              descriptionProps={{ style: { fontSize: '0.875rem' } }}
             >
               <ActionList>
                 <ActionListItem>
@@ -162,6 +152,7 @@ export const AIChatPanel: React.FunctionComponent = () => {
                   key={msg.id}
                   name={msg.role === 'user' ? 'You' : 'AI Assistant'}
                   role={msg.role === 'user' ? 'user' : 'bot'}
+                  avatar={msg.role === 'user' ? '👤' : '🤖'}
                   timestamp={new Date(msg.timestamp).toLocaleString(undefined, {
                     month: 'short',
                     day: 'numeric',
@@ -173,7 +164,7 @@ export const AIChatPanel: React.FunctionComponent = () => {
                 </Message>
               ))}
               {isLoading && (
-                <Message name="AI Assistant" role="bot">
+                <Message name="AI Assistant" role="bot" avatar="🤖">
                   <Spinner size="md" /> Analyzing comments...
                 </Message>
               )}
@@ -245,7 +236,8 @@ export const AIChatPanel: React.FunctionComponent = () => {
           </div>
         </div>
       </ChatbotFooter>
-    </Chatbot>
+      </Chatbot>
+    </div>
   );
 };
 

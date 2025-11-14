@@ -21,7 +21,7 @@ export const AIAssistant: React.FunctionComponent = () => {
           isChatbotVisible={isChatbotVisible}
           onToggleChatbot={toggleChatbot}
           toggleButtonLabel="AI Assistant"
-          toolTipLabel="Get AI help analyzing feedback"
+          tooltipLabel="Get AI help analyzing feedback"
           style={{
             backgroundColor: '#C9190B',
             borderRadius: '50%',
