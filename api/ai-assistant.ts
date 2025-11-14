@@ -49,6 +49,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Parse request body
     const { query, threads, version, route } = req.body;
 
+    // Debug logging
+    console.log('=== AI Assistant API Called ===');
+    console.log('Query:', query);
+    console.log('Version:', version);
+    console.log('Route:', route);
+    console.log('Threads received:', threads?.length || 0);
+    if (threads && threads.length > 0) {
+      console.log('First thread:', JSON.stringify(threads[0], null, 2));
+    }
+    console.log('================================');
+
     if (!query || !threads || !version) {
       return res.status(400).json({ 
         error: 'Missing required fields: query, threads, version' 
@@ -103,7 +114,13 @@ RESPONSE:`,
     const data = await response.json();
     
     // Extract the AI response from completions API format
-    const aiMessage = data.choices?.[0]?.text || data.text || 'No response from AI';
+    let aiMessage = data.choices?.[0]?.text || data.text || 'No response from AI';
+
+    // Strip DeepSeek R1 reasoning tokens (<think>...</think>)
+    // These are internal reasoning steps that shouldn't be shown to users
+    aiMessage = aiMessage.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+
+    console.log('AI Response (after stripping think tags):', aiMessage.substring(0, 200) + '...');
 
     return res.status(200).json({
       message: aiMessage.trim(),
@@ -128,12 +145,27 @@ function formatPromptWithComments(
   version: string, 
   route?: string
 ): string {
+  console.log('--- Formatting Prompt ---');
+  console.log('Total threads to filter:', threads.length);
+  console.log('Looking for version:', version);
+  console.log('Looking for route:', route);
+  
   // Filter threads by version and optionally by route
   const relevantThreads = threads.filter(t => {
-    if (t.version !== version) return false;
-    if (route && t.route !== route) return false;
+    console.log(`Thread ${t.id}: version=${t.version}, route=${t.route}, comments=${t.comments?.length || 0}`);
+    if (t.version !== version) {
+      console.log(`  -> Skipped (version mismatch: "${t.version}" !== "${version}")`);
+      return false;
+    }
+    if (route && t.route !== route) {
+      console.log(`  -> Skipped (route mismatch: "${t.route}" !== "${route}")`);
+      return false;
+    }
+    console.log('  -> Included!');
     return true;
   });
+
+  console.log('Relevant threads after filtering:', relevantThreads.length);
 
   // Build a structured summary of comments
   const commentSummary = relevantThreads.map((thread, idx) => {
@@ -147,7 +179,7 @@ ${threadComments}`;
 
   const totalComments = relevantThreads.reduce((sum, t) => sum + t.comments.length, 0);
 
-  return `User Query: "${query}"
+  const formattedPrompt = `User Query: "${query}"
 
 Context:
 - Version: ${version}
@@ -159,5 +191,11 @@ Comment Data:
 ${commentSummary || 'No comments found matching the criteria.'}
 
 Please analyze these comments and answer the user's query.`;
+
+  console.log('Formatted prompt length:', formattedPrompt.length);
+  console.log('Comment summary preview:', commentSummary.substring(0, 200));
+  console.log('--- End Formatting ---');
+
+  return formattedPrompt;
 }
 
