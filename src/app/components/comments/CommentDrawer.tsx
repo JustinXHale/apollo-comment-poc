@@ -19,7 +19,7 @@ import {
   Label,
   Spinner
 } from '@patternfly/react-core';
-import { CommentIcon, TimesIcon, PlusCircleIcon, SyncAltIcon, GithubIcon, ExternalLinkAltIcon, RedoIcon, WandIcon } from '@patternfly/react-icons';
+import { CommentIcon, TimesIcon, PlusCircleIcon, SyncAltIcon, GithubIcon, ExternalLinkAltIcon, RedoIcon, MagicIcon } from '@patternfly/react-icons';
 import { useComments } from '@app/context/CommentContext';
 import { useVersion } from '@app/context/VersionContext';
 import { useLocation } from 'react-router-dom';
@@ -281,7 +281,7 @@ export const CommentDrawer: React.FunctionComponent<CommentDrawerProps> = ({
                     id={`ai-summarize-thread-${selectedThread.id}`}
                     variant="secondary"
                     size="sm"
-                    icon={<WandIcon />}
+                    icon={<MagicIcon />}
                     onClick={handleSummarizeThread}
                     style={{ marginTop: '0.5rem' }}
                   >
