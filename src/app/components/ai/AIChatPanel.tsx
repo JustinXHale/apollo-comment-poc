@@ -153,20 +153,27 @@ export const AIChatPanel: React.FunctionComponent = () => {
                   name={msg.role === 'user' ? 'You' : 'AI Assistant'}
                   role={msg.role === 'user' ? 'user' : 'bot'}
                   avatar={msg.role === 'user' ? '👤' : '🤖'}
+                  content={msg.content}
                   timestamp={new Date(msg.timestamp).toLocaleString(undefined, {
                     month: 'short',
                     day: 'numeric',
                     hour: '2-digit',
                     minute: '2-digit'
                   })}
-                >
-                  <div style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</div>
-                </Message>
+                />
               ))}
               {isLoading && (
-                <Message name="AI Assistant" role="bot" avatar="🤖">
-                  <div><Spinner size="md" /> Analyzing comments...</div>
-                </Message>
+                <Message 
+                  name="AI Assistant" 
+                  role="bot" 
+                  avatar="🤖"
+                  content={
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <Spinner size="md" /> 
+                      <span>Analyzing comments...</span>
+                    </div>
+                  }
+                />
               )}
             </>
           )}
