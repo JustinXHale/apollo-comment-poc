@@ -17,8 +17,7 @@ import {
   Label,
   TextArea,
   ActionList,
-  ActionListItem,
-  Spinner
+  ActionListItem
 } from '@patternfly/react-core';
 import { TimesIcon, PaperPlaneIcon } from '@patternfly/react-icons';
 import { useLocation } from 'react-router-dom';
@@ -167,12 +166,7 @@ export const AIChatPanel: React.FunctionComponent = () => {
                   name="AI Assistant" 
                   role="bot" 
                   avatar="🤖"
-                  content={
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <Spinner size="md" /> 
-                      <span>Analyzing comments...</span>
-                    </div>
-                  }
+                  content="⏳ Analyzing comments..."
                 />
               )}
             </>
@@ -181,66 +175,25 @@ export const AIChatPanel: React.FunctionComponent = () => {
       </ChatbotContent>
 
       <ChatbotFooter>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%' }}>
-          {/* Quick action buttons */}
-          {messages.length > 0 && (
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-              <Button
-                variant="secondary"
-                size="sm"
-                isDisabled={isLoading}
-                onClick={() => handleQuickAction('What comments were left in the last 7 days?')}
-              >
-                Last 7 days
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                isDisabled={isLoading}
-                onClick={() => handleQuickAction('Show comments on this page only')}
-              >
-                This page only
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                isDisabled={isLoading}
-                onClick={() => handleQuickAction('Find all accessibility issues')}
-              >
-                Accessibility
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                isDisabled={isLoading}
-                onClick={() => handleQuickAction('Show high priority items')}
-              >
-                High priority
-              </Button>
-            </div>
-          )}
-
-          {/* Input field */}
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
-            <TextArea
-              id="ai-chat-input"
-              value={inputValue}
-              onChange={(_event, value) => setInputValue(value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Ask about feedback..."
-              aria-label="Message input"
-              rows={2}
-              style={{ flex: 1 }}
-              isDisabled={isLoading}
-            />
-            <Button
-              variant="primary"
-              onClick={handleSendMessage}
-              isDisabled={!inputValue.trim() || isLoading}
-              icon={<PaperPlaneIcon />}
-              aria-label="Send message"
-            />
-          </div>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', width: '100%' }}>
+          <TextArea
+            id="ai-chat-input"
+            value={inputValue}
+            onChange={(_event, value) => setInputValue(value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Ask about feedback..."
+            aria-label="Message input"
+            rows={2}
+            style={{ flex: 1 }}
+            isDisabled={isLoading}
+          />
+          <Button
+            variant="primary"
+            onClick={handleSendMessage}
+            isDisabled={!inputValue.trim() || isLoading}
+            icon={<PaperPlaneIcon />}
+            aria-label="Send message"
+          />
         </div>
       </ChatbotFooter>
       </Chatbot>
