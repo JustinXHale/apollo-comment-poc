@@ -147,21 +147,11 @@ export const CommentDrawer: React.FunctionComponent<CommentDrawerProps> = ({
       const data = await response.json();
       const summary = data.message || 'No summary available.';
       
-      // Store the summary in state for display in the drawer
+      // Store the summary in state for display in the drawer only
       setThreadSummaries(prev => ({
         ...prev,
         [selectedThread.id]: summary
       }));
-      
-      // Also send to chatbot for history
-      if (!isChatbotVisible) {
-        toggleChatbot();
-      }
-      sendMessage(`Summarize the feedback in this thread (${selectedThread.comments.length} comments)`, {
-        threads: [selectedThread],
-        version: currentVersion || 'unknown',
-        route: location.pathname
-      });
       
     } catch (error) {
       console.error('Failed to generate summary:', error);

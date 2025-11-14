@@ -89,17 +89,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       },
       body: JSON.stringify({
         model: maasModel,
-        prompt: `You are a UX feedback analyzer. Provide a brief, concise summary.
+        prompt: `You are a UX feedback analyzer. Provide a brief summary of the key issues mentioned.
 
 ${formattedPrompt}
 
-INSTRUCTIONS:
-1. Provide ONE paragraph summarizing the key feedback themes
-2. Maximum 2-3 sentences
-3. Focus on actionable insights only
-4. Do NOT use headers, bullet points, or sections
-5. Do NOT ask questions or prompt for user input
-6. Answer directly and concisely
+CRITICAL INSTRUCTIONS:
+1. Write ONLY 2-3 sentences maximum
+2. State ONLY the key issues and suggested improvements
+3. Do NOT explain the user's query or the context
+4. Do NOT mention comment counts, dates, authors, or versions
+5. Do NOT use phrases like "The user wants" or "The feedback highlights"
+6. Start directly with the issues: "Users report..." or "The feedback indicates..."
+7. Focus purely on actionable insights
 
 RESPONSE:`,
         temperature: 0.2,
