@@ -160,12 +160,12 @@ export const AIChatPanel: React.FunctionComponent = () => {
                     minute: '2-digit'
                   })}
                 >
-                  {msg.content}
+                  <div style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</div>
                 </Message>
               ))}
               {isLoading && (
                 <Message name="AI Assistant" role="bot" avatar="🤖">
-                  <Spinner size="md" /> Analyzing comments...
+                  <div><Spinner size="md" /> Analyzing comments...</div>
                 </Message>
               )}
             </>
