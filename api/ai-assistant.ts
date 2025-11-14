@@ -71,36 +71,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${maasApiKey}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'accept': 'application/json'
       },
       body: JSON.stringify({
         model: maasModel,
-        messages: [
-          {
-            role: 'system',
-            content: `You are a UX feedback analyzer helping designers understand user comments on their prototypes. 
+        prompt: `You are a UX feedback analyzer helping designers understand user comments on their prototypes.
 
 Your tasks:
 - Summarize feedback concisely and actionably
 - Group comments by theme (accessibility, navigation, visual design, etc.)
 - Identify patterns and common issues
 - Prioritize high-impact items
-- Reference specific comment threads when relevant
 - Be brief and designer-friendly
 
-When analyzing comments, focus on:
-1. What users said
-2. How frequently similar issues appear
-3. Which pages/routes are affected
-4. Priority level (based on frequency and severity)`
-          },
-          {
-            role: 'user',
-            content: formattedPrompt
-          }
-        ],
+${formattedPrompt}
+
+Please provide a concise analysis:`,
         temperature: 0.7,
-        max_tokens: 1000
+        max_tokens: 500
       })
     });
 
@@ -111,11 +100,11 @@ When analyzing comments, focus on:
 
     const data = await response.json();
     
-    // Extract the AI response (adjust based on actual MaaS response format)
-    const aiMessage = data.choices?.[0]?.message?.content || data.message || 'No response from AI';
+    // Extract the AI response from completions API format
+    const aiMessage = data.choices?.[0]?.text || data.text || 'No response from AI';
 
     return res.status(200).json({
-      message: aiMessage,
+      message: aiMessage.trim(),
       timestamp: new Date().toISOString()
     });
 
