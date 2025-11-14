@@ -1,7 +1,8 @@
 {
+  "framework": null,
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "devCommand": "npm run start:dev",
+  "devCommand": "PORT=3001 npm run start:dev",
   "rewrites": [
     {
       "source": "/api/:path*",
