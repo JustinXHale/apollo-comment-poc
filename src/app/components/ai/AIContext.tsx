@@ -84,7 +84,24 @@ export const AIProvider: React.FunctionComponent<{ children: React.ReactNode }> 
     setIsLoading(true);
 
     try {
-      // Call the Vercel serverless function
+      // Mock response for local development
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API delay
+        
+        const mockResponse = `**Mock AI Response** (local dev mode)\n\nI analyzed your query: "${content.trim()}"\n\n**Summary:**\n- Found ${commentContext?.threads?.length || 0} comment threads\n- Version: ${commentContext?.version || 'unknown'}\n- Page: ${commentContext?.route || 'unknown'}\n\n*Note: This is a mock response. Deploy to production to test the real AI.*`;
+        
+        const botMessage: AIMessage = {
+          id: `bot-${Date.now()}`,
+          role: 'bot',
+          content: mockResponse,
+          timestamp: new Date().toISOString()
+        };
+
+        setMessages(prev => [...prev, botMessage]);
+        return;
+      }
+
+      // Call the Vercel serverless function (production)
       const response = await fetch('/api/ai-assistant', {
         method: 'POST',
         headers: {
