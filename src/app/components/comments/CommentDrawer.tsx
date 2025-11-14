@@ -19,13 +19,14 @@ import {
   Label,
   Spinner
 } from '@patternfly/react-core';
-import { CommentIcon, TimesIcon, PlusCircleIcon, SyncAltIcon, GithubIcon, ExternalLinkAltIcon, RedoIcon } from '@patternfly/react-icons';
+import { CommentIcon, TimesIcon, PlusCircleIcon, SyncAltIcon, GithubIcon, ExternalLinkAltIcon, RedoIcon, SparklesIcon } from '@patternfly/react-icons';
 import { useComments } from '@app/context/CommentContext';
 import { useVersion } from '@app/context/VersionContext';
 import { useLocation } from 'react-router-dom';
 import { isGitHubConfigured } from '@app/services/githubAdapter';
 import { isGitLabConfigured } from '@app/services/gitlabAdapter';
 import { useGitLabAuth } from '@app/contexts/GitLabAuthContext';
+import { useAIContext } from '@app/components/ai';
 
 interface CommentDrawerProps {
   children: React.ReactNode;
@@ -53,6 +54,7 @@ export const CommentDrawer: React.FunctionComponent<CommentDrawerProps> = ({
   } = useComments();
   const { currentVersion } = useVersion();
   const { isAuthenticated: isGitLabAuthenticated } = useGitLabAuth();
+  const { sendMessage, toggleChatbot, isChatbotVisible } = useAIContext();
   
   const [editingCommentId, setEditingCommentId] = React.useState<string | null>(null);
   const [editText, setEditText] = React.useState('');
@@ -108,6 +110,23 @@ export const CommentDrawer: React.FunctionComponent<CommentDrawerProps> = ({
       await deleteThread(selectedThreadId);
       onThreadSelect(null);
     }
+  };
+
+  const handleSummarizeThread = () => {
+    if (!selectedThread) return;
+    
+    // Open chatbot if not already open
+    if (!isChatbotVisible) {
+      toggleChatbot();
+    }
+    
+    // Send a summarization request for this specific thread
+    const query = `Summarize the feedback in this thread (${selectedThread.comments.length} comments)`;
+    sendMessage(query, {
+      threads: [selectedThread], // Pass only this thread
+      version: currentVersion || 'unknown',
+      route: location.pathname
+    });
   };
 
   const handleDeleteComment = async (threadId: string, commentId: string) => {
@@ -256,6 +275,19 @@ export const CommentDrawer: React.FunctionComponent<CommentDrawerProps> = ({
                     </a>
                   </div>
                 )}
+                {/* AI Summarize Thread Button */}
+                {selectedThread.comments.length > 0 && (
+                  <Button
+                    id={`ai-summarize-thread-${selectedThread.id}`}
+                    variant="secondary"
+                    size="sm"
+                    icon={<SparklesIcon />}
+                    onClick={handleSummarizeThread}
+                    style={{ marginTop: '0.5rem' }}
+                  >
+                    AI Summarize Thread
+                  </Button>
+                )}
                 {enableCommenting && isUserAuthenticated && (
                   <Button
                     id={`delete-thread-${selectedThread.id}`}
@@ -263,7 +295,7 @@ export const CommentDrawer: React.FunctionComponent<CommentDrawerProps> = ({
                     size="sm"
                     icon={<TimesIcon />}
                     onClick={handleDeleteThread}
-                    style={{ marginTop: '0.5rem' }}
+                    style={{ marginTop: '0.5rem', marginLeft: selectedThread.comments.length > 0 ? '0.5rem' : '0' }}
                   >
                     Delete Thread
                   </Button>
