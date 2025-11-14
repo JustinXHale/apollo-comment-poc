@@ -27,3 +27,7 @@ __cursor_history__/
 # Optional: personal screenshots, logs, etc.
 screenshots/
 logs/
+
+# MCP configuration with tokens
+.cursor-mcp-config.json
+.vercel

@@ -45,6 +45,7 @@ import { GitHubAuthButton } from '@app/components/GitHubAuthButton';
 import { GitLabAuthButton } from '@app/components/GitLabAuthButton';
 import { useGitHubAuth } from '@app/contexts/GitHubAuthContext';
 import { useGitLabAuth } from '@app/contexts/GitLabAuthContext';
+import { AIProvider, AIAssistant } from '@app/components/ai';
 // Import custom logos
 import LightLogo from '@app/bgimages/Product_Logos_Light.svg';
 import DarkLogo from '@app/bgimages/Product-Logos_Dark.svg';
@@ -608,83 +609,86 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
     </SkipToContent>
   );
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* Apollo Canvas Masthead */}
-      {/* <ApolloCanvasMasthead /> */}
-      
-      {/* UXD Prototype Banner */}
-      <div style={{
-        backgroundColor: '#FF6F00',
-        color: 'white',
-        textAlign: 'center',
-        padding: '0.25rem',
-        fontSize: '0.75rem',
-        fontWeight: 600,
-        letterSpacing: '0.5px',
-        flexShrink: 0,
-        zIndex: 1000,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '0.5rem'
-      }}>
-        UXD PROTOTYPE
-        <Tooltip
-          content={
-            <div>
-               This prototype demonstrates the <em>AI hub</em> and <em>Generative AI studio</em> features for 3.0. Not all features and interactions are fully represented and this does not represent a commitment on the part of Red Hat. Features are subject to change.
-            </div>
-          }
-          position="bottom"
-        >
-          <InfoCircleIcon 
-            style={{ 
-              fontSize: '0.75rem', 
-              cursor: 'pointer',
-              opacity: 0.8 
-            }} 
-          />
-        </Tooltip>
-      </div>
-      
-      {/* Sign In Banner */}
-      {!isGitHubAuthenticated && !isGitLabAuthenticated && !bannerDismissed && (
-        <Alert
-          variant="info"
-          isInline
-          title="Sign in with GitHub or GitLab to enable commenting and save your comments"
-          actionClose={<AlertActionCloseButton onClose={() => setBannerDismissed(true)} />}
-          style={{
-            margin: 0,
-            borderRadius: 0,
-            borderLeft: 'none',
-            borderRight: 'none',
-            borderTop: 'none'
-          }}
-        />
-      )}
-      
-      <Page
-        mainContainerId={pageId}
-        masthead={masthead}
-        sidebar={sidebarOpen && Sidebar}
-        skipToContent={PageSkipToContent}
-        style={{ flex: 1, minHeight: 0, position: 'relative' }}
-      >
-        <CommentDrawer
-          selectedThreadId={selectedThreadId}
-          onThreadSelect={setSelectedThreadId}
-        >
-          <div style={{ position: 'relative', height: '100%', width: '100%' }}>
-            {children}
-            <CommentOverlay
-              selectedThreadId={selectedThreadId}
-              onThreadSelect={setSelectedThreadId}
+    <AIProvider>
+      <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+        {/* Apollo Canvas Masthead */}
+        {/* <ApolloCanvasMasthead /> */}
+        
+        {/* UXD Prototype Banner */}
+        <div style={{
+          backgroundColor: '#FF6F00',
+          color: 'white',
+          textAlign: 'center',
+          padding: '0.25rem',
+          fontSize: '0.75rem',
+          fontWeight: 600,
+          letterSpacing: '0.5px',
+          flexShrink: 0,
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '0.5rem'
+        }}>
+          UXD PROTOTYPE
+          <Tooltip
+            content={
+              <div>
+                 This prototype demonstrates the <em>AI hub</em> and <em>Generative AI studio</em> features for 3.0. Not all features and interactions are fully represented and this does not represent a commitment on the part of Red Hat. Features are subject to change.
+              </div>
+            }
+            position="bottom"
+          >
+            <InfoCircleIcon 
+              style={{ 
+                fontSize: '0.75rem', 
+                cursor: 'pointer',
+                opacity: 0.8 
+              }} 
             />
-          </div>
-        </CommentDrawer>
-      </Page>
-    </div>
+          </Tooltip>
+        </div>
+        
+        {/* Sign In Banner */}
+        {!isGitHubAuthenticated && !isGitLabAuthenticated && !bannerDismissed && (
+          <Alert
+            variant="info"
+            isInline
+            title="Sign in with GitHub or GitLab to enable commenting and save your comments"
+            actionClose={<AlertActionCloseButton onClose={() => setBannerDismissed(true)} />}
+            style={{
+              margin: 0,
+              borderRadius: 0,
+              borderLeft: 'none',
+              borderRight: 'none',
+              borderTop: 'none'
+            }}
+          />
+        )}
+        
+        <Page
+          mainContainerId={pageId}
+          masthead={masthead}
+          sidebar={sidebarOpen && Sidebar}
+          skipToContent={PageSkipToContent}
+          style={{ flex: 1, minHeight: 0, position: 'relative' }}
+        >
+          <CommentDrawer
+            selectedThreadId={selectedThreadId}
+            onThreadSelect={setSelectedThreadId}
+          >
+            <div style={{ position: 'relative', height: '100%', width: '100%' }}>
+              {children}
+              <CommentOverlay
+                selectedThreadId={selectedThreadId}
+                onThreadSelect={setSelectedThreadId}
+              />
+            </div>
+          </CommentDrawer>
+          <AIAssistant />
+        </Page>
+      </div>
+    </AIProvider>
   );
 };
 
