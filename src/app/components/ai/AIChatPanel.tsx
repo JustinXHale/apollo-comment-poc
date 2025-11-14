@@ -19,14 +19,14 @@ import {
   ActionList,
   ActionListItem
 } from '@patternfly/react-core';
-import { TimesIcon, PaperPlaneIcon } from '@patternfly/react-icons';
+import { TimesIcon, PaperPlaneIcon, TrashIcon } from '@patternfly/react-icons';
 import { useLocation } from 'react-router-dom';
 import { useAIContext } from './AIContext';
 import { useVersion } from '@app/context/VersionContext';
 import { useComments } from '@app/context/CommentContext';
 
 export const AIChatPanel: React.FunctionComponent = () => {
-  const { messages, isLoading, sendMessage, toggleChatbot } = useAIContext();
+  const { messages, isLoading, sendMessage, toggleChatbot, clearHistory } = useAIContext();
   const { currentVersion } = useVersion();
   const { threads } = useComments();
   const location = useLocation();
@@ -89,6 +89,14 @@ export const AIChatPanel: React.FunctionComponent = () => {
           )}
         </ChatbotHeaderMain>
         <ChatbotHeaderActions>
+          {messages.length > 0 && (
+            <Button
+              variant="plain"
+              onClick={clearHistory}
+              aria-label="Clear chat history"
+              icon={<TrashIcon />}
+            />
+          )}
           <Button
             variant="plain"
             onClick={toggleChatbot}
