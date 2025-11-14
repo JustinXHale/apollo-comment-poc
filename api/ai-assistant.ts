@@ -89,18 +89,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       },
       body: JSON.stringify({
         model: maasModel,
-        prompt: `You are a UX feedback analyzer. Analyze user comments and provide actionable insights.
+        prompt: `You are a UX feedback analyzer. Provide a brief, concise summary.
 
 ${formattedPrompt}
 
 INSTRUCTIONS:
-1. Answer the user's query directly and concisely
-2. Group feedback by theme (accessibility, navigation, UX, visual design) if applicable
-3. Highlight critical issues first
-4. Keep response under 400 words
-5. Use bullet points for clarity
-6. Do NOT ask questions or prompt for user input
-7. Provide a complete analysis based on available data
+1. Provide ONE paragraph summarizing the key feedback themes
+2. Maximum 2-3 sentences
+3. Focus on actionable insights only
+4. Do NOT use headers, bullet points, or sections
+5. Do NOT ask questions or prompt for user input
+6. Answer directly and concisely
 
 RESPONSE:`,
         temperature: 0.2,
@@ -165,7 +164,11 @@ function formatPromptWithComments(
     // Filter threads by version and optionally by route
     relevantThreads = threads.filter(t => {
       console.log(`Thread ${t.id}: version=${t.version}, route=${t.route}, comments=${t.comments?.length || 0}`);
-      if (t.version !== version) {
+      
+      // Include threads that match version OR have no version (GitHub-synced threads)
+      const versionMatch = !t.version || t.version === version || String(t.version) === String(version);
+      
+      if (!versionMatch) {
         console.log(`  -> Skipped (version mismatch: "${t.version}" !== "${version}")`);
         return false;
       }

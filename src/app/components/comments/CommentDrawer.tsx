@@ -17,9 +17,11 @@ import {
   EmptyStateBody,
   Divider,
   Label,
-  Spinner
+  Spinner,
+  ExpandableSection,
+  Alert
 } from '@patternfly/react-core';
-import { CommentIcon, TimesIcon, PlusCircleIcon, SyncAltIcon, GithubIcon, ExternalLinkAltIcon, RedoIcon, MagicIcon } from '@patternfly/react-icons';
+import { CommentIcon, TimesIcon, PlusCircleIcon, SyncAltIcon, GithubIcon, ExternalLinkAltIcon, RedoIcon, MagicIcon, InfoCircleIcon } from '@patternfly/react-icons';
 import { useComments } from '@app/context/CommentContext';
 import { useVersion } from '@app/context/VersionContext';
 import { useLocation } from 'react-router-dom';
@@ -60,6 +62,11 @@ export const CommentDrawer: React.FunctionComponent<CommentDrawerProps> = ({
   const [editText, setEditText] = React.useState('');
   const [replyText, setReplyText] = React.useState('');
   const replyTextAreaRef = React.useRef<HTMLTextAreaElement>(null);
+  
+  // AI Summary state
+  const [threadSummaries, setThreadSummaries] = React.useState<Record<string, string>>({});
+  const [loadingSummary, setLoadingSummary] = React.useState(false);
+  const [summaryExpanded, setSummaryExpanded] = React.useState(true);
 
   const currentRouteThreads = getThreadsForRoute(location.pathname, currentVersion);
   const selectedThread = currentRouteThreads.find(t => t.id === selectedThreadId);
@@ -112,21 +119,59 @@ export const CommentDrawer: React.FunctionComponent<CommentDrawerProps> = ({
     }
   };
 
-  const handleSummarizeThread = () => {
+  const handleSummarizeThread = async () => {
     if (!selectedThread) return;
     
-    // Open chatbot if not already open
-    if (!isChatbotVisible) {
-      toggleChatbot();
-    }
+    setLoadingSummary(true);
+    setSummaryExpanded(true); // Auto-expand when generating
     
-    // Send a summarization request for this specific thread
-    const query = `Summarize the feedback in this thread (${selectedThread.comments.length} comments)`;
-    sendMessage(query, {
-      threads: [selectedThread], // Pass only this thread
-      version: currentVersion || 'unknown',
-      route: location.pathname
-    });
+    try {
+      // Call the AI API directly to get the summary
+      const response = await fetch('/api/ai-assistant', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          query: `Summarize the feedback in this thread (${selectedThread.comments.length} comments)`,
+          threads: [selectedThread],
+          version: currentVersion || 'unknown',
+          route: location.pathname
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const summary = data.message || 'No summary available.';
+      
+      // Store the summary in state for display in the drawer
+      setThreadSummaries(prev => ({
+        ...prev,
+        [selectedThread.id]: summary
+      }));
+      
+      // Also send to chatbot for history
+      if (!isChatbotVisible) {
+        toggleChatbot();
+      }
+      sendMessage(`Summarize the feedback in this thread (${selectedThread.comments.length} comments)`, {
+        threads: [selectedThread],
+        version: currentVersion || 'unknown',
+        route: location.pathname
+      });
+      
+    } catch (error) {
+      console.error('Failed to generate summary:', error);
+      setThreadSummaries(prev => ({
+        ...prev,
+        [selectedThread.id]: 'Failed to generate summary. Please try again.'
+      }));
+    } finally {
+      setLoadingSummary(false);
+    }
   };
 
   const handleDeleteComment = async (threadId: string, commentId: string) => {
@@ -283,9 +328,11 @@ export const CommentDrawer: React.FunctionComponent<CommentDrawerProps> = ({
                     size="sm"
                     icon={<MagicIcon />}
                     onClick={handleSummarizeThread}
+                    isLoading={loadingSummary}
+                    isDisabled={loadingSummary}
                     style={{ marginTop: '0.5rem' }}
                   >
-                    AI Summarize Thread
+                    {loadingSummary ? 'Generating...' : 'AI Summarize Thread'}
                   </Button>
                 )}
                 {enableCommenting && isUserAuthenticated && (
@@ -302,6 +349,39 @@ export const CommentDrawer: React.FunctionComponent<CommentDrawerProps> = ({
                 )}
               </CardBody>
             </Card>
+
+            {/* AI Summary Display */}
+            {threadSummaries[selectedThread.id] && (
+              <Alert
+                variant="info"
+                isInline
+                title="AI Summary"
+                actionClose={
+                  <Button
+                    variant="plain"
+                    onClick={() => {
+                      const newSummaries = { ...threadSummaries };
+                      delete newSummaries[selectedThread.id];
+                      setThreadSummaries(newSummaries);
+                    }}
+                    aria-label="Clear summary"
+                  >
+                    <TimesIcon />
+                  </Button>
+                }
+              >
+                <ExpandableSection
+                  toggleText={summaryExpanded ? 'Hide summary' : 'Show summary'}
+                  onToggle={(_event, isExpanded) => setSummaryExpanded(isExpanded)}
+                  isExpanded={summaryExpanded}
+                  isIndented
+                >
+                  <div style={{ fontSize: '0.875rem', lineHeight: '1.5' }}>
+                    {threadSummaries[selectedThread.id]}
+                  </div>
+                </ExpandableSection>
+              </Alert>
+            )}
 
             <Divider />
 
