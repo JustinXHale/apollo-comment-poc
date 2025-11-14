@@ -183,7 +183,10 @@ function formatPromptWithComments(
   // Build a structured summary of comments
   const commentSummary = relevantThreads.map((thread, idx) => {
     const threadComments = thread.comments
-      .map(c => `  - ${c.author} (${new Date(c.createdAt || c.timestamp).toLocaleDateString()}): "${c.text || c.content}"`)
+      .map(c => {
+        const date = c.createdAt || c.timestamp || new Date().toISOString();
+        return `  - ${c.author} (${new Date(date).toLocaleDateString()}): "${c.text || c.content}"`;
+      })
       .join('\n');
     
     return `Thread ${idx + 1} (${thread.route}, ${thread.status || 'open'}):
