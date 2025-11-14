@@ -35,8 +35,10 @@ interface Thread {
 interface Comment {
   id: string;
   author: string;
-  content: string;
-  timestamp: string;
+  text?: string;        // GitHub/GitLab format
+  content?: string;     // Internal format
+  createdAt?: string;   // GitHub/GitLab format
+  timestamp?: string;   // Internal format
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -119,6 +121,8 @@ RESPONSE:`,
     // Strip DeepSeek R1 reasoning tokens (<think>...</think>)
     // These are internal reasoning steps that shouldn't be shown to users
     aiMessage = aiMessage.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+    // Also catch orphaned opening/closing tags
+    aiMessage = aiMessage.replace(/<\/?think>/gi, '').trim();
 
     console.log('AI Response (after stripping think tags):', aiMessage.substring(0, 200) + '...');
 
@@ -150,30 +154,39 @@ function formatPromptWithComments(
   console.log('Looking for version:', version);
   console.log('Looking for route:', route);
   
-  // Filter threads by version and optionally by route
-  const relevantThreads = threads.filter(t => {
-    console.log(`Thread ${t.id}: version=${t.version}, route=${t.route}, comments=${t.comments?.length || 0}`);
-    if (t.version !== version) {
-      console.log(`  -> Skipped (version mismatch: "${t.version}" !== "${version}")`);
-      return false;
-    }
-    if (route && t.route !== route) {
-      console.log(`  -> Skipped (route mismatch: "${t.route}" !== "${route}")`);
-      return false;
-    }
-    console.log('  -> Included!');
-    return true;
-  });
+  // Special case: If only 1 thread is passed (e.g., from "AI Summarize Thread" button),
+  // skip version filtering as it's explicitly the thread the user wants summarized
+  let relevantThreads: Thread[];
+  
+  if (threads.length === 1) {
+    console.log('Single thread mode - skipping version/route filtering');
+    relevantThreads = threads;
+  } else {
+    // Filter threads by version and optionally by route
+    relevantThreads = threads.filter(t => {
+      console.log(`Thread ${t.id}: version=${t.version}, route=${t.route}, comments=${t.comments?.length || 0}`);
+      if (t.version !== version) {
+        console.log(`  -> Skipped (version mismatch: "${t.version}" !== "${version}")`);
+        return false;
+      }
+      if (route && t.route !== route) {
+        console.log(`  -> Skipped (route mismatch: "${t.route}" !== "${route}")`);
+        return false;
+      }
+      console.log('  -> Included!');
+      return true;
+    });
+  }
 
   console.log('Relevant threads after filtering:', relevantThreads.length);
 
   // Build a structured summary of comments
   const commentSummary = relevantThreads.map((thread, idx) => {
     const threadComments = thread.comments
-      .map(c => `  - ${c.author} (${new Date(c.timestamp).toLocaleDateString()}): "${c.content}"`)
+      .map(c => `  - ${c.author} (${new Date(c.createdAt || c.timestamp).toLocaleDateString()}): "${c.text || c.content}"`)
       .join('\n');
     
-    return `Thread ${idx + 1} (${thread.route}, ${thread.status}):
+    return `Thread ${idx + 1} (${thread.route}, ${thread.status || 'open'}):
 ${threadComments}`;
   }).join('\n\n');
 
