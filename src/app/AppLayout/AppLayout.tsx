@@ -37,15 +37,18 @@ import { BarsIcon, BellIcon, CaretDownIcon, CogIcon, CommentIcon, FlagIcon, Info
 import { useTheme } from '@app/utils/ThemeContext';
 import { useUserProfile } from '@app/utils/UserProfileContext';
 import { useFeatureFlags } from '@app/utils/FeatureFlagsContext';
-import { useComments } from '@app/context/CommentContext';
-import { useVersion } from '@app/context/VersionContext';
-import { CommentOverlay } from '@app/components/comments/CommentOverlay';
-import { CommentDrawer } from '@app/components/comments/CommentDrawer';
+import { 
+  useComments,
+  useVersion,
+  CommentOverlay,
+  CommentDrawer,
+  useGitHubAuth,
+  useGitLabAuth,
+  AIProvider,
+  AIAssistant
+} from '@apollo/commenting-system';
 import { GitHubAuthButton } from '@app/components/GitHubAuthButton';
 import { GitLabAuthButton } from '@app/components/GitLabAuthButton';
-import { useGitHubAuth } from '@app/contexts/GitHubAuthContext';
-import { useGitLabAuth } from '@app/contexts/GitLabAuthContext';
-import { AIProvider, AIAssistant } from '@app/components/ai';
 // Import custom logos
 import LightLogo from '@app/bgimages/Product_Logos_Light.svg';
 import DarkLogo from '@app/bgimages/Product-Logos_Dark.svg';

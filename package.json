@@ -6,6 +6,9 @@
   "homepage": "https://patternfly-react-seed.surge.sh",
   "license": "MIT",
   "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "prebuild": "npm run type-check && npm run clean",
     "build": "webpack --config webpack.prod.js",
@@ -72,6 +75,7 @@
     "webpack-merge": "^6.0.1"
   },
   "dependencies": {
+    "@apollo/commenting-system": "workspace:*",
     "@fortawesome/fontawesome-svg-core": "^7.0.1",
     "@fortawesome/free-regular-svg-icons": "^7.0.1",
     "@fortawesome/free-solid-svg-icons": "^7.0.1",

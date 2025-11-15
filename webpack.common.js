@@ -122,6 +122,24 @@ module.exports = (env) => {
       ],
       symlinks: false,
       cacheWithContext: false,
+      fallback: {
+        "stream": false,
+        "buffer": false,
+        "util": false,
+        "assert": false,
+        "http": false,
+        "https": false,
+        "http2": false,
+        "os": false,
+        "url": false,
+        "zlib": false,
+        "path": false,
+        "fs": false,
+        "crypto": false,
+        "net": false,
+        "tls": false,
+        "child_process": false
+      }
     },
   };
 };

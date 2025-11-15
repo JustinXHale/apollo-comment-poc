@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Button, Avatar, Dropdown, DropdownList, DropdownItem, MenuToggle } from '@patternfly/react-core';
 import { GithubIcon } from '@patternfly/react-icons';
-import { useGitHubAuth } from '../contexts/GitHubAuthContext';
+import { useGitHubAuth } from '@apollo/commenting-system';
 
 export const GitHubAuthButton: React.FC = () => {
   const { user, isAuthenticated, login, logout } = useGitHubAuth();

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Button, Dropdown, DropdownList, DropdownItem, MenuToggle, Avatar } from '@patternfly/react-core';
-import { useGitLabAuth } from '@app/contexts/GitLabAuthContext';
+import { useGitLabAuth } from '@apollo/commenting-system';
 
 export const GitLabAuthButton: React.FC = () => {
   const { user, isAuthenticated, login, logout } = useGitLabAuth();

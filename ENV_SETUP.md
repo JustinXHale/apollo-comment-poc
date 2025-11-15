@@ -1,4 +1,4 @@
-# Environment Setup for AI Assistant
+npm i -g vercel# Environment Setup for AI Assistant
 
 ## Local Development
 

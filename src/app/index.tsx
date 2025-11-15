@@ -7,11 +7,13 @@ import { AppRoutes } from '@app/routes';
 import { ThemeProvider } from '@app/utils/ThemeContext';
 import { FeatureFlagsProvider } from '@app/utils/FeatureFlagsContext';
 import { UserProfileProvider } from '@app/utils/UserProfileContext';
-import { CommentProvider } from '@app/context/CommentContext';
-import { GitLabAuthProvider } from '@app/contexts/GitLabAuthContext';
-import { VersionProvider } from '@app/context/VersionContext';
 import { ToasterProvider } from '@app/utils/ToasterContext';
-import { GitHubAuthProvider } from '@app/contexts/GitHubAuthContext';
+import {
+  CommentProvider,
+  GitLabAuthProvider,
+  VersionProvider,
+  GitHubAuthProvider
+} from '@apollo/commenting-system';
 import '@app/app.css';
 
 const App: React.FunctionComponent = () => (
