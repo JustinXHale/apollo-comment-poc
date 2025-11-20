@@ -13,7 +13,7 @@ import {
   GitLabAuthProvider,
   VersionProvider,
   GitHubAuthProvider
-} from '@apollo/commenting-system';
+} from '@app/commenting-system';
 import '@app/app.css';
 
 const App: React.FunctionComponent = () => (

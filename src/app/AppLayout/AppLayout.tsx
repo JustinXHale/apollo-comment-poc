@@ -46,7 +46,7 @@ import {
   useGitLabAuth,
   AIProvider,
   AIAssistant
-} from '@apollo/commenting-system';
+} from '@app/commenting-system';
 import { GitHubAuthButton } from '@app/components/GitHubAuthButton';
 import { GitLabAuthButton } from '@app/components/GitLabAuthButton';
 // Import custom logos
