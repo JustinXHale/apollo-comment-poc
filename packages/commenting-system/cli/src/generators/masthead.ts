@@ -56,7 +56,8 @@ export async function integrateIntoMasthead(
 
 function injectMastheadIntegration(content: string): string {
   // Step 1: Add imports
-  const imports = `import {
+  const imports = `import { CommentIcon } from '@patternfly/react-icons';
+import {
   CommentProvider,
   CommentOverlay,
   CommentDrawer,
