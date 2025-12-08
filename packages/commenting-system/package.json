@@ -1,0 +1,60 @@
+{
+  "name": "hale-commenting-system",
+  "version": "2.0.3",
+  "description": "Local-first commenting system for React applications with localStorage persistence",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "hale-commenting-system": "./cli/dist/index.js"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "cli/dist"
+  ],
+  "scripts": {
+    "build": "npm run build:lib && npm run build:cli",
+    "build:lib": "tsup",
+    "build:cli": "cd cli && npm run build",
+    "dev": "tsup --watch",
+    "type-check": "tsc --noEmit",
+    "prepare": "npm run build"
+  },
+  "peerDependencies": {
+    "@patternfly/react-core": "^6.0.0",
+    "@patternfly/react-icons": "^6.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "react-router-dom": "^6.0.0 || ^7.0.0"
+  },
+  "dependencies": {
+    "commander": "^12.0.0",
+    "inquirer": "^9.2.15",
+    "chalk": "^5.3.0",
+    "ora": "^8.0.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "tsup": "^8.0.2",
+    "typescript": "^5.4.5"
+  },
+  "keywords": [
+    "react",
+    "comments",
+    "feedback",
+    "localstorage",
+    "patternfly",
+    "cli",
+    "local-first"
+  ],
+  "author": "Justin Hale",
+  "license": "MIT"
+}

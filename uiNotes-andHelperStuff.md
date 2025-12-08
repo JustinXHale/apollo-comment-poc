@@ -14,5 +14,5 @@
 -- Step 4: Change migrate button to the dropdown button.
 
 # Issues
-- versioning comments (Jenn Giardino asked)
 - not syncing after logged in
+- local mode needs the ability to delete Joel comments
