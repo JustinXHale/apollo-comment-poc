@@ -1,6 +1,8 @@
 import * as React from 'react';
 import { useParams } from 'react-router-dom';
 import {
+  Alert,
+  AlertActionCloseButton,
   Breadcrumb,
   BreadcrumbItem,
   Button,
@@ -20,11 +22,20 @@ import {
   Grid,
   GridItem,
   Icon,
+  MenuToggle,
   PageSection,
+  SearchInput,
+  Select,
+  SelectList,
+  SelectOption,
   Tab,
   Tabs,
   TabTitleText,
   Title,
+  Toolbar,
+  ToolbarContent,
+  ToolbarGroup,
+  ToolbarItem,
 } from '@patternfly/react-core';
 import {
   WrenchIcon,
@@ -34,7 +45,25 @@ import {
   ConnectedIcon,
   UsersIcon,
   InfoCircleIcon,
+  OutlinedQuestionCircleIcon,
+  ExclamationTriangleIcon,
+  SyncAltIcon,
+  TrashIcon,
 } from '@patternfly/react-icons';
+import {
+  Table,
+  Thead,
+  Tbody,
+  Tr,
+  Th,
+  Td,
+  ActionsColumn,
+  IAction,
+  ExpandableRowContent
+} from '@patternfly/react-table';
+import { Label, Tooltip, Popover, List, ListItem } from '@patternfly/react-core';
+import { CreateWorkbenchWizard } from './CreateWorkbenchWizard';
+import MigrationAssistWizard, { LegacyWorkbenchConfig } from '../DevelopTrain/Workbenches/MigrationAssistWizard';
 
 const DataScienceProjectDetail: React.FunctionComponent = () => {
   const { projectName = 'emptyProject' } = useParams<{ projectName: string }>();
@@ -42,6 +71,267 @@ const DataScienceProjectDetail: React.FunctionComponent = () => {
   const [isTrainExpanded, setIsTrainExpanded] = React.useState(true);
   const [isServeExpanded, setIsServeExpanded] = React.useState(true);
   const [isConfigExpanded, setIsConfigExpanded] = React.useState(true);
+  const [expandedWorkbenches, setExpandedWorkbenches] = React.useState<string[]>([]);
+  const [isCreateWizardOpen, setIsCreateWizardOpen] = React.useState(false);
+  
+  // Migration-related state
+  const [selectedWorkbenchIds, setSelectedWorkbenchIds] = React.useState<string[]>([]);
+  const [showMigrationBanner, setShowMigrationBanner] = React.useState(true);
+  const [templatesAvailable] = React.useState(true); // Simulate Joel's template readiness
+  const migrationDeadline = '2025-12-31';
+
+  // Filtering state
+  const [searchValue, setSearchValue] = React.useState('');
+  const [statusFilters, setStatusFilters] = React.useState<string[]>([]);
+  const [versionFilters, setVersionFilters] = React.useState<string[]>([]);
+  const [isStatusFilterOpen, setIsStatusFilterOpen] = React.useState(false);
+  const [isVersionFilterOpen, setIsVersionFilterOpen] = React.useState(false);
+
+  // Migration wizard state
+  const [isMigrationWizardOpen, setIsMigrationWizardOpen] = React.useState(false);
+  const [selectedWorkbenchesForMigration, setSelectedWorkbenchesForMigration] = React.useState<LegacyWorkbenchConfig[]>([]);
+
+  // Mock workbench data with migration status
+  const mockWorkbenches = [
+    {
+      id: 'wb-1',
+      name: 'code server test',
+      resourceName: 'code-server-test',
+      resourceType: 'Notebook',
+      image: 'Code Server | Data Science | CPU | Python 3.11',
+      imageVersion: '2025.1 (e332806)',
+      isDeprecated: true,
+      isLegacyV1: true,
+      hardwareProfile: '',
+      status: 'Stopped',
+      clusterStorage: '',
+      packages: ['Boto3 v1.37', 'Kafka-Python-ng v2.2', 'Matplotlib v3.10', 'Numpy v2.2', 'Pandas v2.2', 'Scikit-learn v1.6', 'Scipy v1.15', 'Sklearn-onnx v1.18', 'ipykernel v6.29', 'Kubeflow-Training v1.9'],
+      limits: '2 CPU, 8GiB Memory listed',
+      requests: '1 CPU, 8GiB Memory requested',
+      migrationStatus: 'in-progress' as const,
+      migratedToWorkbenchId: 'wb-1-v2'
+    },
+    {
+      id: 'wb-2',
+      name: 'de',
+      resourceName: 'de',
+      resourceType: 'Notebook',
+      image: 'Jupyter | Minimal | CPU | Python 3.11',
+      imageVersion: '2024.2 (be38cca)',
+      isDeprecated: true,
+      isLegacyV1: true,
+      hardwareProfile: '',
+      status: 'Stopped',
+      clusterStorage: '',
+      packages: [],
+      limits: '',
+      requests: '',
+      migrationStatus: 'completed' as const,
+      migratedToWorkbenchId: 'wb-2-v2'
+    },
+    {
+      id: 'wb-3',
+      name: 'example',
+      resourceName: 'example',
+      resourceType: 'Notebook',
+      image: 'Jupyter | Data Science | CPU | Python 3.11',
+      imageVersion: '2024.2 (be38cca)',
+      isDeprecated: true,
+      isLegacyV1: true,
+      hardwareProfile: '',
+      status: 'Stopped',
+      clusterStorage: '',
+      packages: [],
+      limits: '',
+      requests: '',
+      migrationStatus: 'not-requested' as const
+    },
+    {
+      id: 'wb-4',
+      name: 'ffd',
+      resourceName: 'ffd',
+      resourceType: 'Notebook',
+      image: 'Jupyter | PyTorch | CUDA | Python 3.11',
+      imageVersion: '2024.2 (be38cca)',
+      isDeprecated: true,
+      isLegacyV1: true,
+      hardwareProfile: '',
+      status: 'Failed',
+      statusMessage: 'Failed to scale-up',
+      clusterStorage: '',
+      packages: [],
+      limits: '',
+      requests: '',
+      migrationStatus: 'not-requested' as const
+    },
+    {
+      id: 'wb-5',
+      name: 'kyle',
+      resourceName: 'kyle',
+      resourceType: 'Notebook',
+      image: 'Code Server | Data Science | CPU | Python 3.11',
+      imageVersion: '2025.1 (e332806)',
+      isDeprecated: true,
+      isLegacyV1: true,
+      hardwareProfile: '',
+      status: 'Stopped',
+      clusterStorage: '',
+      packages: [],
+      limits: '',
+      requests: '',
+      migrationStatus: 'not-requested' as const
+    },
+    {
+      id: 'wb-6',
+      name: 'Next workbench',
+      resourceName: 'next-workbench',
+      resourceType: 'Notebook',
+      image: 'Jupyter | TrustyAI | CPU | Python 3.11',
+      imageVersion: '2024.2 (be38cca)',
+      isDeprecated: false,
+      isLegacyV1: false,
+      hardwareProfile: '',
+      status: 'Stopped',
+      clusterStorage: '',
+      packages: [],
+      limits: '',
+      requests: ''
+    },
+    {
+      id: 'wb-7',
+      name: 'Test workbench',
+      resourceName: 'test-workbench',
+      resourceType: 'Notebook',
+      image: 'Jupyter | Data Science | CPU | Python 3.11',
+      imageVersion: '2024.2 (be38cca)',
+      isDeprecated: true,
+      isLegacyV1: true,
+      hardwareProfile: '',
+      status: 'Running',
+      clusterStorage: '',
+      packages: [],
+      limits: '',
+      requests: '',
+      migrationStatus: 'in-progress' as const,
+      migratedToWorkbenchId: 'wb-7-v2'
+    },
+    {
+      id: 'wb-8',
+      name: 'UXDPOC6',
+      description: 'Workbench that connects to an Object Storage and has a simple model saved there.',
+      resourceName: 'uxdpoc6',
+      resourceType: 'Notebook',
+      image: 'Jupyter | TensorFlow | CUDA | Python 3.11',
+      imageVersion: '2024.2 (be38cca)',
+      isDeprecated: true,
+      isLegacyV1: true,
+      hardwareProfile: '',
+      status: 'Stopped',
+      clusterStorage: '',
+      packages: [],
+      limits: '',
+      requests: '',
+      migrationStatus: 'not-requested' as const
+    }
+  ];
+
+  // Filtered workbenches based on search and filters
+  const filteredWorkbenches = React.useMemo(() => {
+    return mockWorkbenches.filter((workbench) => {
+      // Search filter (name)
+      const matchesSearch =
+        searchValue === '' ||
+        workbench.name.toLowerCase().includes(searchValue.toLowerCase());
+
+      // Status filter
+      const matchesStatus = statusFilters.length === 0 || 
+        statusFilters.includes(workbench.status) ||
+        (workbench.migrationStatus === 'in-progress' && statusFilters.includes('Migrating'));
+
+      // Version filter
+      const versionLabel = workbench.isLegacyV1 ? 'Legacy V1' : 'NB 2.0 Compliant';
+      const matchesVersion = versionFilters.length === 0 || versionFilters.includes(versionLabel);
+
+      return matchesSearch && matchesStatus && matchesVersion;
+    });
+  }, [mockWorkbenches, searchValue, statusFilters, versionFilters]);
+
+  // Helper function to render compliance label (matches Joel's admin view pattern)
+  const renderComplianceLabel = (isLegacyV1: boolean) => (
+    <Tooltip 
+      content={
+        isLegacyV1 
+          ? "Legacy V1 workbenches use deprecated images and should be migrated to NB 2.0" 
+          : "This workbench is using the latest NB 2.0 compliant image"
+      }
+    >
+      <Label color={isLegacyV1 ? 'grey' : 'blue'} id={`compliance-label-${isLegacyV1 ? 'v1' : 'v2'}`}>
+        {isLegacyV1 ? 'Legacy V1' : 'NB 2.0 Compliant'}
+      </Label>
+    </Tooltip>
+  );
+
+  const toggleWorkbenchExpansion = (workbenchId: string) => {
+    setExpandedWorkbenches(prev => 
+      prev.includes(workbenchId) 
+        ? prev.filter(id => id !== workbenchId)
+        : [...prev, workbenchId]
+    );
+  };
+
+  // Calculate deprecated workbench count
+  const deprecatedCount = mockWorkbenches.filter(wb => wb.isDeprecated).length;
+
+  // Selection helpers
+  const isWorkbenchSelected = (id: string) => selectedWorkbenchIds.includes(id);
+  
+  const onSelectWorkbench = (id: string, isSelecting: boolean) => {
+    setSelectedWorkbenchIds(prev => 
+      isSelecting ? [...prev, id] : prev.filter(i => i !== id)
+    );
+  };
+
+  const onSelectAllWorkbenches = (_event: React.FormEvent<HTMLInputElement>, isSelecting: boolean) => {
+    setSelectedWorkbenchIds(isSelecting ? filteredWorkbenches.map(wb => wb.id) : []);
+  };
+
+  const areAllWorkbenchesSelected = filteredWorkbenches.length > 0 && 
+    filteredWorkbenches.every(wb => selectedWorkbenchIds.includes(wb.id));
+
+  // Count selected deprecated workbenches for bulk migration
+  const selectedDeprecatedCount = filteredWorkbenches.filter(
+    wb => wb.isDeprecated && selectedWorkbenchIds.includes(wb.id)
+  ).length;
+
+  // Count total selected for delete button
+  const selectedCount = selectedWorkbenchIds.length;
+
+  // Handle bulk migration action - opens the MigrationAssistWizard
+  const handleBulkMigration = () => {
+    const selected = filteredWorkbenches
+      .filter((wb) => wb.isLegacyV1 && selectedWorkbenchIds.includes(wb.id))
+      .map((wb, index) => {
+        // Vary the conflicts to demonstrate unique env var counting
+        let env: Record<string, string> | undefined;
+        
+        if (index % 3 === 0) {
+          env = { SAMPLE_ENV: 'VALUE', ANOTHER_VAR: 'test' };
+        } else if (index % 5 === 0) {
+          env = { CUDA_VERSION: '12.1' };
+        } else {
+          env = undefined;
+        }
+        
+        return {
+          id: wb.id,
+          name: wb.name,
+          project: projectName,
+          env
+        };
+      });
+    setSelectedWorkbenchesForMigration(selected);
+    setIsMigrationWizardOpen(true);
+  };
 
   const handleTabClick = (
     _event: React.MouseEvent<any> | React.KeyboardEvent | MouseEvent,
@@ -179,11 +469,11 @@ const DataScienceProjectDetail: React.FunctionComponent = () => {
                               cluster storage in your workbench.
                             </Content>
                           </FlexItem>
-                          <FlexItem>
-                            <Button variant="primary" id="create-workbench-button">
-                              Create a workbench
-                            </Button>
-                          </FlexItem>
+                <FlexItem>
+                  <Button variant="primary" id="create-workbench-button" onClick={() => setIsCreateWizardOpen(true)}>
+                    Create a workbench
+                  </Button>
+                </FlexItem>
                         </Flex>
                       </CardBody>
                     </Card>
@@ -434,11 +724,400 @@ const DataScienceProjectDetail: React.FunctionComponent = () => {
           </Flex>
         )}
 
-        {/* Other tabs content placeholders */}
+        {/* Workbenches Tab Content */}
         {activeTabKey === 1 && (
-          <Content component={ContentVariants.p} id="workbenches-tab-content">
-            Workbenches tab content
-          </Content>
+          <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsLg' }}>
+            {/* Title with Deprecation Badge */}
+            <FlexItem>
+              <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }}>
+                <FlexItem>
+                  <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                    <FlexItem>
+                      <Title headingLevel="h2" id="workbenches-tab-title">
+                        Workbenches
+                      </Title>
+                    </FlexItem>
+                    {deprecatedCount > 0 && (
+                      <FlexItem>
+                        <Label color="orange" icon={<ExclamationTriangleIcon />} id="deprecated-count-badge">
+                          {deprecatedCount} using deprecated images
+                        </Label>
+                      </FlexItem>
+                    )}
+                  </Flex>
+                </FlexItem>
+              </Flex>
+            </FlexItem>
+
+            {/* Admin Migration Banner */}
+            {showMigrationBanner && deprecatedCount > 0 && (
+              <FlexItem>
+                <Alert 
+                  variant="warning" 
+                  isInline 
+                  title="Action required: Migrate deprecated workbenches"
+                  actionClose={<AlertActionCloseButton onClose={() => setShowMigrationBanner(false)} />}
+                  id="migration-banner"
+                >
+                  Your administrator requires all workbenches to be migrated to v2.0 by {migrationDeadline}.
+                  You have {deprecatedCount} workbench{deprecatedCount !== 1 ? 'es' : ''} that need migration.
+                  Select workbenches below and click &quot;Migrate to New Version.&quot;
+                </Alert>
+              </FlexItem>
+            )}
+
+            {/* Filtering Toolbar */}
+            <FlexItem>
+              <Toolbar id="workbenches-toolbar" inset={{ default: 'insetNone' }} clearAllFilters={() => {
+                setSearchValue('');
+                setStatusFilters([]);
+                setVersionFilters([]);
+              }}>
+                <ToolbarContent>
+                  <ToolbarGroup variant="filter-group">
+                    <ToolbarItem>
+                      <SearchInput
+                        placeholder="Filter by name"
+                        value={searchValue}
+                        onChange={(_event, value) => setSearchValue(value)}
+                        onClear={() => setSearchValue('')}
+                        id="workbenches-search"
+                      />
+                    </ToolbarItem>
+                    <ToolbarItem>
+                      <Select
+                        isOpen={isStatusFilterOpen}
+                        onOpenChange={(isOpen) => setIsStatusFilterOpen(isOpen)}
+                        onSelect={(_event, value) => {
+                          const status = value as string;
+                          setStatusFilters(
+                            statusFilters.includes(status)
+                              ? statusFilters.filter((s) => s !== status)
+                              : [...statusFilters, status]
+                          );
+                        }}
+                        selected={statusFilters}
+                        toggle={(toggleRef) => (
+                          <MenuToggle
+                            ref={toggleRef}
+                            onClick={() => setIsStatusFilterOpen(!isStatusFilterOpen)}
+                            isExpanded={isStatusFilterOpen}
+                            id="status-filter-toggle"
+                          >
+                            Status
+                          </MenuToggle>
+                        )}
+                      >
+                        <SelectList>
+                          <SelectOption hasCheckbox isSelected={statusFilters.includes('Running')} value="Running">
+                            Running
+                          </SelectOption>
+                          <SelectOption hasCheckbox isSelected={statusFilters.includes('Stopped')} value="Stopped">
+                            Stopped
+                          </SelectOption>
+                          <SelectOption hasCheckbox isSelected={statusFilters.includes('Failed')} value="Failed">
+                            Failed
+                          </SelectOption>
+                          <SelectOption hasCheckbox isSelected={statusFilters.includes('Migrating')} value="Migrating">
+                            Migrating
+                          </SelectOption>
+                        </SelectList>
+                      </Select>
+                    </ToolbarItem>
+                    <ToolbarItem>
+                      <Select
+                        isOpen={isVersionFilterOpen}
+                        onOpenChange={(isOpen) => setIsVersionFilterOpen(isOpen)}
+                        onSelect={(_event, value) => {
+                          const version = value as string;
+                          setVersionFilters(
+                            versionFilters.includes(version)
+                              ? versionFilters.filter((v) => v !== version)
+                              : [...versionFilters, version]
+                          );
+                        }}
+                        selected={versionFilters}
+                        toggle={(toggleRef) => (
+                          <MenuToggle
+                            ref={toggleRef}
+                            onClick={() => setIsVersionFilterOpen(!isVersionFilterOpen)}
+                            isExpanded={isVersionFilterOpen}
+                            id="version-filter-toggle"
+                          >
+                            Version
+                          </MenuToggle>
+                        )}
+                      >
+                        <SelectList>
+                          <SelectOption hasCheckbox isSelected={versionFilters.includes('Legacy V1')} value="Legacy V1">
+                            Legacy V1
+                          </SelectOption>
+                          <SelectOption hasCheckbox isSelected={versionFilters.includes('NB 2.0 Compliant')} value="NB 2.0 Compliant">
+                            NB 2.0 Compliant
+                          </SelectOption>
+                        </SelectList>
+                      </Select>
+                    </ToolbarItem>
+                    <ToolbarItem>
+                      <Button
+                        id="delete-selected-button"
+                        variant="plain"
+                        icon={<TrashIcon />}
+                        isDisabled={selectedCount === 0}
+                        onClick={() => {
+                          console.log('Delete selected workbenches:', selectedWorkbenchIds);
+                        }}
+                        aria-label={`Delete ${selectedCount} selected workbench${selectedCount !== 1 ? 'es' : ''}`}
+                      />
+                    </ToolbarItem>
+                  </ToolbarGroup>
+                  <ToolbarGroup>
+                    <ToolbarItem>
+                      <Button variant="primary" id="create-workbench-tab-button" onClick={() => setIsCreateWizardOpen(true)}>
+                        Create Workbench
+                      </Button>
+                    </ToolbarItem>
+                    <ToolbarItem>
+                      <Button
+                        variant="secondary"
+                        id="migrate-selected-button"
+                        isDisabled={selectedDeprecatedCount === 0}
+                        onClick={handleBulkMigration}
+                      >
+                        Migrate Workbenches ({selectedDeprecatedCount} Selected)
+                      </Button>
+                    </ToolbarItem>
+                  </ToolbarGroup>
+                </ToolbarContent>
+              </Toolbar>
+            </FlexItem>
+
+            <FlexItem>
+              <Table aria-label="Workbenches table" variant="compact" id="workbenches-table">
+                <Thead>
+                  <Tr>
+                    <Th
+                      select={{
+                        onSelect: onSelectAllWorkbenches,
+                        isSelected: areAllWorkbenchesSelected,
+                      }}
+                      id="select-all-checkbox"
+                    />
+                    <Th />
+                    <Th width={15} id="workbench-name-header">Name</Th>
+                    <Th width={25} id="workbench-image-header">Workbench image</Th>
+                    <Th width={10} id="workbench-hardware-header">Hardware profile</Th>
+                    <Th width={15} id="workbench-version-header">Version/Compliance</Th>
+                    <Th width={15} id="workbench-status-header">Status</Th>
+                    <Th width={10} />
+                    <Th width={5} />
+                  </Tr>
+                </Thead>
+                {filteredWorkbenches.map((workbench, rowIndex) => {
+                  const isExpanded = expandedWorkbenches.includes(workbench.id);
+
+                  const getStatusLabel = (status: string) => {
+                    switch (status) {
+                      case 'Running':
+                        return <Label color="green" icon={<span style={{ fontSize: '0.75rem' }}>●</span>} id={`status-${workbench.id}`}>Running</Label>;
+                      case 'Stopped':
+                        return <Label icon={<span style={{ fontSize: '0.75rem' }}>○</span>} id={`status-${workbench.id}`}>Stopped</Label>;
+                      case 'Failed':
+                        return <Label color="red" icon={<span style={{ fontSize: '0.75rem' }}>●</span>} id={`status-${workbench.id}`}>Failed</Label>;
+                      default:
+                        return <Label id={`status-${workbench.id}`}>{status}</Label>;
+                    }
+                  };
+
+                  const rowActions: IAction[] = [
+                    {
+                      title: 'Edit',
+                      onClick: () => console.log(`Edit ${workbench.name}`),
+                    },
+                    {
+                      title: 'Migrate to New Version...',
+                      onClick: () => {
+                        const wbConfig: LegacyWorkbenchConfig = {
+                          id: workbench.id,
+                          name: workbench.name,
+                          project: projectName,
+                          env: { SAMPLE_ENV: 'VALUE', ANOTHER_VAR: 'test' }
+                        };
+                        setSelectedWorkbenchesForMigration([wbConfig]);
+                        setIsMigrationWizardOpen(true);
+                      },
+                      isDisabled: !workbench.isDeprecated,
+                    },
+                    {
+                      title: 'Delete',
+                      onClick: () => console.log(`Delete ${workbench.name}`),
+                    },
+                  ];
+
+                  return (
+                    <Tbody key={workbench.id} isExpanded={isExpanded}>
+                      <Tr>
+                        <Td
+                          select={{
+                            rowIndex,
+                            onSelect: (_event, isSelecting) => onSelectWorkbench(workbench.id, isSelecting),
+                            isSelected: isWorkbenchSelected(workbench.id),
+                          }}
+                          id={`select-${workbench.id}`}
+                        />
+                        <Td
+                          expand={{
+                            rowIndex: workbench.id,
+                            isExpanded,
+                            onToggle: () => toggleWorkbenchExpansion(workbench.id),
+                          }}
+                        />
+                        <Td dataLabel="Name">
+                          <Flex spaceItems={{ default: 'spaceItemsSm' }} alignItems={{ default: 'alignItemsCenter' }}>
+                            <FlexItem>
+                              {workbench.name}
+                            </FlexItem>
+                            <FlexItem>
+                              <Popover
+                                headerContent="Resource names and types are used to find your resources in OpenShift."
+                                bodyContent={
+                                  <div>
+                                    <strong>Resource name</strong>
+                                    <div>{workbench.resourceName}</div>
+                                    <br />
+                                    <strong>Resource type</strong>
+                                    <div>{workbench.resourceType}</div>
+                                  </div>
+                                }
+                              >
+                                <Button
+                                  variant="plain"
+                                  aria-label={`Resource info for ${workbench.name}`}
+                                  id={`info-${workbench.id}`}
+                                  style={{ padding: 0, minWidth: 'auto' }}
+                                >
+                                  <OutlinedQuestionCircleIcon style={{ fontSize: '0.875rem' }} />
+                                </Button>
+                              </Popover>
+                            </FlexItem>
+                          </Flex>
+                        </Td>
+                        <Td dataLabel="Workbench image">
+                          <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsXs' }}>
+                            <FlexItem>{workbench.image}</FlexItem>
+                            <FlexItem>
+                              <span style={{ fontSize: '0.875rem', color: 'var(--pf-v6-global--Color--200)' }}>
+                                {workbench.imageVersion}
+                              </span>
+                            </FlexItem>
+                          </Flex>
+                        </Td>
+                        <Td dataLabel="Hardware profile">
+                          {workbench.hardwareProfile || '-'}
+                        </Td>
+                        <Td dataLabel="Version/Compliance" id={`version-${workbench.id}`}>
+                          <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsXs' }}>
+                            <FlexItem>
+                              {workbench.migrationStatus === 'completed' 
+                                ? renderComplianceLabel(false) // Show NB 2.0 Compliant for completed migrations
+                                : renderComplianceLabel(workbench.isLegacyV1)
+                              }
+                            </FlexItem>
+                            {workbench.migrationStatus === 'in-progress' && (
+                              <FlexItem>
+                                <Label color="blue" icon={<SyncAltIcon />} isCompact id={`migration-status-${workbench.id}`}>
+                                  Migration in progress
+                                </Label>
+                              </FlexItem>
+                            )}
+                          </Flex>
+                        </Td>
+                        <Td dataLabel="Status">
+                          <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsXs' }}>
+                            <FlexItem>
+                              {getStatusLabel(workbench.status)}
+                            </FlexItem>
+                            {workbench.statusMessage && (
+                              <FlexItem>
+                                <Button
+                                  variant="link"
+                                  isInline
+                                  id={`status-message-${workbench.id}`}
+                                  style={{ fontSize: '0.875rem', padding: 0 }}
+                                >
+                                  {workbench.statusMessage}
+                                </Button>
+                              </FlexItem>
+                            )}
+                          </Flex>
+                        </Td>
+                        <Td>
+                          <Button
+                            variant="link"
+                            isInline
+                            id={`action-${workbench.id}`}
+                            isDisabled={workbench.status === 'Failed'}
+                          >
+                            {workbench.status === 'Running' ? 'Stop' : 'Start'}
+                          </Button>
+                        </Td>
+                        <Td isActionCell>
+                          <ActionsColumn items={rowActions} id={`actions-${workbench.id}`} />
+                        </Td>
+                      </Tr>
+                      <Tr isExpanded={isExpanded}>
+                        <Td />
+                        <Td />
+                        <Td colSpan={7}>
+                          <ExpandableRowContent>
+                            <Grid hasGutter md={4}>
+                              <GridItem>
+                                <Title headingLevel="h4" size="md" id={`cluster-storage-title-${workbench.id}`}>
+                                  Cluster storage
+                                </Title>
+                                <Content component={ContentVariants.p}>
+                                  {workbench.clusterStorage || 'No cluster storage configured'}
+                                </Content>
+                              </GridItem>
+                              <GridItem>
+                                <Title headingLevel="h4" size="md" id={`packages-title-${workbench.id}`}>
+                                  Packages
+                                </Title>
+                                {workbench.packages.length > 0 ? (
+                                  <List isPlain>
+                                    {workbench.packages.map((pkg, idx) => (
+                                      <ListItem key={idx}>{pkg}</ListItem>
+                                    ))}
+                                  </List>
+                                ) : (
+                                  <Content component={ContentVariants.p}>No packages</Content>
+                                )}
+                              </GridItem>
+                              <GridItem>
+                                <Title headingLevel="h4" size="md" id={`limits-title-${workbench.id}`}>
+                                  Limits
+                                </Title>
+                                <Content component={ContentVariants.p}>
+                                  {workbench.limits || 'No limits configured'}
+                                </Content>
+                                <br />
+                                <Title headingLevel="h4" size="md" id={`requests-title-${workbench.id}`}>
+                                  Requests
+                                </Title>
+                                <Content component={ContentVariants.p}>
+                                  {workbench.requests || 'No requests configured'}
+                                </Content>
+                              </GridItem>
+                            </Grid>
+                          </ExpandableRowContent>
+                        </Td>
+                      </Tr>
+                    </Tbody>
+                  );
+                })}
+              </Table>
+            </FlexItem>
+          </Flex>
         )}
         {activeTabKey === 2 && (
           <Content component={ContentVariants.p} id="pipelines-tab-content">
@@ -471,6 +1150,24 @@ const DataScienceProjectDetail: React.FunctionComponent = () => {
           </Content>
         )}
       </PageSection>
+
+      {/* Create Workbench Wizard */}
+      <CreateWorkbenchWizard 
+        isOpen={isCreateWizardOpen} 
+        onClose={() => setIsCreateWizardOpen(false)} 
+      />
+
+      {/* Migration Assist Wizard */}
+      {selectedWorkbenchesForMigration.length > 0 && (
+        <MigrationAssistWizard
+          isOpen={isMigrationWizardOpen}
+          onClose={() => {
+            setIsMigrationWizardOpen(false);
+            setSelectedWorkbenchesForMigration([]);
+          }}
+          workbenches={selectedWorkbenchesForMigration}
+        />
+      )}
     </>
   );
 };
