@@ -19,6 +19,9 @@ import {
   MenuToggle,
   MenuToggleElement,
   Modal,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
   ModalVariant,
   PageSection,
   PageSectionTypes,
@@ -505,7 +508,6 @@ const CreateWorkbenchWizard: React.FunctionComponent<CreateWorkbenchWizardProps>
         onClose={handleClose}
         aria-labelledby="create-workbench-wizard-title"
         variant={ModalVariant.large}
-        hasNoBodyWrapper
         id="create-workbench-wizard-modal"
       >
         <PageSection hasBodyWrapper={false} type={PageSectionTypes.wizard} aria-label="Create workbench wizard">
@@ -585,21 +587,23 @@ const CreateWorkbenchWizard: React.FunctionComponent<CreateWorkbenchWizardProps>
       {showCancelModal && (
         <Modal
           variant={ModalVariant.small}
-          title="Cancel workbench creation?"
           isOpen={showCancelModal}
           onClose={() => setShowCancelModal(false)}
-          actions={[
+          id="cancel-confirmation-modal"
+        >
+          <ModalHeader title="Cancel workbench creation?" />
+          <ModalBody>
+            <ExclamationTriangleIcon style={{ color: 'var(--pf-v6-global--warning-color--100)', marginRight: '0.5rem' }} />
+            Are you sure you want to cancel? All unsaved work will be lost.
+          </ModalBody>
+          <ModalFooter>
             <Button key="confirm" variant="danger" onClick={handleConfirmCancel} id="cancel-confirm-button">
               Yes, cancel
-            </Button>,
+            </Button>
             <Button key="back" variant="link" onClick={() => setShowCancelModal(false)} id="cancel-back-button">
               No, continue editing
             </Button>
-          ]}
-          id="cancel-confirmation-modal"
-        >
-          <ExclamationTriangleIcon style={{ color: 'var(--pf-v6-global--warning-color--100)', marginRight: '0.5rem' }} />
-          Are you sure you want to cancel? All unsaved work will be lost.
+          </ModalFooter>
         </Modal>
       )}
     </>

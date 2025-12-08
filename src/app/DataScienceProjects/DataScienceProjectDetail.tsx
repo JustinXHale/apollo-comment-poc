@@ -910,7 +910,7 @@ const DataScienceProjectDetail: React.FunctionComponent = () => {
                     <Th width={15} id="workbench-version-header">Version/Compliance</Th>
                     <Th width={15} id="workbench-status-header">Status</Th>
                     <Th width={10} />
-                    <Th width={5} />
+                    <Th width={10} />
                   </Tr>
                 </Thead>
                 {filteredWorkbenches.map((workbench, rowIndex) => {
@@ -967,7 +967,7 @@ const DataScienceProjectDetail: React.FunctionComponent = () => {
                         />
                         <Td
                           expand={{
-                            rowIndex: workbench.id,
+                            rowIndex,
                             isExpanded,
                             onToggle: () => toggleWorkbenchExpansion(workbench.id),
                           }}
