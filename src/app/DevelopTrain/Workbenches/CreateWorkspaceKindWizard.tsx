@@ -40,8 +40,6 @@ import {
   TextInputGroup,
   TextInputGroupMain,
   TextInputGroupUtilities,
-  ChipGroup,
-  Chip,
 } from '@patternfly/react-core';
 import { 
   PlusCircleIcon, 
@@ -573,8 +571,7 @@ const CreateWorkspaceKindWizard: React.FunctionComponent<CreateWorkspaceKindWiza
                   <FormGroup fieldId="enable-tshirt-sizing">
                     <Switch
                       id="enable-tshirt-sizing"
-                      label="Enable preset size options"
-                      labelOff="Preset sizes disabled"
+                      label={enableTshirtSizing ? "Enable preset size options" : "Preset sizes disabled"}
                       isChecked={enableTshirtSizing}
                       onChange={(_event, checked) => setEnableTshirtSizing(checked)}
                     />
@@ -764,8 +761,7 @@ const CreateWorkspaceKindWizard: React.FunctionComponent<CreateWorkspaceKindWiza
                   <FormGroup fieldId="enable-legacy-secrets">
                     <Switch
                       id="enable-legacy-secrets"
-                      label="Enable legacy secrets support"
-                      labelOff="Legacy secrets disabled"
+                      label={enableLegacySecrets ? "Enable legacy secrets support" : "Legacy secrets disabled"}
                       isChecked={enableLegacySecrets}
                       onChange={(_event, checked) => setEnableLegacySecrets(checked)}
                     />
@@ -871,8 +867,7 @@ const CreateWorkspaceKindWizard: React.FunctionComponent<CreateWorkspaceKindWiza
                   <FormGroup fieldId="enable-legacy-pvc-support">
                     <Switch
                       id="enable-legacy-pvc-support"
-                      label="Enable Legacy PVC Support"
-                      labelOff="Legacy PVC support disabled"
+                      label={enableLegacyPvcSupport ? "Enable Legacy PVC Support" : "Legacy PVC support disabled"}
                       isChecked={enableLegacyPvcSupport}
                       onChange={(_event, checked) => setEnableLegacyPvcSupport(checked)}
                     />
