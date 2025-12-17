@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { Link } from 'react-router-dom';
 import {
   PageSection,
   Title,
@@ -14,13 +15,18 @@ import {
   SelectOption,
   SelectList,
   MenuToggle,
+  MenuToggleElement,
   ToolbarGroup,
   DescriptionList,
   DescriptionListGroup,
   DescriptionListTerm,
   DescriptionListDescription,
   Flex,
-  FlexItem
+  FlexItem,
+  Dropdown,
+  DropdownItem,
+  DropdownList,
+  Divider
 } from '@patternfly/react-core';
 import {
   Table,
@@ -33,8 +39,9 @@ import {
   IAction,
   ThProps
 } from '@patternfly/react-table';
-import { ExchangeAltIcon, TrashIcon } from '@patternfly/react-icons';
+import { ExchangeAltIcon, TrashIcon, CaretDownIcon, PlusCircleIcon } from '@patternfly/react-icons';
 import MigrationAssistWizard, { LegacyWorkbenchConfig } from './MigrationAssistWizard';
+import CreateWorkspaceKindWizard from './CreateWorkspaceKindWizard';
 
 type WorkbenchRecord = {
   id: string;
@@ -227,8 +234,12 @@ const initialRows: WorkbenchRecord[] = [
 const Workbenches: React.FunctionComponent = () => {
   const [records, setRecords] = React.useState<WorkbenchRecord[]>(initialRows);
   const [isWizardOpen, setIsWizardOpen] = React.useState(false);
+  const [isCreateWorkspaceKindWizardOpen, setIsCreateWorkspaceKindWizardOpen] = React.useState(false);
   const [selectedWorkbenches, setSelectedWorkbenches] = React.useState<LegacyWorkbenchConfig[]>([]);
   const [selectedRowIds, setSelectedRowIds] = React.useState<string[]>([]);
+  
+  // Action dropdown state
+  const [isActionDropdownOpen, setIsActionDropdownOpen] = React.useState(false);
   
   // Expandable rows state
   const [expandedRows, setExpandedRows] = React.useState<string[]>([]);
@@ -459,12 +470,66 @@ const Workbenches: React.FunctionComponent = () => {
   return (
     <>
       <PageSection aria-label="Workbenches Header" id="workbenches-header">
-        <Title headingLevel="h2" id="workbenches-title">
-          Workbenches
-        </Title>
-        <Content component={ContentVariants.p}>
-          Monitor and manage all active workbenches. Use bulk actions below to migrate legacy V1 resources.
-        </Content>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'flex-start',
+          marginBottom: 'var(--pf-v6-global--spacer--md)',
+        }}>
+          <div>
+            <Title headingLevel="h2" id="workbenches-title">
+              Workbenches
+            </Title>
+            <Content component={ContentVariants.p}>
+              Monitor and manage all active workbenches. Use bulk actions below to migrate legacy V1 resources.
+            </Content>
+          </div>
+          <Dropdown
+            isOpen={isActionDropdownOpen}
+            onOpenChange={(isOpen) => setIsActionDropdownOpen(isOpen)}
+            popperProps={{ position: 'right' }}
+            toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+              <MenuToggle
+                ref={toggleRef}
+                onClick={() => setIsActionDropdownOpen(!isActionDropdownOpen)}
+                isExpanded={isActionDropdownOpen}
+                variant="primary"
+                id="workbenches-action-dropdown-toggle"
+                icon={<PlusCircleIcon />}
+              >
+                Actions
+              </MenuToggle>
+            )}
+            id="workbenches-action-dropdown"
+          >
+            <DropdownList>
+              <DropdownItem
+                key="create-workspace-kind"
+                id="create-workspace-kind-action"
+                description="Define a golden template for organizational standards"
+                onClick={() => {
+                  setIsCreateWorkspaceKindWizardOpen(true);
+                  setIsActionDropdownOpen(false);
+                }}
+              >
+                Create Workspace Kind
+              </DropdownItem>
+              <Divider component="li" />
+              <DropdownItem
+                key="migrate-workbenches"
+                id="migrate-workbenches-action"
+                description={`Migrate ${selectedLegacyV1Count} selected legacy workbenches to V2`}
+                isDisabled={selectedLegacyV1Count === 0}
+                onClick={() => {
+                  openBulkMigrationWizard();
+                  setIsActionDropdownOpen(false);
+                }}
+              >
+                Migrate Workbenches ({selectedLegacyV1Count} Selected)
+              </DropdownItem>
+            </DropdownList>
+          </Dropdown>
+        </div>
       </PageSection>
 
       <PageSection id="workbenches-content-section">
@@ -586,19 +651,9 @@ const Workbenches: React.FunctionComponent = () => {
                 </Button>
               </ToolbarItem>
               <ToolbarItem>
-                <Button id="manage-workspace-kinds-button" variant="secondary">
-                  Manage Workspace Kinds
-                </Button>
-              </ToolbarItem>
-              <ToolbarItem>
-                <Button
-                  id="migrate-workbenches-button"
-                  variant="primary"
-                  onClick={openBulkMigrationWizard}
-                  isDisabled={selectedLegacyV1Count === 0}
-                >
-                  Migrate Workbenches ({selectedLegacyV1Count} Selected)
-                </Button>
+                <Link to="/settings/workspace-kinds" id="manage-workspace-kinds-link">
+                  Manage workspace kinds
+                </Link>
               </ToolbarItem>
             </ToolbarGroup>
           </ToolbarContent>
@@ -741,6 +796,11 @@ const Workbenches: React.FunctionComponent = () => {
           workbenches={selectedWorkbenches}
         />
       )}
+
+      <CreateWorkspaceKindWizard
+        isOpen={isCreateWorkspaceKindWizardOpen}
+        onClose={() => setIsCreateWorkspaceKindWizardOpen(false)}
+      />
     </>
   );
 };
