@@ -517,8 +517,6 @@ const combinedViewStyleMap: Record<string, VisualStyle> = {
   // Indentation style examples (2-3 migrated legacy workbenches)
   'wb-4': 'indentation',
   'wb-4-v2': 'indentation',
-  'wb-17': 'indentation',
-  'wb-17-v2': 'indentation',
   // Expandable style examples (2-3 V2 workbenches with legacy children)
   'wb-19-v2': 'expandable',
   'wb-19': 'expandable',
@@ -527,12 +525,10 @@ const combinedViewStyleMap: Record<string, VisualStyle> = {
   // Badge in name style examples (2-3 workbenches with relationships)
   'wb-20-v2': 'badge-in-name',
   'wb-20': 'badge-in-name',
-  'wb-18-v2': 'badge-in-name',
-  'wb-18': 'badge-in-name',
   // Migration link column style examples (2-3 workbenches with relationships)
-  'wb-17-v2': 'migration-link-column', // Show wb-17 pair again with different style
+  'wb-17-v2': 'migration-link-column',
   'wb-17': 'migration-link-column',
-  'wb-18-v2': 'migration-link-column', // Show wb-18 pair again with different style
+  'wb-18-v2': 'migration-link-column',
   'wb-18': 'migration-link-column',
   // Migrating items (like in current style)
   'wb-1': 'indentation', // Migrating item
@@ -1211,7 +1207,7 @@ const Workbenches: React.FunctionComponent = () => {
             <Title headingLevel="h6" style={{ marginBottom: 'var(--pf-v6-global--spacer--md)' }}>
               Visual Style Demos
             </Title>
-            <Flex wrap={{ default: 'wrap' }} spaceItems={{ default: 'spaceItemsLg' }}>
+            <Flex wrap="wrap" spaceItems={{ default: 'spaceItemsLg' }}>
               <FlexItem>
                 <Radio
                   id="style-indentation"
@@ -1575,7 +1571,7 @@ const Workbenches: React.FunctionComponent = () => {
               {visibleColumns.name && (
                 <Th
                   sort={{
-                    sortBy: sortBy?.index === 0 ? sortBy : undefined,
+                    sortBy: sortBy?.index === 0 ? sortBy : { index: 0, direction: 'asc' as const },
                     onSort: handleSort,
                     columnIndex: 0
                   }}
@@ -1586,7 +1582,7 @@ const Workbenches: React.FunctionComponent = () => {
               {visibleColumns.project && (
                 <Th
                   sort={{
-                    sortBy: sortBy?.index === 1 ? sortBy : undefined,
+                    sortBy: sortBy?.index === 1 ? sortBy : { index: 1, direction: 'asc' as const },
                     onSort: handleSort,
                     columnIndex: 1
                   }}
@@ -1597,7 +1593,7 @@ const Workbenches: React.FunctionComponent = () => {
               {visibleColumns.status && (
                 <Th
                   sort={{
-                    sortBy: sortBy?.index === 2 ? sortBy : undefined,
+                    sortBy: sortBy?.index === 2 ? sortBy : { index: 2, direction: 'asc' as const },
                     onSort: handleSort,
                     columnIndex: 2
                   }}
@@ -1608,7 +1604,7 @@ const Workbenches: React.FunctionComponent = () => {
               {(visualStyle === 'migration-link-column' || visualStyle === 'combined') && visibleColumns.migrationLink && (
                 <Th
                   sort={{
-                    sortBy: sortBy?.index === 3 ? sortBy : undefined,
+                    sortBy: sortBy?.index === 3 ? sortBy : { index: 3, direction: 'asc' as const },
                     onSort: handleSort,
                     columnIndex: 3
                   }}
@@ -1619,7 +1615,7 @@ const Workbenches: React.FunctionComponent = () => {
               {visibleColumns.version && (
                 <Th
                   sort={{
-                    sortBy: sortBy?.index === ((visualStyle === 'migration-link-column' || visualStyle === 'combined') && visibleColumns.migrationLink ? 4 : 3) ? sortBy : undefined,
+                    sortBy: sortBy?.index === ((visualStyle === 'migration-link-column' || visualStyle === 'combined') && visibleColumns.migrationLink ? 4 : 3) ? sortBy : { index: (visualStyle === 'migration-link-column' || visualStyle === 'combined') && visibleColumns.migrationLink ? 4 : 3, direction: 'asc' as const },
                     onSort: handleSort,
                     columnIndex: (visualStyle === 'migration-link-column' || visualStyle === 'combined') && visibleColumns.migrationLink ? 4 : 3
                   }}
@@ -1630,7 +1626,7 @@ const Workbenches: React.FunctionComponent = () => {
               {visibleColumns.createdBy && (
                 <Th
                   sort={{
-                    sortBy: sortBy?.index === ((visualStyle === 'migration-link-column' || visualStyle === 'combined') && visibleColumns.migrationLink ? 5 : 4) ? sortBy : undefined,
+                    sortBy: sortBy?.index === ((visualStyle === 'migration-link-column' || visualStyle === 'combined') && visibleColumns.migrationLink ? 5 : 4) ? sortBy : { index: (visualStyle === 'migration-link-column' || visualStyle === 'combined') && visibleColumns.migrationLink ? 5 : 4, direction: 'asc' as const },
                     onSort: handleSort,
                     columnIndex: (visualStyle === 'migration-link-column' || visualStyle === 'combined') && visibleColumns.migrationLink ? 5 : 4
                   }}
@@ -1641,7 +1637,7 @@ const Workbenches: React.FunctionComponent = () => {
               {visibleColumns.image && (
                 <Th
                   sort={{
-                    sortBy: sortBy?.index === ((visualStyle === 'migration-link-column' || visualStyle === 'combined') && visibleColumns.migrationLink ? 6 : 5) ? sortBy : undefined,
+                    sortBy: sortBy?.index === ((visualStyle === 'migration-link-column' || visualStyle === 'combined') && visibleColumns.migrationLink ? 6 : 5) ? sortBy : { index: (visualStyle === 'migration-link-column' || visualStyle === 'combined') && visibleColumns.migrationLink ? 6 : 5, direction: 'asc' as const },
                     onSort: handleSort,
                     columnIndex: (visualStyle === 'migration-link-column' || visualStyle === 'combined') && visibleColumns.migrationLink ? 6 : 5
                   }}
