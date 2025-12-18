@@ -53,6 +53,7 @@ import { GitLabAuthButton } from '@app/components/GitLabAuthButton';
 import LightLogo from '@app/bgimages/Product_Logos_Light.svg';
 import DarkLogo from '@app/bgimages/Product-Logos_Dark.svg';
 import ApolloCanvasMasthead from '@app/components/ApolloCanvasMasthead';
+import { BUILD_VERSION } from '../utils/buildVersion';
 
 interface IAppLayout {
   children: React.ReactNode;
@@ -132,7 +133,7 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
                 isExpanded={versionDropdownOpen}
                 style={{ minWidth: '160px' }}
               >
-                Version {currentVersion}{currentVersion === '3' ? ' (Current)' : ''}
+                {BUILD_VERSION}
               </MenuToggle>
             )}
           >
@@ -142,21 +143,7 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
                 onClick={() => setCurrentVersion('3')}
                 isSelected={currentVersion === '3'}
               >
-                Version 3 (Current)
-              </DropdownItem>
-              <DropdownItem
-                key="version-2"
-                onClick={() => setCurrentVersion('2')}
-                isSelected={currentVersion === '2'}
-              >
-                Version 2
-              </DropdownItem>
-              <DropdownItem
-                key="version-1"
-                onClick={() => setCurrentVersion('1')}
-                isSelected={currentVersion === '1'}
-              >
-                Version 1
+                {BUILD_VERSION}
               </DropdownItem>
             </DropdownList>
           </Dropdown>
