@@ -141,7 +141,8 @@ const initialRows: WorkbenchRecord[] = [
     status: 'Running',
     isLegacyV1: true,
     createdBy: 'dave',
-    image: 'quay.io/org/notebook:1.2.5'
+    image: 'quay.io/org/notebook:1.2.5',
+    workspaceKindId: 'kind-2' // VS Code Legacy
   },
   {
     id: 'wb-14',
@@ -150,7 +151,8 @@ const initialRows: WorkbenchRecord[] = [
     status: 'Running',
     isLegacyV1: true,
     createdBy: 'lisa',
-    image: 'quay.io/org/notebook:1.2.7'
+    image: 'quay.io/org/notebook:1.2.7',
+    workspaceKindId: 'kind-4' // TensorFlow Legacy
   },
   {
     id: 'wb-15',
@@ -160,6 +162,7 @@ const initialRows: WorkbenchRecord[] = [
     isLegacyV1: true,
     createdBy: 'mike',
     image: 'quay.io/org/notebook:1.3.1',
+    workspaceKindId: 'kind-2', // VS Code Legacy
     isMigrating: true,
     migrationDetails: {
       newWorkbenchName: 'sentiment-analysis-v2-2024-01-17',
@@ -175,7 +178,8 @@ const initialRows: WorkbenchRecord[] = [
     status: 'Stopped',
     isLegacyV1: true,
     createdBy: 'sarah',
-    image: 'quay.io/org/notebook:1.2.4'
+    image: 'quay.io/org/notebook:1.2.4',
+    workspaceKindId: 'kind-4' // TensorFlow Legacy
   },
   {
     id: 'wb-4-v2',
@@ -195,6 +199,7 @@ const initialRows: WorkbenchRecord[] = [
     isLegacyV1: true,
     createdBy: 'alice',
     image: 'quay.io/org/notebook:1.3.0',
+    workspaceKindId: 'kind-2', // VS Code Legacy
     isLegacyChild: true,
     parentWorkbenchId: 'wb-4-v2'
   },
@@ -206,6 +211,7 @@ const initialRows: WorkbenchRecord[] = [
     isLegacyV1: false,
     createdBy: 'bob',
     image: 'quay.io/org/notebook-nb20:2.0.1',
+    workspaceKindId: 'kind-1', // Jupyter Notebook 2.0
     migratedFromId: 'wb-4a',
     hasBeenStarted: true
   },
@@ -217,6 +223,7 @@ const initialRows: WorkbenchRecord[] = [
     isLegacyV1: true,
     createdBy: 'bob',
     image: 'quay.io/org/notebook:1.3.0',
+    workspaceKindId: 'kind-2', // VS Code Legacy
     isLegacyChild: true,
     parentWorkbenchId: 'wb-4a-v2'
   },
@@ -229,6 +236,7 @@ const initialRows: WorkbenchRecord[] = [
     isLegacyV1: false,
     createdBy: 'nina',
     image: 'quay.io/org/notebook-nb20:2.0.2',
+    workspaceKindId: 'kind-3', // PyTorch Training 2.0
     migratedFromId: 'wb-17',
     hasBeenStarted: true
   },
@@ -240,6 +248,7 @@ const initialRows: WorkbenchRecord[] = [
     isLegacyV1: true,
     createdBy: 'nina',
     image: 'quay.io/org/notebook:1.2.6',
+    workspaceKindId: 'kind-2', // VS Code Legacy
     isLegacyChild: true,
     parentWorkbenchId: 'wb-17-v2'
   },
@@ -251,6 +260,7 @@ const initialRows: WorkbenchRecord[] = [
     isLegacyV1: false,
     createdBy: 'oscar',
     image: 'quay.io/org/notebook-nb20:2.0.3',
+    workspaceKindId: 'kind-5', // R Studio 2.0
     migratedFromId: 'wb-18',
     hasBeenStarted: true
   },
@@ -262,6 +272,7 @@ const initialRows: WorkbenchRecord[] = [
     isLegacyV1: true,
     createdBy: 'oscar',
     image: 'quay.io/org/notebook:1.3.2',
+    workspaceKindId: 'kind-4', // TensorFlow Legacy
     isLegacyChild: true,
     parentWorkbenchId: 'wb-18-v2'
   },
@@ -273,6 +284,7 @@ const initialRows: WorkbenchRecord[] = [
     isLegacyV1: false,
     createdBy: 'paula',
     image: 'quay.io/org/notebook-nb20:2.0.1',
+    workspaceKindId: 'kind-1', // Jupyter Notebook 2.0
     migratedFromId: 'wb-19',
     hasBeenStarted: true
   },
@@ -284,6 +296,7 @@ const initialRows: WorkbenchRecord[] = [
     isLegacyV1: true,
     createdBy: 'paula',
     image: 'quay.io/org/notebook:1.2.9',
+    workspaceKindId: 'kind-2', // VS Code Legacy
     isLegacyChild: true,
     parentWorkbenchId: 'wb-19-v2'
   },
@@ -295,6 +308,7 @@ const initialRows: WorkbenchRecord[] = [
     isLegacyV1: false,
     createdBy: 'quinn',
     image: 'quay.io/org/notebook-nb20:2.0.0',
+    workspaceKindId: 'kind-3', // PyTorch Training 2.0
     migratedFromId: 'wb-20'
   },
   {
@@ -304,7 +318,8 @@ const initialRows: WorkbenchRecord[] = [
     status: 'Running',
     isLegacyV1: true,
     createdBy: 'quinn',
-    image: 'quay.io/org/notebook:1.3.0'
+    image: 'quay.io/org/notebook:1.3.0',
+    workspaceKindId: 'kind-4' // TensorFlow Legacy
   },
   // Standalone workbenches (not migrated)
   {
@@ -314,7 +329,8 @@ const initialRows: WorkbenchRecord[] = [
     status: 'Stopped',
     isLegacyV1: false,
     createdBy: 'joel',
-    image: 'quay.io/org/notebook-nb20:2.0.0'
+    image: 'quay.io/org/notebook-nb20:2.0.0',
+    workspaceKindId: 'kind-3' // PyTorch Training 2.0
   },
   {
     id: 'wb-5',
@@ -323,7 +339,8 @@ const initialRows: WorkbenchRecord[] = [
     status: 'Stopped',
     isLegacyV1: false,
     createdBy: 'carol',
-    image: 'quay.io/org/notebook-nb20:2.0.1'
+    image: 'quay.io/org/notebook-nb20:2.0.1',
+    workspaceKindId: 'kind-1' // Jupyter Notebook 2.0
   },
   {
     id: 'wb-7',
@@ -332,7 +349,8 @@ const initialRows: WorkbenchRecord[] = [
     status: 'Running',
     isLegacyV1: false,
     createdBy: 'eve',
-    image: 'quay.io/org/notebook-nb20:2.1.0'
+    image: 'quay.io/org/notebook-nb20:2.1.0',
+    workspaceKindId: 'kind-5' // R Studio 2.0
   },
   {
     id: 'wb-8',
@@ -341,7 +359,8 @@ const initialRows: WorkbenchRecord[] = [
     status: 'Stopped',
     isLegacyV1: true,
     createdBy: 'frank',
-    image: 'quay.io/org/notebook:1.2.8'
+    image: 'quay.io/org/notebook:1.2.8',
+    workspaceKindId: 'kind-2' // VS Code Legacy
   },
   {
     id: 'wb-9',
@@ -350,7 +369,8 @@ const initialRows: WorkbenchRecord[] = [
     status: 'Running',
     isLegacyV1: true,
     createdBy: 'grace',
-    image: 'quay.io/org/notebook:1.3.1'
+    image: 'quay.io/org/notebook:1.3.1',
+    workspaceKindId: 'kind-4' // TensorFlow Legacy
   },
   {
     id: 'wb-10',
@@ -359,7 +379,8 @@ const initialRows: WorkbenchRecord[] = [
     status: 'Running',
     isLegacyV1: false,
     createdBy: 'henry',
-    image: 'quay.io/org/notebook-nb20:2.0.2'
+    image: 'quay.io/org/notebook-nb20:2.0.2',
+    workspaceKindId: 'kind-1' // Jupyter Notebook 2.0
   },
   {
     id: 'wb-11',
@@ -368,7 +389,8 @@ const initialRows: WorkbenchRecord[] = [
     status: 'Stopped',
     isLegacyV1: true,
     createdBy: 'iris',
-    image: 'quay.io/org/notebook:1.2.9'
+    image: 'quay.io/org/notebook:1.2.9',
+    workspaceKindId: 'kind-2' // VS Code Legacy
   },
   {
     id: 'wb-12',
@@ -377,7 +399,8 @@ const initialRows: WorkbenchRecord[] = [
     status: 'Running',
     isLegacyV1: true,
     createdBy: 'joel',
-    image: 'quay.io/org/notebook:1.3.2'
+    image: 'quay.io/org/notebook:1.3.2',
+    workspaceKindId: 'kind-4' // TensorFlow Legacy
   },
   {
     id: 'wb-13',
@@ -386,7 +409,8 @@ const initialRows: WorkbenchRecord[] = [
     status: 'Running',
     isLegacyV1: false,
     createdBy: 'karen',
-    image: 'quay.io/org/notebook-nb20:2.0.3'
+    image: 'quay.io/org/notebook-nb20:2.0.3',
+    workspaceKindId: 'kind-3' // PyTorch Training 2.0
   }
 ];
 
@@ -545,7 +569,7 @@ const Workbenches: React.FunctionComponent = () => {
   const [selectedRowIds, setSelectedRowIds] = React.useState<string[]>([]);
 
   // Visual style selection
-  const [visualStyle, setVisualStyle] = React.useState<VisualStyle>('indentation');
+  const [visualStyle, setVisualStyle] = React.useState<VisualStyle>('badge-in-name');
 
   // Action dropdown state
   const [isActionDropdownOpen, setIsActionDropdownOpen] = React.useState(false);
@@ -748,7 +772,7 @@ const Workbenches: React.FunctionComponent = () => {
         
         // If Migration Link column is visible and index >= 3, we need to check if it's Migration Link or later columns
         if (migrationLinkVisible) {
-          // Index mapping: 0=Name, 1=Project, 2=Status, 3=Migration Link, 4=Version, 5=Created By, 6=Image
+          // Index mapping: 0=Name, 1=Project, 2=Status, 3=Migration Link, 4=Version, 5=Created By, 6=Workspace Kinds
           switch (actualIndex) {
             case 0: // Name
               aValue = a.name.toLowerCase();
@@ -784,15 +808,15 @@ const Workbenches: React.FunctionComponent = () => {
               aValue = a.createdBy.toLowerCase();
               bValue = b.createdBy.toLowerCase();
               break;
-            case 6: // Image
-              aValue = a.image.toLowerCase();
-              bValue = b.image.toLowerCase();
+            case 6: // Workspace Kinds
+              aValue = getWorkspaceKindName(a).toLowerCase();
+              bValue = getWorkspaceKindName(b).toLowerCase();
               break;
             default:
               return 0;
           }
         } else {
-          // Index mapping: 0=Name, 1=Project, 2=Status, 3=Version, 4=Created By, 5=Image
+          // Index mapping: 0=Name, 1=Project, 2=Status, 3=Version, 4=Created By, 5=Workspace Kinds
           switch (actualIndex) {
             case 0: // Name
               aValue = a.name.toLowerCase();
@@ -814,9 +838,9 @@ const Workbenches: React.FunctionComponent = () => {
               aValue = a.createdBy.toLowerCase();
               bValue = b.createdBy.toLowerCase();
               break;
-            case 5: // Image
-              aValue = a.image.toLowerCase();
-              bValue = b.image.toLowerCase();
+            case 5: // Workspace Kinds
+              aValue = getWorkspaceKindName(a).toLowerCase();
+              bValue = getWorkspaceKindName(b).toLowerCase();
               break;
             default:
               return 0;
@@ -950,6 +974,15 @@ const Workbenches: React.FunctionComponent = () => {
     return undefined;
   };
 
+  // Helper to get workspace kind name for a workbench
+  const getWorkspaceKindName = (record: WorkbenchRecord): string => {
+    if (record.workspaceKindId) {
+      const kind = workspaceKinds.find(k => k.id === record.workspaceKindId);
+      return kind ? kind.name : 'Unknown';
+    }
+    return 'Not assigned';
+  };
+
   // Helper to render name cell based on visual style
   const renderNameCell = (record: WorkbenchRecord) => {
     const relatedWorkbench = getRelatedWorkbench(record);
@@ -957,20 +990,21 @@ const Workbenches: React.FunctionComponent = () => {
 
     switch (effectiveStyle) {
       case 'badge-in-name':
-        return (
-          <div>
-            <div>{record.name}</div>
-            {relatedWorkbench && (
+        // For Legacy V1 items, show badge under name
+        if (record.isLegacyV1 && (record.isLegacyChild || record.parentWorkbenchId) && relatedWorkbench) {
+          return (
+            <div>
+              <div>{record.name}</div>
               <div style={{ marginTop: '4px' }}>
                 <Badge isRead>
-                  {record.isLegacyChild || record.parentWorkbenchId
-                    ? `Successor: ${relatedWorkbench.name}`
-                    : `Migrated from: ${relatedWorkbench.name}`}
+                  Successor: {relatedWorkbench.name}
                 </Badge>
               </div>
-            )}
-          </div>
-        );
+            </div>
+          );
+        }
+        // For NB 2.0 Compliant items, just show name (migration info in label tooltip)
+        return record.name;
 
       default:
         return record.name;
@@ -996,6 +1030,8 @@ const Workbenches: React.FunctionComponent = () => {
   // Helper to render version cell based on visual style
   const renderVersionCell = (record: WorkbenchRecord) => {
     const effectiveStyle = getEffectiveVisualStyle(record);
+    const relatedWorkbench = getRelatedWorkbench(record);
+    
     // In indentation style, show "Legacy V1 - Migrated" for migrated Legacy V1 items
     if (effectiveStyle === 'indentation' && record.isLegacyChild && record.parentWorkbenchId) {
       const parentWorkbench = records.find(r => r.id === record.parentWorkbenchId);
@@ -1008,6 +1044,27 @@ const Workbenches: React.FunctionComponent = () => {
           <Label id="label-legacy-v1-migrated" color="orange">Legacy V1 - Migrated</Label>
         </Tooltip>
       );
+    }
+
+    // In badge-in-name style, include migration info in the labels
+    if (effectiveStyle === 'badge-in-name' && relatedWorkbench) {
+      if (!record.isLegacyV1) {
+        // NB 2.0 Compliant workbench - show what it migrated from
+        const migrationInfo = `Migrated from: ${relatedWorkbench.name}`;
+        return (
+          <Tooltip content={migrationInfo}>
+            <Label id="label-nb20" color="blue">NB 2.0 Compliant</Label>
+          </Tooltip>
+        );
+      } else if (record.isLegacyChild || record.parentWorkbenchId) {
+        // Legacy V1 workbench - show what it migrated to
+        const migrationInfo = `Successor: ${relatedWorkbench.name}`;
+        return (
+          <Tooltip content={migrationInfo}>
+            <Label id="label-legacy-v1-migrated" color="orange">Legacy V1 - Migrated</Label>
+          </Tooltip>
+        );
+      }
     }
 
     // Default label
@@ -1210,9 +1267,18 @@ const Workbenches: React.FunctionComponent = () => {
             <Flex wrap="wrap" spaceItems={{ default: 'spaceItemsLg' }}>
               <FlexItem>
                 <Radio
+                  id="style-badge-in-name"
+                  name="visual-style"
+                  label="Badge in Name"
+                  isChecked={visualStyle === 'badge-in-name'}
+                  onChange={() => setVisualStyle('badge-in-name')}
+                />
+              </FlexItem>
+              <FlexItem>
+                <Radio
                   id="style-indentation"
                   name="visual-style"
-                  label="Current"
+                  label="Badge only"
                   isChecked={visualStyle === 'indentation'}
                   onChange={() => setVisualStyle('indentation')}
                 />
@@ -1224,15 +1290,6 @@ const Workbenches: React.FunctionComponent = () => {
                   label="Expandable Nested"
                   isChecked={visualStyle === 'expandable'}
                   onChange={() => setVisualStyle('expandable')}
-                />
-              </FlexItem>
-              <FlexItem>
-                <Radio
-                  id="style-badge-in-name"
-                  name="visual-style"
-                  label="Badge in Name"
-                  isChecked={visualStyle === 'badge-in-name'}
-                  onChange={() => setVisualStyle('badge-in-name')}
                 />
               </FlexItem>
               <FlexItem>
@@ -1470,7 +1527,7 @@ const Workbenches: React.FunctionComponent = () => {
                       value="image"
                       onClick={() => setVisibleColumns({ ...visibleColumns, image: !visibleColumns.image })}
                     >
-                      Image
+                      Workspace Kinds
                     </SelectOption>
                   </SelectList>
                 </Select>
@@ -1642,7 +1699,7 @@ const Workbenches: React.FunctionComponent = () => {
                     columnIndex: (visualStyle === 'migration-link-column' || visualStyle === 'combined') && visibleColumns.migrationLink ? 6 : 5
                   }}
                 >
-                  Image
+                  Workspace Kinds
                 </Th>
               )}
               <Th screenReaderText="Actions"></Th>
@@ -1717,7 +1774,7 @@ const Workbenches: React.FunctionComponent = () => {
                     <Td dataLabel="Created By">{r.createdBy}</Td>
                   )}
                   {visibleColumns.image && (
-                    <Td dataLabel="Image">{r.image}</Td>
+                    <Td dataLabel="Workspace Kinds">{getWorkspaceKindName(r)}</Td>
                   )}
                   <Td isActionCell dataLabel="Actions">
                     <ActionsColumn items={buildActions(r)} popperProps={{ position: 'right' }} />
