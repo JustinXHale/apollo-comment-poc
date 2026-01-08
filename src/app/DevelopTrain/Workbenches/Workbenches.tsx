@@ -16,7 +16,6 @@ import {
   SelectOption,
   SelectList,
   MenuToggle,
-  MenuToggleElement,
   ToolbarGroup,
   DescriptionList,
   DescriptionListGroup,
@@ -38,7 +37,9 @@ import {
   Tab,
   TabTitleText,
   Checkbox,
-  Switch
+  Switch,
+  InputGroup,
+  InputGroupItem
 } from '@patternfly/react-core';
 import {
   Table,
@@ -51,7 +52,7 @@ import {
   IAction,
   ThProps
 } from '@patternfly/react-table';
-import { ExchangeAltIcon, TrashIcon, CaretDownIcon, PlusCircleIcon, LinkIcon, ArrowRightIcon, ArrowLeftIcon, ThIcon } from '@patternfly/react-icons';
+import { ExchangeAltIcon, TrashIcon, CaretDownIcon, LinkIcon, ArrowRightIcon, ArrowLeftIcon, ThIcon, FilterIcon } from '@patternfly/react-icons';
 import MigrationAssistWizard, { LegacyWorkbenchConfig } from './MigrationAssistWizard';
 import CreateWorkspaceKindWizard from './CreateWorkspaceKindWizard';
 
@@ -60,7 +61,8 @@ type VisualStyle =
   | 'expandable'
   | 'badge-in-name'
   | 'migration-link-column'
-  | 'combined';
+  | 'combined'
+  | 'dual-table-view';
 
 type WorkspaceKind = {
   id: string;
@@ -419,7 +421,8 @@ const visualStyleDescriptions: Record<VisualStyle, string> = {
   'expandable': 'V2 workbenches can be expanded to reveal nested legacy V1 details. Legacy V1 workbenches are hidden by default and only appear when their parent V2 workbench is expanded. Best for focusing on V2 workbenches while keeping legacy details accessible.',
   'badge-in-name': 'Shows migration relationship badges directly below the workbench name. Both V1 and V2 workbenches remain as independent rows with full sorting capability. Clear visual relationship but adds vertical space to each row.',
   'migration-link-column': 'Uses a dedicated "Migration Link" column to show relationships with directional arrows (← From / → To). Both workbenches remain independent rows and fully sortable. Provides the clearest representation of migration relationships.',
-  'combined': 'Combined view displaying 2-3 examples of each visual style in one table for side-by-side comparison. Each workbench demonstrates a different style approach, making it easy to evaluate all options together.'
+  'combined': 'Combined view displaying 2-3 examples of each visual style in one table for side-by-side comparison. Each workbench demonstrates a different style approach, making it easy to evaluate all options together.',
+  'dual-table-view': 'Shows migrated workbenches in one table and legacy workbenches in a separate table below. Each table has independent pagination and selection.'
 };
 
 // Mapping to limit examples to 3 per style for the first 4 radio options
@@ -430,7 +433,8 @@ const styleExampleLimitMap: Record<VisualStyle, string[]> = {
   'expandable': ['wb-1', 'wb-19-v2', 'wb-19', 'wb-4a-v2', 'wb-4a', 'wb-15'], // 2 pairs + 2 migrating = ~6 rows (V1 hidden)
   'badge-in-name': ['wb-1', 'wb-20-v2', 'wb-20', 'wb-18-v2', 'wb-18', 'wb-15'], // 2 pairs + 2 migrating = ~6 rows
   'migration-link-column': ['wb-1', 'wb-17-v2', 'wb-17', 'wb-18-v2', 'wb-18', 'wb-15'], // 2 pairs + 2 migrating = ~6 rows
-  'combined': [] // No limit for combined
+  'combined': [], // No limit for combined
+  'dual-table-view': [] // No limit for dual table view
 };
 
 // Mock data for Workspace Kinds
@@ -571,8 +575,6 @@ const Workbenches: React.FunctionComponent = () => {
   // Visual style selection
   const [visualStyle, setVisualStyle] = React.useState<VisualStyle>('badge-in-name');
 
-  // Action dropdown state
-  const [isActionDropdownOpen, setIsActionDropdownOpen] = React.useState(false);
 
   // Expandable rows state
   const [expandedRows, setExpandedRows] = React.useState<string[]>([]);
@@ -590,6 +592,12 @@ const Workbenches: React.FunctionComponent = () => {
   // Pagination state
   const [page, setPage] = React.useState(1);
   const [perPage, setPerPage] = React.useState(15);
+  
+  // Dual table view pagination state
+  const [migratedPage, setMigratedPage] = React.useState(1);
+  const [legacyPage, setLegacyPage] = React.useState(1);
+  const [migratedPerPage, setMigratedPerPage] = React.useState(15);
+  const [legacyPerPage, setLegacyPerPage] = React.useState(15);
 
   // Tab state
   const [activeTab, setActiveTab] = React.useState<string | number>(0);
@@ -606,25 +614,128 @@ const Workbenches: React.FunctionComponent = () => {
     image: true
   });
 
-  // Workspace Kinds filter state
-  const [workspaceKindsSearch, setWorkspaceKindsSearch] = React.useState('');
-  const [workspaceKindsComplianceFilter, setWorkspaceKindsComplianceFilter] = React.useState<string[]>([]);
-  const [workspaceKindsStatusFilter, setWorkspaceKindsStatusFilter] = React.useState<string[]>([]);
-  const [isWorkspaceKindsComplianceFilterOpen, setIsWorkspaceKindsComplianceFilterOpen] = React.useState(false);
-  const [isWorkspaceKindsStatusFilterOpen, setIsWorkspaceKindsStatusFilterOpen] = React.useState(false);
+  // Workspace Kinds filter state - Attribute search
+  const [workspaceKindsFilterAttribute, setWorkspaceKindsFilterAttribute] = React.useState<'name' | 'compliance' | 'status'>('name');
+  const [workspaceKindsFilterInput, setWorkspaceKindsFilterInput] = React.useState('');
+  const [workspaceKindsFilterDropdownOpen, setWorkspaceKindsFilterDropdownOpen] = React.useState(false);
+  const [workspaceKindsActiveFilters, setWorkspaceKindsActiveFilters] = React.useState<{
+    name: string[];
+    compliance: string[];
+    status: string[];
+  }>({
+    name: [],
+    compliance: [],
+    status: []
+  });
   const [selectedWorkspaceKindIds, setSelectedWorkspaceKindIds] = React.useState<string[]>([]);
 
-  // Archive filter state
-  const [archiveSearch, setArchiveSearch] = React.useState('');
-  const [archiveStatusFilter, setArchiveStatusFilter] = React.useState<string[]>([]);
-  const [archiveVersionFilter, setArchiveVersionFilter] = React.useState<string[]>([]);
-  const [isArchiveStatusFilterOpen, setIsArchiveStatusFilterOpen] = React.useState(false);
-  const [isArchiveVersionFilterOpen, setIsArchiveVersionFilterOpen] = React.useState(false);
+  // Archive filter state - Attribute search
+  const [archiveFilterAttribute, setArchiveFilterAttribute] = React.useState<'name' | 'status' | 'version'>('name');
+  const [archiveFilterInput, setArchiveFilterInput] = React.useState('');
+  const [archiveFilterDropdownOpen, setArchiveFilterDropdownOpen] = React.useState(false);
+  const [archiveActiveFilters, setArchiveActiveFilters] = React.useState<{
+    name: string[];
+    status: string[];
+    version: string[];
+  }>({
+    name: [],
+    status: [],
+    version: []
+  });
   const [selectedArchiveIds, setSelectedArchiveIds] = React.useState<string[]>([]);
 
-  // Workbenches workspace kind filter state
-  const [workspaceKindFilter, setWorkspaceKindFilter] = React.useState<string[]>([]);
-  const [isWorkspaceKindFilterOpen, setIsWorkspaceKindFilterOpen] = React.useState(false);
+  // Workbenches filter state - Attribute search
+  const [workbenchesFilterAttribute, setWorkbenchesFilterAttribute] = React.useState<'name' | 'status' | 'version' | 'workspaceKind'>('name');
+  const [workbenchesFilterInput, setWorkbenchesFilterInput] = React.useState('');
+  const [workbenchesFilterDropdownOpen, setWorkbenchesFilterDropdownOpen] = React.useState(false);
+  const [activeFilters, setActiveFilters] = React.useState<{
+    name: string[];
+    status: string[];
+    version: string[];
+    workspaceKind: string[];
+  }>({
+    name: [],
+    status: [],
+    version: [],
+    workspaceKind: []
+  });
+
+  // Filter helper functions
+  const addFilter = (tab: 'workbenches' | 'workspaceKinds' | 'archive', attribute: string, value: string) => {
+    if (tab === 'workbenches') {
+      setActiveFilters(prev => {
+        const newFilters = { ...prev };
+        if (!newFilters[attribute as keyof typeof newFilters].includes(value)) {
+          newFilters[attribute as keyof typeof newFilters] = [...newFilters[attribute as keyof typeof newFilters], value];
+        }
+        return newFilters;
+      });
+      setWorkbenchesFilterInput('');
+    } else if (tab === 'workspaceKinds') {
+      setWorkspaceKindsActiveFilters(prev => {
+        const newFilters = { ...prev };
+        if (!newFilters[attribute as keyof typeof newFilters].includes(value)) {
+          newFilters[attribute as keyof typeof newFilters] = [...newFilters[attribute as keyof typeof newFilters], value];
+        }
+        return newFilters;
+      });
+      setWorkspaceKindsFilterInput('');
+    } else if (tab === 'archive') {
+      setArchiveActiveFilters(prev => {
+        const newFilters = { ...prev };
+        if (!newFilters[attribute as keyof typeof newFilters].includes(value)) {
+          newFilters[attribute as keyof typeof newFilters] = [...newFilters[attribute as keyof typeof newFilters], value];
+        }
+        return newFilters;
+      });
+      setArchiveFilterInput('');
+    }
+  };
+
+  const removeFilter = (tab: 'workbenches' | 'workspaceKinds' | 'archive', attribute: string, value: string) => {
+    if (tab === 'workbenches') {
+      setActiveFilters(prev => ({
+        ...prev,
+        [attribute]: prev[attribute as keyof typeof prev].filter(f => f !== value)
+      }));
+    } else if (tab === 'workspaceKinds') {
+      setWorkspaceKindsActiveFilters(prev => ({
+        ...prev,
+        [attribute]: prev[attribute as keyof typeof prev].filter(f => f !== value)
+      }));
+    } else if (tab === 'archive') {
+      setArchiveActiveFilters(prev => ({
+        ...prev,
+        [attribute]: prev[attribute as keyof typeof prev].filter(f => f !== value)
+      }));
+    }
+  };
+
+  const clearAllFilters = (tab: 'workbenches' | 'workspaceKinds' | 'archive') => {
+    if (tab === 'workbenches') {
+      setActiveFilters({
+        name: [],
+        status: [],
+        version: [],
+        workspaceKind: []
+      });
+      setWorkbenchesFilterInput('');
+    } else if (tab === 'workspaceKinds') {
+      setWorkspaceKindsActiveFilters({
+        name: [],
+        compliance: [],
+        status: []
+      });
+      setWorkspaceKindsFilterInput('');
+    } else if (tab === 'archive') {
+      setArchiveActiveFilters({
+        name: [],
+        status: [],
+        version: []
+      });
+      setArchiveFilterInput('');
+    }
+  };
 
   // Helper to get effective visual style for a record (used in combined view)
   const getEffectiveVisualStyle = (record: WorkbenchRecord): VisualStyle => {
@@ -666,25 +777,27 @@ const Workbenches: React.FunctionComponent = () => {
         }
       }
 
-      // Search filter (name, project, created by)
-      const matchesSearch =
-        searchValue === '' ||
-        record.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-        record.project.toLowerCase().includes(searchValue.toLowerCase()) ||
-        record.createdBy.toLowerCase().includes(searchValue.toLowerCase());
+      // Attribute search filters
+      const matchesName = activeFilters.name.length === 0 ||
+        activeFilters.name.some(filter => 
+          record.name.toLowerCase().includes(filter.toLowerCase()) ||
+          record.project.toLowerCase().includes(filter.toLowerCase()) ||
+          record.createdBy.toLowerCase().includes(filter.toLowerCase())
+        );
 
-      // Status filter - check both actual status and migrating state
-      const matchesStatus = statusFilters.length === 0 ||
-        statusFilters.includes(record.status) ||
-        (record.isMigrating && statusFilters.includes('Migrating'));
+      const matchesStatus = activeFilters.status.length === 0 ||
+        activeFilters.status.includes(record.status) ||
+        (record.isMigrating && activeFilters.status.includes('Migrating'));
 
-      // Version filter
       const versionLabel = record.isLegacyV1 ? 'Legacy V1' : 'NB 2.0 Compliant';
-      const matchesVersion = versionFilters.length === 0 || versionFilters.includes(versionLabel);
+      const matchesVersion = activeFilters.version.length === 0 ||
+        activeFilters.version.includes(versionLabel);
 
-      // Workspace kind filter
-      const matchesWorkspaceKind = workspaceKindFilter.length === 0 ||
-        (record.workspaceKindId && workspaceKindFilter.includes(record.workspaceKindId));
+      const matchesWorkspaceKind = activeFilters.workspaceKind.length === 0 ||
+        (record.workspaceKindId && activeFilters.workspaceKind.some(filter => {
+          const kind = workspaceKinds.find(k => k.id === record.workspaceKindId);
+          return kind && (kind.name.toLowerCase().includes(filter.toLowerCase()) || kind.id === filter);
+        }));
 
       // For expandable mode: hide V1 workbenches that have a parent V2 (they show as nested content)
       if (visualStyle === 'expandable') {
@@ -702,7 +815,7 @@ const Workbenches: React.FunctionComponent = () => {
         }
       }
 
-      return matchesSearch && matchesStatus && matchesVersion && matchesWorkspaceKind;
+      return matchesName && matchesStatus && matchesVersion && matchesWorkspaceKind;
     });
 
     // Default sort: by name alphabetically (unless user has selected a sort)
@@ -855,7 +968,19 @@ const Workbenches: React.FunctionComponent = () => {
     }
 
     return sorted;
-  }, [records, searchValue, statusFilters, versionFilters, workspaceKindFilter, visualStyle, sortBy]);
+  }, [records, activeFilters, visualStyle, sortBy, workspaceKinds]);
+
+  // Split records for dual table view
+  const { migratedRecords, legacyRecords } = React.useMemo(() => {
+    if (visualStyle !== 'dual-table-view') {
+      return { migratedRecords: [], legacyRecords: [] };
+    }
+    
+    const migrated = filteredRecords.filter(record => !record.isLegacyV1);
+    const legacy = filteredRecords.filter(record => record.isLegacyV1);
+    
+    return { migratedRecords: migrated, legacyRecords: legacy };
+  }, [filteredRecords, visualStyle]);
 
   // Paginated records
   const paginatedRecords = React.useMemo(() => {
@@ -864,31 +989,49 @@ const Workbenches: React.FunctionComponent = () => {
     return filteredRecords.slice(startIndex, endIndex);
   }, [filteredRecords, page, perPage]);
 
+  // Paginated records for dual table view
+  const paginatedMigratedRecords = React.useMemo(() => {
+    if (visualStyle !== 'dual-table-view') return [];
+    const startIndex = (migratedPage - 1) * migratedPerPage;
+    const endIndex = startIndex + migratedPerPage;
+    return migratedRecords.slice(startIndex, endIndex);
+  }, [migratedRecords, migratedPage, migratedPerPage, visualStyle]);
+
+  const paginatedLegacyRecords = React.useMemo(() => {
+    if (visualStyle !== 'dual-table-view') return [];
+    const startIndex = (legacyPage - 1) * legacyPerPage;
+    const endIndex = startIndex + legacyPerPage;
+    return legacyRecords.slice(startIndex, endIndex);
+  }, [legacyRecords, legacyPage, legacyPerPage, visualStyle]);
+
   // Reset to page 1 when filters change
   React.useEffect(() => {
     setPage(1);
-  }, [searchValue, statusFilters, versionFilters, visualStyle]);
+    if (visualStyle === 'dual-table-view') {
+      setMigratedPage(1);
+      setLegacyPage(1);
+    }
+  }, [activeFilters, visualStyle]);
 
   // Filtered archived workbenches
   const filteredArchivedWorkbenches = React.useMemo(() => {
     return archivedWorkbenches.filter((archived) => {
-      const matchesSearch =
-        archiveSearch === '' ||
-        archived.name.toLowerCase().includes(archiveSearch.toLowerCase()) ||
-        archived.project.toLowerCase().includes(archiveSearch.toLowerCase());
+      const matchesName = archiveActiveFilters.name.length === 0 ||
+        archiveActiveFilters.name.some(filter =>
+          archived.name.toLowerCase().includes(filter.toLowerCase()) ||
+          archived.project.toLowerCase().includes(filter.toLowerCase())
+        );
       
-      const matchesStatus =
-        archiveStatusFilter.length === 0 ||
-        archiveStatusFilter.includes(archived.status);
+      const matchesStatus = archiveActiveFilters.status.length === 0 ||
+        archiveActiveFilters.status.includes(archived.status);
       
       const versionLabel = archived.isLegacyV1 ? 'Legacy V1' : 'NB 2.0 Compliant';
-      const matchesVersion =
-        archiveVersionFilter.length === 0 ||
-        archiveVersionFilter.includes(versionLabel);
+      const matchesVersion = archiveActiveFilters.version.length === 0 ||
+        archiveActiveFilters.version.includes(versionLabel);
       
-      return matchesSearch && matchesStatus && matchesVersion;
+      return matchesName && matchesStatus && matchesVersion;
     });
-  }, [archivedWorkbenches, archiveSearch, archiveStatusFilter, archiveVersionFilter]);
+  }, [archivedWorkbenches, archiveActiveFilters]);
 
   const isRowSelected = (id: string) => selectedRowIds.includes(id);
 
@@ -904,6 +1047,31 @@ const Workbenches: React.FunctionComponent = () => {
   const areAllSelected = React.useMemo(() => {
     return filteredRecords.length > 0 && filteredRecords.every((r) => selectedRowIds.includes(r.id));
   }, [filteredRecords, selectedRowIds]);
+
+  // Dual table view selection helpers
+  const onSelectAllMigrated = (_event: React.FormEvent<HTMLInputElement>, isSelecting: boolean) => {
+    const allMigratedIds = migratedRecords.map((r) => r.id);
+    setSelectedRowIds((prev) => {
+      const withoutMigrated = prev.filter(id => !allMigratedIds.includes(id));
+      return isSelecting ? [...withoutMigrated, ...allMigratedIds] : withoutMigrated;
+    });
+  };
+
+  const onSelectAllLegacy = (_event: React.FormEvent<HTMLInputElement>, isSelecting: boolean) => {
+    const allLegacyIds = legacyRecords.map((r) => r.id);
+    setSelectedRowIds((prev) => {
+      const withoutLegacy = prev.filter(id => !allLegacyIds.includes(id));
+      return isSelecting ? [...withoutLegacy, ...allLegacyIds] : withoutLegacy;
+    });
+  };
+
+  const areAllMigratedSelected = React.useMemo(() => {
+    return migratedRecords.length > 0 && migratedRecords.every((r) => selectedRowIds.includes(r.id));
+  }, [migratedRecords, selectedRowIds]);
+
+  const areAllLegacySelected = React.useMemo(() => {
+    return legacyRecords.length > 0 && legacyRecords.every((r) => selectedRowIds.includes(r.id));
+  }, [legacyRecords, selectedRowIds]);
 
   const selectedCount = React.useMemo(() => {
     return selectedRowIds.length;
@@ -1157,6 +1325,12 @@ const Workbenches: React.FunctionComponent = () => {
       onClick: () => console.log('Manage clicked for', record.id)
     };
 
+    const deleteAction: IAction = {
+      title: 'Delete',
+      // eslint-disable-next-line no-console
+      onClick: () => console.log('Delete clicked for', record.id)
+    };
+
     // Build actions based on status and type
     const actions: IAction[] = [];
     
@@ -1172,6 +1346,10 @@ const Workbenches: React.FunctionComponent = () => {
       actions.push(migrate);
     }
     actions.push(open, manage);
+    
+    // Add separator and delete at the end
+    actions.push({ isSeparator: true });
+    actions.push(deleteAction);
 
     return actions;
   };
@@ -1210,51 +1388,6 @@ const Workbenches: React.FunctionComponent = () => {
               Monitor and manage all active workbenches. Use bulk actions below to migrate legacy V1 resources.
             </Content>
           </div>
-          <Dropdown
-            isOpen={isActionDropdownOpen}
-            onOpenChange={(isOpen) => setIsActionDropdownOpen(isOpen)}
-            popperProps={{ position: 'right' }}
-            toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-              <MenuToggle
-                ref={toggleRef}
-                onClick={() => setIsActionDropdownOpen(!isActionDropdownOpen)}
-                isExpanded={isActionDropdownOpen}
-                variant="primary"
-                id="workbenches-action-dropdown-toggle"
-                icon={<PlusCircleIcon />}
-              >
-                Actions
-              </MenuToggle>
-            )}
-            id="workbenches-action-dropdown"
-          >
-            <DropdownList>
-              <DropdownItem
-                key="create-workspace-kind"
-                id="create-workspace-kind-action"
-                description="Define a golden template for organizational standards"
-                onClick={() => {
-                  setIsCreateWorkspaceKindWizardOpen(true);
-                  setIsActionDropdownOpen(false);
-                }}
-              >
-                Create Workspace Kind
-              </DropdownItem>
-              <Divider component="li" />
-              <DropdownItem
-                key="migrate-workbenches"
-                id="migrate-workbenches-action"
-                description={`Migrate ${selectedLegacyV1Count} selected legacy workbenches to V2`}
-                isDisabled={selectedLegacyV1Count === 0}
-                onClick={() => {
-                  openBulkMigrationWizard();
-                  setIsActionDropdownOpen(false);
-                }}
-              >
-                Migrate Workbenches ({selectedLegacyV1Count} Selected)
-              </DropdownItem>
-            </DropdownList>
-          </Dropdown>
         </div>
       </PageSection>
 
@@ -1294,20 +1427,11 @@ const Workbenches: React.FunctionComponent = () => {
               </FlexItem>
               <FlexItem>
                 <Radio
-                  id="style-migration-link-column"
+                  id="style-dual-table-view"
                   name="visual-style"
-                  label="Migration Link Column"
-                  isChecked={visualStyle === 'migration-link-column'}
-                  onChange={() => setVisualStyle('migration-link-column')}
-                />
-              </FlexItem>
-              <FlexItem>
-                <Radio
-                  id="style-combined"
-                  name="visual-style"
-                  label="Combined (All Styles)"
-                  isChecked={visualStyle === 'combined'}
-                  onChange={() => setVisualStyle('combined')}
+                  label="Dual Table View"
+                  isChecked={visualStyle === 'dual-table-view'}
+                  onChange={() => setVisualStyle('dual-table-view')}
                 />
               </FlexItem>
             </Flex>
@@ -1326,132 +1450,55 @@ const Workbenches: React.FunctionComponent = () => {
       </PageSection>
 
       <PageSection id="workbenches-content-section">
-        <Toolbar id="workbenches-toolbar" inset={{ default: 'insetNone' }} style={{ columnGap: '16px', paddingBottom: '0px' }} clearAllFilters={() => {
-          setSearchValue('');
-          setStatusFilters([]);
-          setVersionFilters([]);
-          setWorkspaceKindFilter([]);
-        }}>
+        <Toolbar id="workbenches-toolbar" inset={{ default: 'insetNone' }} style={{ columnGap: '16px', paddingBottom: '0px' }} clearAllFilters={() => clearAllFilters('workbenches')}>
           <ToolbarContent>
             <ToolbarGroup variant="filter-group">
               <ToolbarItem>
-                <SearchInput
-                  placeholder="Filter by name, project, or user"
-                  value={searchValue}
-                  onChange={(_event, value) => setSearchValue(value)}
-                  onClear={() => setSearchValue('')}
-                  id="workbenches-search"
-                />
-              </ToolbarItem>
-              <ToolbarItem>
-                <Select
-                  isOpen={isStatusFilterOpen}
-                  onOpenChange={(isOpen) => setIsStatusFilterOpen(isOpen)}
-                  onSelect={(_event, value) => {
-                    const status = value as string;
-                    setStatusFilters(
-                      statusFilters.includes(status)
-                        ? statusFilters.filter((s) => s !== status)
-                        : [...statusFilters, status]
-                    );
-                  }}
-                  selected={statusFilters}
-                  toggle={(toggleRef) => (
-                    <MenuToggle
-                      ref={toggleRef}
-                      onClick={() => setIsStatusFilterOpen(!isStatusFilterOpen)}
-                      isExpanded={isStatusFilterOpen}
+                <InputGroup>
+                  <InputGroupItem>
+                    <Dropdown
+                      isOpen={workbenchesFilterDropdownOpen}
+                      onOpenChange={(isOpen) => setWorkbenchesFilterDropdownOpen(isOpen)}
+                      toggle={(toggleRef) => (
+                        <MenuToggle
+                          ref={toggleRef}
+                          onClick={() => setWorkbenchesFilterDropdownOpen(!workbenchesFilterDropdownOpen)}
+                          isExpanded={workbenchesFilterDropdownOpen}
+                          icon={<FilterIcon style={{ marginRight: '0.5rem' }} />}
+                        >
+                          {workbenchesFilterAttribute === 'name' ? 'Name' :
+                           workbenchesFilterAttribute === 'status' ? 'Status' :
+                           workbenchesFilterAttribute === 'version' ? 'Version' :
+                           'Workspace Kind'}
+                        </MenuToggle>
+                      )}
                     >
-                      Status
-                    </MenuToggle>
-                  )}
-                >
-                  <SelectList>
-                    <SelectOption hasCheckbox isSelected={statusFilters.includes('Running')} value="Running">
-                      Running
-                    </SelectOption>
-                    <SelectOption hasCheckbox isSelected={statusFilters.includes('Stopped')} value="Stopped">
-                      Stopped
-                    </SelectOption>
-                    <SelectOption hasCheckbox isSelected={statusFilters.includes('Migrating')} value="Migrating">
-                      Migrating
-                    </SelectOption>
-                  </SelectList>
-                </Select>
-              </ToolbarItem>
-              <ToolbarItem>
-                <Select
-                  isOpen={isVersionFilterOpen}
-                  onOpenChange={(isOpen) => setIsVersionFilterOpen(isOpen)}
-                  onSelect={(_event, value) => {
-                    const version = value as string;
-                    setVersionFilters(
-                      versionFilters.includes(version)
-                        ? versionFilters.filter((v) => v !== version)
-                        : [...versionFilters, version]
-                    );
-                  }}
-                  selected={versionFilters}
-                  toggle={(toggleRef) => (
-                    <MenuToggle
-                      ref={toggleRef}
-                      onClick={() => setIsVersionFilterOpen(!isVersionFilterOpen)}
-                      isExpanded={isVersionFilterOpen}
-                    >
-                      Version
-                    </MenuToggle>
-                  )}
-                >
-                  <SelectList>
-                    <SelectOption hasCheckbox isSelected={versionFilters.includes('Legacy V1')} value="Legacy V1">
-                      Legacy V1
-                    </SelectOption>
-                    <SelectOption
-                      hasCheckbox
-                      isSelected={versionFilters.includes('NB 2.0 Compliant')}
-                      value="NB 2.0 Compliant"
-                    >
-                      NB 2.0 Compliant
-                    </SelectOption>
-                  </SelectList>
-                </Select>
-              </ToolbarItem>
-              <ToolbarItem>
-                <Select
-                  isOpen={isWorkspaceKindFilterOpen}
-                  onOpenChange={(isOpen) => setIsWorkspaceKindFilterOpen(isOpen)}
-                  onSelect={(_event, value) => {
-                    const kindId = value as string;
-                    setWorkspaceKindFilter(
-                      workspaceKindFilter.includes(kindId)
-                        ? workspaceKindFilter.filter((id) => id !== kindId)
-                        : [...workspaceKindFilter, kindId]
-                    );
-                  }}
-                  selected={workspaceKindFilter}
-                  toggle={(toggleRef) => (
-                    <MenuToggle
-                      ref={toggleRef}
-                      onClick={() => setIsWorkspaceKindFilterOpen(!isWorkspaceKindFilterOpen)}
-                      isExpanded={isWorkspaceKindFilterOpen}
-                    >
-                      Workspace Kind
-                    </MenuToggle>
-                  )}
-                >
-                  <SelectList>
-                    {(workspaceKinds || []).map((kind) => (
-                      <SelectOption
-                        key={kind.id}
-                        hasCheckbox
-                        isSelected={workspaceKindFilter.includes(kind.id)}
-                        value={kind.id}
-                      >
-                        {kind.name}
-                      </SelectOption>
-                    ))}
-                  </SelectList>
-                </Select>
+                      <DropdownList>
+                        <DropdownItem onClick={() => setWorkbenchesFilterAttribute('name')}>Name</DropdownItem>
+                        <DropdownItem onClick={() => setWorkbenchesFilterAttribute('status')}>Status</DropdownItem>
+                        <DropdownItem onClick={() => setWorkbenchesFilterAttribute('version')}>Version</DropdownItem>
+                        <DropdownItem onClick={() => setWorkbenchesFilterAttribute('workspaceKind')}>Workspace Kind</DropdownItem>
+                      </DropdownList>
+                    </Dropdown>
+                  </InputGroupItem>
+                  <InputGroupItem isFill>
+                    <SearchInput
+                      placeholder={`Filter by ${workbenchesFilterAttribute === 'name' ? 'name, project, or user' :
+                                   workbenchesFilterAttribute === 'status' ? 'status' :
+                                   workbenchesFilterAttribute === 'version' ? 'version' :
+                                   'workspace kind'}`}
+                      value={workbenchesFilterInput}
+                      onChange={(_event, value) => setWorkbenchesFilterInput(value)}
+                      onClear={() => setWorkbenchesFilterInput('')}
+                      onSearch={() => {
+                        if (workbenchesFilterInput.trim()) {
+                          addFilter('workbenches', workbenchesFilterAttribute, workbenchesFilterInput.trim());
+                        }
+                      }}
+                      id="workbenches-attribute-search"
+                    />
+                  </InputGroupItem>
+                </InputGroup>
               </ToolbarItem>
               <ToolbarItem>
                 <Select
@@ -1557,43 +1604,62 @@ const Workbenches: React.FunctionComponent = () => {
                   Create Workbench
                 </Button>
               </ToolbarItem>
+              <ToolbarItem>
+                <Button
+                  id="migrate-workbenches-button"
+                  variant="secondary"
+                  isDisabled={selectedLegacyV1Count === 0}
+                  onClick={() => openBulkMigrationWizard()}
+                >
+                  Migrate Workbenches ({selectedLegacyV1Count} Selected)
+                </Button>
+              </ToolbarItem>
             </ToolbarGroup>
           </ToolbarContent>
         </Toolbar>
 
         {/* Active Filters */}
-        {(statusFilters.length > 0 || versionFilters.length > 0 || workspaceKindFilter.length > 0) && (
-          <div style={{ marginBottom: '4px', marginTop: '0px' }}>
+        {(activeFilters.name.length > 0 || activeFilters.status.length > 0 || activeFilters.version.length > 0 || activeFilters.workspaceKind.length > 0) && (
+          <div style={{ marginBottom: '16px', marginTop: '0px' }}>
             <LabelGroup
               categoryName="Active filters"
               isClosable={false}
-              numLabels={statusFilters.length + versionFilters.length + workspaceKindFilter.length}
+              numLabels={activeFilters.name.length + activeFilters.status.length + activeFilters.version.length + activeFilters.workspaceKind.length}
             >
-              {statusFilters.map(filter => (
+              {activeFilters.name.map(filter => (
+                <Label 
+                  key={`name-${filter}`}
+                  variant="outline"
+                  onClose={() => removeFilter('workbenches', 'name', filter)}
+                >
+                  Name: {filter}
+                </Label>
+              ))}
+              {activeFilters.status.map(filter => (
                 <Label 
                   key={`status-${filter}`}
                   variant="outline"
-                  onClose={() => setStatusFilters(prev => prev.filter(f => f !== filter))}
+                  onClose={() => removeFilter('workbenches', 'status', filter)}
                 >
                   Status: {filter}
                 </Label>
               ))}
-              {versionFilters.map(filter => (
+              {activeFilters.version.map(filter => (
                 <Label 
                   key={`version-${filter}`}
                   variant="outline"
-                  onClose={() => setVersionFilters(prev => prev.filter(f => f !== filter))}
+                  onClose={() => removeFilter('workbenches', 'version', filter)}
                 >
                   Version: {filter}
                 </Label>
               ))}
-              {workspaceKindFilter.map(kindId => {
+              {activeFilters.workspaceKind.map(kindId => {
                 const kind = workspaceKinds.find(k => k.id === kindId);
                 return (
                   <Label 
                     key={`workspace-kind-${kindId}`}
                     variant="outline"
-                    onClose={() => setWorkspaceKindFilter(prev => prev.filter(id => id !== kindId))}
+                    onClose={() => removeFilter('workbenches', 'workspaceKind', kindId)}
                   >
                     Workspace Kind: {kind?.name || kindId}
                   </Label>
@@ -1602,11 +1668,7 @@ const Workbenches: React.FunctionComponent = () => {
             </LabelGroup>
             <Button 
               variant="link" 
-              onClick={() => {
-                setStatusFilters([]);
-                setVersionFilters([]);
-                setWorkspaceKindFilter([]);
-              }} 
+              onClick={() => clearAllFilters('workbenches')} 
               style={{ marginTop: '0.5rem' }}
             >
               Clear all filters
@@ -1614,7 +1676,9 @@ const Workbenches: React.FunctionComponent = () => {
           </div>
         )}
 
-        <Table aria-label="Workbenches list" id="workbenches-table" variant="compact">
+        {visualStyle !== 'dual-table-view' && (
+          <>
+            <Table aria-label="Workbenches list" id="workbenches-table" variant="compact">
           <Thead>
             <Tr>
               <Th></Th>
@@ -1899,7 +1963,400 @@ const Workbenches: React.FunctionComponent = () => {
             setPage(1);
           }}
           widgetId="workbenches-pagination"
+          style={{ marginTop: '8px' }}
         />
+          </>
+        )}
+
+        {visualStyle === 'dual-table-view' && (
+          <>
+            {/* Migrated Workbenches Table */}
+            <div style={{ marginBottom: 'var(--pf-v6-global--spacer--xl)' }}>
+              <Title headingLevel="h3" style={{ marginBottom: 'var(--pf-v6-global--spacer--md)' }}>
+                Migrated Workbenches (NB 2.0 Compliant)
+              </Title>
+              <Table aria-label="Migrated workbenches list" id="migrated-workbenches-table" variant="compact">
+                <Thead>
+                  <Tr>
+                    <Th></Th>
+                    <Th
+                      select={{
+                        onSelect: onSelectAllMigrated,
+                        isSelected: areAllMigratedSelected,
+                        isDisabled: false
+                      }}
+                    />
+                    {visibleColumns.name && (
+                      <Th
+                        sort={{
+                          sortBy: sortBy?.index === 0 ? sortBy : { index: 0, direction: 'asc' as const },
+                          onSort: handleSort,
+                          columnIndex: 0
+                        }}
+                      >
+                        Name
+                      </Th>
+                    )}
+                    {visibleColumns.project && (
+                      <Th
+                        sort={{
+                          sortBy: sortBy?.index === 1 ? sortBy : { index: 1, direction: 'asc' as const },
+                          onSort: handleSort,
+                          columnIndex: 1
+                        }}
+                      >
+                        Project
+                      </Th>
+                    )}
+                    {visibleColumns.status && (
+                      <Th
+                        sort={{
+                          sortBy: sortBy?.index === 2 ? sortBy : { index: 2, direction: 'asc' as const },
+                          onSort: handleSort,
+                          columnIndex: 2
+                        }}
+                      >
+                        Status
+                      </Th>
+                    )}
+                    {visibleColumns.version && (
+                      <Th
+                        sort={{
+                          sortBy: sortBy?.index === 3 ? sortBy : { index: 3, direction: 'asc' as const },
+                          onSort: handleSort,
+                          columnIndex: 3
+                        }}
+                      >
+                        Version/Compliance
+                      </Th>
+                    )}
+                    {visibleColumns.createdBy && (
+                      <Th
+                        sort={{
+                          sortBy: sortBy?.index === 4 ? sortBy : { index: 4, direction: 'asc' as const },
+                          onSort: handleSort,
+                          columnIndex: 4
+                        }}
+                      >
+                        Created By
+                      </Th>
+                    )}
+                    {visibleColumns.image && (
+                      <Th
+                        sort={{
+                          sortBy: sortBy?.index === 5 ? sortBy : { index: 5, direction: 'asc' as const },
+                          onSort: handleSort,
+                          columnIndex: 5
+                        }}
+                      >
+                        Workspace Kinds
+                      </Th>
+                    )}
+                    <Th screenReaderText="Actions"></Th>
+                  </Tr>
+                </Thead>
+                <Tbody>
+                  {paginatedMigratedRecords.map((r, rowIndex) => {
+                    return (
+                      <React.Fragment key={r.id}>
+                        <Tr style={getRowStyle(r)}>
+                          {r.isMigrating ? (
+                            <Td
+                              expand={{
+                                rowIndex: rowIndex,
+                                isExpanded: expandedRows.includes(r.id),
+                                onToggle: () => toggleRowExpansion(r.id),
+                                expandId: `expandable-${r.id}`
+                              }}
+                            />
+                          ) : (
+                            <Td />
+                          )}
+                          <Td
+                            select={{
+                              rowIndex: rowIndex,
+                              onSelect: (_event, isSelecting) => onSelectRow(r.id, isSelecting),
+                              isSelected: isRowSelected(r.id),
+                              isDisabled: false
+                            }}
+                          />
+                          {visibleColumns.name && (
+                            <Td dataLabel="Name">
+                              {renderNameCell(r)}
+                            </Td>
+                          )}
+                          {visibleColumns.project && (
+                            <Td dataLabel="Project">{r.project}</Td>
+                          )}
+                          {visibleColumns.status && (
+                            <Td dataLabel="Status">
+                              {renderStatusCell(r)}
+                            </Td>
+                          )}
+                          {visibleColumns.version && (
+                            <Td dataLabel="Version/Compliance">{renderVersionCell(r)}</Td>
+                          )}
+                          {visibleColumns.createdBy && (
+                            <Td dataLabel="Created By">{r.createdBy}</Td>
+                          )}
+                          {visibleColumns.image && (
+                            <Td dataLabel="Workspace Kinds">{getWorkspaceKindName(r)}</Td>
+                          )}
+                          <Td isActionCell dataLabel="Actions">
+                            <ActionsColumn items={buildActions(r)} popperProps={{ position: 'right' }} />
+                          </Td>
+                        </Tr>
+                        {r.isMigrating && r.migrationDetails && (
+                          <Tr key={`${r.id}-expanded`} isExpanded={expandedRows.includes(r.id)}>
+                            <Td />
+                            <Td colSpan={getColSpan()}>
+                              {expandedRows.includes(r.id) && (
+                                <div style={{ padding: '1rem', backgroundColor: '#f0f0f0' }}>
+                                  <Title headingLevel="h6" id={`migration-title-${r.id}`}>Migration Details</Title>
+                                  <DescriptionList isHorizontal>
+                                    <DescriptionListGroup>
+                                      <DescriptionListTerm>New Workbench Name</DescriptionListTerm>
+                                      <DescriptionListDescription>
+                                        {r.migrationDetails.newWorkbenchName}
+                                      </DescriptionListDescription>
+                                    </DescriptionListGroup>
+                                    <DescriptionListGroup>
+                                      <DescriptionListTerm>Migration Status</DescriptionListTerm>
+                                      <DescriptionListDescription>
+                                        <Label color={
+                                          r.migrationDetails.migrationStatus === 'completed' ? 'green' :
+                                          r.migrationDetails.migrationStatus === 'in-progress' ? 'blue' :
+                                          r.migrationDetails.migrationStatus === 'failed' ? 'red' : 'orange'
+                                        }>
+                                          {r.migrationDetails.migrationStatus}
+                                        </Label>
+                                      </DescriptionListDescription>
+                                    </DescriptionListGroup>
+                                    <DescriptionListGroup>
+                                      <DescriptionListTerm>Initiated At</DescriptionListTerm>
+                                      <DescriptionListDescription>
+                                        {new Date(r.migrationDetails.initiatedAt).toLocaleString()}
+                                      </DescriptionListDescription>
+                                    </DescriptionListGroup>
+                                  </DescriptionList>
+                                </div>
+                              )}
+                            </Td>
+                          </Tr>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </Tbody>
+              </Table>
+              <Pagination
+                itemCount={migratedRecords.length}
+                page={migratedPage}
+                perPage={migratedPerPage}
+                onSetPage={(_event, newPage) => setMigratedPage(newPage)}
+                onPerPageSelect={(_event, newPerPage) => {
+                  setMigratedPerPage(newPerPage);
+                  setMigratedPage(1);
+                }}
+                widgetId="migrated-workbenches-pagination"
+                style={{ marginTop: '8px' }}
+              />
+            </div>
+
+            {/* Legacy Workbenches Table */}
+            <div>
+              <Title headingLevel="h3" style={{ marginBottom: 'var(--pf-v6-global--spacer--md)' }}>
+                Legacy Workbenches (Legacy V1)
+              </Title>
+              <Table aria-label="Legacy workbenches list" id="legacy-workbenches-table" variant="compact">
+                <Thead>
+                  <Tr>
+                    <Th></Th>
+                    <Th
+                      select={{
+                        onSelect: onSelectAllLegacy,
+                        isSelected: areAllLegacySelected,
+                        isDisabled: false
+                      }}
+                    />
+                    {visibleColumns.name && (
+                      <Th
+                        sort={{
+                          sortBy: sortBy?.index === 0 ? sortBy : { index: 0, direction: 'asc' as const },
+                          onSort: handleSort,
+                          columnIndex: 0
+                        }}
+                      >
+                        Name
+                      </Th>
+                    )}
+                    {visibleColumns.project && (
+                      <Th
+                        sort={{
+                          sortBy: sortBy?.index === 1 ? sortBy : { index: 1, direction: 'asc' as const },
+                          onSort: handleSort,
+                          columnIndex: 1
+                        }}
+                      >
+                        Project
+                      </Th>
+                    )}
+                    {visibleColumns.status && (
+                      <Th
+                        sort={{
+                          sortBy: sortBy?.index === 2 ? sortBy : { index: 2, direction: 'asc' as const },
+                          onSort: handleSort,
+                          columnIndex: 2
+                        }}
+                      >
+                        Status
+                      </Th>
+                    )}
+                    {visibleColumns.version && (
+                      <Th
+                        sort={{
+                          sortBy: sortBy?.index === 3 ? sortBy : { index: 3, direction: 'asc' as const },
+                          onSort: handleSort,
+                          columnIndex: 3
+                        }}
+                      >
+                        Version/Compliance
+                      </Th>
+                    )}
+                    {visibleColumns.createdBy && (
+                      <Th
+                        sort={{
+                          sortBy: sortBy?.index === 4 ? sortBy : { index: 4, direction: 'asc' as const },
+                          onSort: handleSort,
+                          columnIndex: 4
+                        }}
+                      >
+                        Created By
+                      </Th>
+                    )}
+                    {visibleColumns.image && (
+                      <Th
+                        sort={{
+                          sortBy: sortBy?.index === 5 ? sortBy : { index: 5, direction: 'asc' as const },
+                          onSort: handleSort,
+                          columnIndex: 5
+                        }}
+                      >
+                        Workspace Kinds
+                      </Th>
+                    )}
+                    <Th screenReaderText="Actions"></Th>
+                  </Tr>
+                </Thead>
+                <Tbody>
+                  {paginatedLegacyRecords.map((r, rowIndex) => {
+                    return (
+                      <React.Fragment key={r.id}>
+                        <Tr style={getRowStyle(r)}>
+                          {r.isMigrating ? (
+                            <Td
+                              expand={{
+                                rowIndex: rowIndex,
+                                isExpanded: expandedRows.includes(r.id),
+                                onToggle: () => toggleRowExpansion(r.id),
+                                expandId: `expandable-${r.id}`
+                              }}
+                            />
+                          ) : (
+                            <Td />
+                          )}
+                          <Td
+                            select={{
+                              rowIndex: rowIndex,
+                              onSelect: (_event, isSelecting) => onSelectRow(r.id, isSelecting),
+                              isSelected: isRowSelected(r.id),
+                              isDisabled: false
+                            }}
+                          />
+                          {visibleColumns.name && (
+                            <Td dataLabel="Name">
+                              {renderNameCell(r)}
+                            </Td>
+                          )}
+                          {visibleColumns.project && (
+                            <Td dataLabel="Project">{r.project}</Td>
+                          )}
+                          {visibleColumns.status && (
+                            <Td dataLabel="Status">
+                              {renderStatusCell(r)}
+                            </Td>
+                          )}
+                          {visibleColumns.version && (
+                            <Td dataLabel="Version/Compliance">{renderVersionCell(r)}</Td>
+                          )}
+                          {visibleColumns.createdBy && (
+                            <Td dataLabel="Created By">{r.createdBy}</Td>
+                          )}
+                          {visibleColumns.image && (
+                            <Td dataLabel="Workspace Kinds">{getWorkspaceKindName(r)}</Td>
+                          )}
+                          <Td isActionCell dataLabel="Actions">
+                            <ActionsColumn items={buildActions(r)} popperProps={{ position: 'right' }} />
+                          </Td>
+                        </Tr>
+                        {r.isMigrating && r.migrationDetails && (
+                          <Tr key={`${r.id}-expanded`} isExpanded={expandedRows.includes(r.id)}>
+                            <Td />
+                            <Td colSpan={getColSpan()}>
+                              {expandedRows.includes(r.id) && (
+                                <div style={{ padding: '1rem', backgroundColor: '#f0f0f0' }}>
+                                  <Title headingLevel="h6" id={`migration-title-${r.id}`}>Migration Details</Title>
+                                  <DescriptionList isHorizontal>
+                                    <DescriptionListGroup>
+                                      <DescriptionListTerm>New Workbench Name</DescriptionListTerm>
+                                      <DescriptionListDescription>
+                                        {r.migrationDetails.newWorkbenchName}
+                                      </DescriptionListDescription>
+                                    </DescriptionListGroup>
+                                    <DescriptionListGroup>
+                                      <DescriptionListTerm>Migration Status</DescriptionListTerm>
+                                      <DescriptionListDescription>
+                                        <Label color={
+                                          r.migrationDetails.migrationStatus === 'completed' ? 'green' :
+                                          r.migrationDetails.migrationStatus === 'in-progress' ? 'blue' :
+                                          r.migrationDetails.migrationStatus === 'failed' ? 'red' : 'orange'
+                                        }>
+                                          {r.migrationDetails.migrationStatus}
+                                        </Label>
+                                      </DescriptionListDescription>
+                                    </DescriptionListGroup>
+                                    <DescriptionListGroup>
+                                      <DescriptionListTerm>Initiated At</DescriptionListTerm>
+                                      <DescriptionListDescription>
+                                        {new Date(r.migrationDetails.initiatedAt).toLocaleString()}
+                                      </DescriptionListDescription>
+                                    </DescriptionListGroup>
+                                  </DescriptionList>
+                                </div>
+                              )}
+                            </Td>
+                          </Tr>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </Tbody>
+              </Table>
+              <Pagination
+                itemCount={legacyRecords.length}
+                page={legacyPage}
+                perPage={legacyPerPage}
+                onSetPage={(_event, newPage) => setLegacyPage(newPage)}
+                onPerPageSelect={(_event, newPerPage) => {
+                  setLegacyPerPage(newPerPage);
+                  setLegacyPage(1);
+                }}
+                widgetId="legacy-workbenches-pagination"
+                style={{ marginTop: '8px' }}
+              />
+            </div>
+          </>
+        )}
       </PageSection>
 
       {selectedWorkbenches.length > 0 && (
@@ -1926,104 +2383,79 @@ const Workbenches: React.FunctionComponent = () => {
             <Toolbar
               id="workspace-kinds-toolbar"
               inset={{ default: 'insetNone' }}
-              clearAllFilters={() => {
-                setWorkspaceKindsSearch('');
-                setWorkspaceKindsComplianceFilter([]);
-                setWorkspaceKindsStatusFilter([]);
-              }}
+              clearAllFilters={() => clearAllFilters('workspaceKinds')}
             >
               <ToolbarContent>
                 <ToolbarGroup variant="filter-group">
                   <ToolbarItem>
-                    <SearchInput
-                      placeholder="Filter by name or type"
-                      value={workspaceKindsSearch}
-                      onChange={(_event, value) => setWorkspaceKindsSearch(value)}
-                      onClear={() => setWorkspaceKindsSearch('')}
-                      id="workspace-kinds-search"
-                    />
-                  </ToolbarItem>
-                  <ToolbarItem>
-                    <Select
-                      isOpen={isWorkspaceKindsComplianceFilterOpen}
-                      onOpenChange={(isOpen) => setIsWorkspaceKindsComplianceFilterOpen(isOpen)}
-                      onSelect={(_event, value) => {
-                        const compliance = value as string;
-                        setWorkspaceKindsComplianceFilter(
-                          workspaceKindsComplianceFilter.includes(compliance)
-                            ? workspaceKindsComplianceFilter.filter((c) => c !== compliance)
-                            : [...workspaceKindsComplianceFilter, compliance]
-                        );
-                      }}
-                      selected={workspaceKindsComplianceFilter}
-                      toggle={(toggleRef) => (
-                        <MenuToggle
-                          ref={toggleRef}
-                          onClick={() => setIsWorkspaceKindsComplianceFilterOpen(!isWorkspaceKindsComplianceFilterOpen)}
-                          isExpanded={isWorkspaceKindsComplianceFilterOpen}
+                    <InputGroup>
+                      <InputGroupItem>
+                        <Dropdown
+                          isOpen={workspaceKindsFilterDropdownOpen}
+                          onOpenChange={(isOpen) => setWorkspaceKindsFilterDropdownOpen(isOpen)}
+                          toggle={(toggleRef) => (
+                            <MenuToggle
+                              ref={toggleRef}
+                              onClick={() => setWorkspaceKindsFilterDropdownOpen(!workspaceKindsFilterDropdownOpen)}
+                              aria-label="Filter attribute selector"
+                              isExpanded={workspaceKindsFilterDropdownOpen}
+                              style={{
+                                borderTopRightRadius: 0,
+                                borderBottomRightRadius: 0,
+                                minWidth: '140px'
+                              }}
+                            >
+                              <FilterIcon style={{ marginRight: '0.5rem' }} />
+                              {workspaceKindsFilterAttribute === 'name' ? 'Name' :
+                               workspaceKindsFilterAttribute === 'compliance' ? 'Compliance' : 'Status'}
+                            </MenuToggle>
+                          )}
                         >
-                          Compliance
-                        </MenuToggle>
-                      )}
-                    >
-                      <SelectList>
-                        <SelectOption
-                          hasCheckbox
-                          isSelected={workspaceKindsComplianceFilter.includes('NB 2.0 Compliant')}
-                          value="NB 2.0 Compliant"
-                        >
-                          NB 2.0 Compliant
-                        </SelectOption>
-                        <SelectOption
-                          hasCheckbox
-                          isSelected={workspaceKindsComplianceFilter.includes('Legacy V1')}
-                          value="Legacy V1"
-                        >
-                          Legacy V1
-                        </SelectOption>
-                      </SelectList>
-                    </Select>
-                  </ToolbarItem>
-                  <ToolbarItem>
-                    <Select
-                      isOpen={isWorkspaceKindsStatusFilterOpen}
-                      onOpenChange={(isOpen) => setIsWorkspaceKindsStatusFilterOpen(isOpen)}
-                      onSelect={(_event, value) => {
-                        const status = value as string;
-                        setWorkspaceKindsStatusFilter(
-                          workspaceKindsStatusFilter.includes(status)
-                            ? workspaceKindsStatusFilter.filter((s) => s !== status)
-                            : [...workspaceKindsStatusFilter, status]
-                        );
-                      }}
-                      selected={workspaceKindsStatusFilter}
-                      toggle={(toggleRef) => (
-                        <MenuToggle
-                          ref={toggleRef}
-                          onClick={() => setIsWorkspaceKindsStatusFilterOpen(!isWorkspaceKindsStatusFilterOpen)}
-                          isExpanded={isWorkspaceKindsStatusFilterOpen}
-                        >
-                          Status
-                        </MenuToggle>
-                      )}
-                    >
-                      <SelectList>
-                        <SelectOption
-                          hasCheckbox
-                          isSelected={workspaceKindsStatusFilter.includes('Active')}
-                          value="Active"
-                        >
-                          Active
-                        </SelectOption>
-                        <SelectOption
-                          hasCheckbox
-                          isSelected={workspaceKindsStatusFilter.includes('Inactive')}
-                          value="Inactive"
-                        >
-                          Inactive
-                        </SelectOption>
-                      </SelectList>
-                    </Select>
+                          <DropdownList>
+                            <DropdownItem onClick={() => {
+                              setWorkspaceKindsFilterAttribute('name');
+                              setWorkspaceKindsFilterInput('');
+                            }}>
+                              Name
+                            </DropdownItem>
+                            <DropdownItem onClick={() => {
+                              setWorkspaceKindsFilterAttribute('compliance');
+                              setWorkspaceKindsFilterInput('');
+                            }}>
+                              Compliance
+                            </DropdownItem>
+                            <DropdownItem onClick={() => {
+                              setWorkspaceKindsFilterAttribute('status');
+                              setWorkspaceKindsFilterInput('');
+                            }}>
+                              Status
+                            </DropdownItem>
+                          </DropdownList>
+                        </Dropdown>
+                      </InputGroupItem>
+                      <InputGroupItem isFill>
+                        <SearchInput
+                          placeholder={
+                            workspaceKindsFilterAttribute === 'name' ? 'Filter by name or type' :
+                            workspaceKindsFilterAttribute === 'compliance' ? 'Filter by compliance (Legacy V1, NB 2.0 Compliant)' :
+                            'Filter by status (Active, Inactive)'
+                          }
+                          value={workspaceKindsFilterInput}
+                          onChange={(_event, value) => setWorkspaceKindsFilterInput(value)}
+                          onSearch={() => {
+                            if (workspaceKindsFilterInput.trim()) {
+                              addFilter('workspaceKinds', workspaceKindsFilterAttribute, workspaceKindsFilterInput.trim());
+                            }
+                          }}
+                          onClear={() => setWorkspaceKindsFilterInput('')}
+                          style={{
+                            borderTopLeftRadius: 0,
+                            borderBottomLeftRadius: 0
+                          }}
+                          id="workspace-kinds-attribute-search"
+                        />
+                      </InputGroupItem>
+                    </InputGroup>
                   </ToolbarItem>
                   <ToolbarItem>
                     <Button
@@ -2060,6 +2492,53 @@ const Workbenches: React.FunctionComponent = () => {
               </ToolbarContent>
             </Toolbar>
           </PageSection>
+
+          {/* Active Filters */}
+          {(workspaceKindsActiveFilters.name.length > 0 || workspaceKindsActiveFilters.compliance.length > 0 || workspaceKindsActiveFilters.status.length > 0) && (
+            <div style={{ marginBottom: '16px', marginTop: '0px' }}>
+              <LabelGroup
+                categoryName="Active filters"
+                isClosable={false}
+                numLabels={workspaceKindsActiveFilters.name.length + workspaceKindsActiveFilters.compliance.length + workspaceKindsActiveFilters.status.length}
+              >
+                {workspaceKindsActiveFilters.name.map(filter => (
+                  <Label 
+                    key={`name-${filter}`}
+                    variant="outline"
+                    onClose={() => removeFilter('workspaceKinds', 'name', filter)}
+                  >
+                    Name: {filter}
+                  </Label>
+                ))}
+                {workspaceKindsActiveFilters.compliance.map(filter => (
+                  <Label 
+                    key={`compliance-${filter}`}
+                    variant="outline"
+                    onClose={() => removeFilter('workspaceKinds', 'compliance', filter)}
+                  >
+                    Compliance: {filter}
+                  </Label>
+                ))}
+                {workspaceKindsActiveFilters.status.map(filter => (
+                  <Label 
+                    key={`status-${filter}`}
+                    variant="outline"
+                    onClose={() => removeFilter('workspaceKinds', 'status', filter)}
+                  >
+                    Status: {filter}
+                  </Label>
+                ))}
+              </LabelGroup>
+              <Button 
+                variant="link" 
+                onClick={() => clearAllFilters('workspaceKinds')} 
+                style={{ marginTop: '0.5rem' }}
+              >
+                Clear all filters
+              </Button>
+            </div>
+          )}
+
           <PageSection>
             <Table aria-label="Workspace Kinds table" id="workspace-kinds-table" variant="compact">
               <Thead>
@@ -2068,44 +2547,42 @@ const Workbenches: React.FunctionComponent = () => {
                     select={{
                       onSelect: (_event, isSelecting) => {
                         const filteredKinds = Array.isArray(workspaceKinds) ? workspaceKinds.filter((kind) => {
-                          const matchesSearch =
-                            workspaceKindsSearch === '' ||
-                            kind.name.toLowerCase().includes(workspaceKindsSearch.toLowerCase()) ||
-                            kind.type.toLowerCase().includes(workspaceKindsSearch.toLowerCase());
+                          const matchesName = workspaceKindsActiveFilters.name.length === 0 ||
+                            workspaceKindsActiveFilters.name.some(filter =>
+                              kind.name.toLowerCase().includes(filter.toLowerCase()) ||
+                              kind.type.toLowerCase().includes(filter.toLowerCase())
+                            );
                           
                           const complianceLabel = kind.isLegacyV1 ? 'Legacy V1' : 'NB 2.0 Compliant';
-                          const matchesCompliance =
-                            workspaceKindsComplianceFilter.length === 0 ||
-                            workspaceKindsComplianceFilter.includes(complianceLabel);
+                          const matchesCompliance = workspaceKindsActiveFilters.compliance.length === 0 ||
+                            workspaceKindsActiveFilters.compliance.includes(complianceLabel);
                           
                           const statusLabel = kind.isActive ? 'Active' : 'Inactive';
-                          const matchesStatus =
-                            workspaceKindsStatusFilter.length === 0 ||
-                            workspaceKindsStatusFilter.includes(statusLabel);
+                          const matchesStatus = workspaceKindsActiveFilters.status.length === 0 ||
+                            workspaceKindsActiveFilters.status.includes(statusLabel);
                           
-                          return matchesSearch && matchesCompliance && matchesStatus;
+                          return matchesName && matchesCompliance && matchesStatus;
                         }) : [];
                         const allIds = Array.isArray(filteredKinds) ? filteredKinds.map(k => k.id) : [];
                         setSelectedWorkspaceKindIds(isSelecting ? allIds : []);
                       },
                       isSelected: (() => {
                         const filteredKinds = Array.isArray(workspaceKinds) ? workspaceKinds.filter((kind) => {
-                          const matchesSearch =
-                            workspaceKindsSearch === '' ||
-                            kind.name.toLowerCase().includes(workspaceKindsSearch.toLowerCase()) ||
-                            kind.type.toLowerCase().includes(workspaceKindsSearch.toLowerCase());
+                          const matchesName = workspaceKindsActiveFilters.name.length === 0 ||
+                            workspaceKindsActiveFilters.name.some(filter =>
+                              kind.name.toLowerCase().includes(filter.toLowerCase()) ||
+                              kind.type.toLowerCase().includes(filter.toLowerCase())
+                            );
                           
                           const complianceLabel = kind.isLegacyV1 ? 'Legacy V1' : 'NB 2.0 Compliant';
-                          const matchesCompliance =
-                            workspaceKindsComplianceFilter.length === 0 ||
-                            workspaceKindsComplianceFilter.includes(complianceLabel);
+                          const matchesCompliance = workspaceKindsActiveFilters.compliance.length === 0 ||
+                            workspaceKindsActiveFilters.compliance.includes(complianceLabel);
                           
                           const statusLabel = kind.isActive ? 'Active' : 'Inactive';
-                          const matchesStatus =
-                            workspaceKindsStatusFilter.length === 0 ||
-                            workspaceKindsStatusFilter.includes(statusLabel);
+                          const matchesStatus = workspaceKindsActiveFilters.status.length === 0 ||
+                            workspaceKindsActiveFilters.status.includes(statusLabel);
                           
-                          return matchesSearch && matchesCompliance && matchesStatus;
+                          return matchesName && matchesCompliance && matchesStatus;
                         }) : [];
                         return Array.isArray(filteredKinds) && filteredKinds.length > 0 && filteredKinds.every(k => selectedWorkspaceKindIds.includes(k.id));
                       })(),
@@ -2124,22 +2601,21 @@ const Workbenches: React.FunctionComponent = () => {
               <Tbody>
                 {Array.isArray(workspaceKinds) ? workspaceKinds
                   .filter((kind) => {
-                    const matchesSearch =
-                      workspaceKindsSearch === '' ||
-                      kind.name.toLowerCase().includes(workspaceKindsSearch.toLowerCase()) ||
-                      kind.type.toLowerCase().includes(workspaceKindsSearch.toLowerCase());
+                    const matchesName = workspaceKindsActiveFilters.name.length === 0 ||
+                      workspaceKindsActiveFilters.name.some(filter =>
+                        kind.name.toLowerCase().includes(filter.toLowerCase()) ||
+                        kind.type.toLowerCase().includes(filter.toLowerCase())
+                      );
                     
                     const complianceLabel = kind.isLegacyV1 ? 'Legacy V1' : 'NB 2.0 Compliant';
-                    const matchesCompliance =
-                      workspaceKindsComplianceFilter.length === 0 ||
-                      workspaceKindsComplianceFilter.includes(complianceLabel);
+                    const matchesCompliance = workspaceKindsActiveFilters.compliance.length === 0 ||
+                      workspaceKindsActiveFilters.compliance.includes(complianceLabel);
                     
                     const statusLabel = kind.isActive ? 'Active' : 'Inactive';
-                    const matchesStatus =
-                      workspaceKindsStatusFilter.length === 0 ||
-                      workspaceKindsStatusFilter.includes(statusLabel);
+                    const matchesStatus = workspaceKindsActiveFilters.status.length === 0 ||
+                      workspaceKindsActiveFilters.status.includes(statusLabel);
                     
-                    return matchesSearch && matchesCompliance && matchesStatus;
+                    return matchesName && matchesCompliance && matchesStatus;
                   })
                   .map((kind, rowIndex) => (
                   <Tr key={kind.id}>
@@ -2174,7 +2650,7 @@ const Workbenches: React.FunctionComponent = () => {
                         onClick={() => {
                           // Switch to Workbenches tab and filter by this workspace kind
                           setActiveTab(0);
-                          setWorkspaceKindFilter([kind.id]);
+                          addFilter('workbenches', 'workspaceKind', kind.id);
                         }}
                         style={{ padding: 0 }}
                       >
@@ -2236,97 +2712,79 @@ const Workbenches: React.FunctionComponent = () => {
             <Toolbar
               id="archive-toolbar"
               inset={{ default: 'insetNone' }}
-              clearAllFilters={() => {
-                setArchiveSearch('');
-                setArchiveStatusFilter([]);
-                setArchiveVersionFilter([]);
-              }}
+              clearAllFilters={() => clearAllFilters('archive')}
             >
               <ToolbarContent>
                 <ToolbarGroup variant="filter-group">
                   <ToolbarItem>
-                    <SearchInput
-                      placeholder="Filter by name or project"
-                      value={archiveSearch}
-                      onChange={(_event, value) => setArchiveSearch(value)}
-                      onClear={() => setArchiveSearch('')}
-                      id="archive-search"
-                    />
-                  </ToolbarItem>
-                  <ToolbarItem>
-                    <Select
-                      isOpen={isArchiveStatusFilterOpen}
-                      onOpenChange={(isOpen) => setIsArchiveStatusFilterOpen(isOpen)}
-                      onSelect={(_event, value) => {
-                        const status = value as string;
-                        setArchiveStatusFilter(
-                          archiveStatusFilter.includes(status)
-                            ? archiveStatusFilter.filter((s) => s !== status)
-                            : [...archiveStatusFilter, status]
-                        );
-                      }}
-                      selected={archiveStatusFilter}
-                      toggle={(toggleRef) => (
-                        <MenuToggle
-                          ref={toggleRef}
-                          onClick={() => setIsArchiveStatusFilterOpen(!isArchiveStatusFilterOpen)}
-                          isExpanded={isArchiveStatusFilterOpen}
+                    <InputGroup>
+                      <InputGroupItem>
+                        <Dropdown
+                          isOpen={archiveFilterDropdownOpen}
+                          onOpenChange={(isOpen) => setArchiveFilterDropdownOpen(isOpen)}
+                          toggle={(toggleRef) => (
+                            <MenuToggle
+                              ref={toggleRef}
+                              onClick={() => setArchiveFilterDropdownOpen(!archiveFilterDropdownOpen)}
+                              aria-label="Filter attribute selector"
+                              isExpanded={archiveFilterDropdownOpen}
+                              style={{
+                                borderTopRightRadius: 0,
+                                borderBottomRightRadius: 0,
+                                minWidth: '140px'
+                              }}
+                            >
+                              <FilterIcon style={{ marginRight: '0.5rem' }} />
+                              {archiveFilterAttribute === 'name' ? 'Name' :
+                               archiveFilterAttribute === 'status' ? 'Status' : 'Version'}
+                            </MenuToggle>
+                          )}
                         >
-                          Status
-                        </MenuToggle>
-                      )}
-                    >
-                      <SelectList>
-                        <SelectOption
-                          hasCheckbox
-                          isSelected={archiveStatusFilter.includes('Archived')}
-                          value="Archived"
-                        >
-                          Archived
-                        </SelectOption>
-                      </SelectList>
-                    </Select>
-                  </ToolbarItem>
-                  <ToolbarItem>
-                    <Select
-                      isOpen={isArchiveVersionFilterOpen}
-                      onOpenChange={(isOpen) => setIsArchiveVersionFilterOpen(isOpen)}
-                      onSelect={(_event, value) => {
-                        const version = value as string;
-                        setArchiveVersionFilter(
-                          archiveVersionFilter.includes(version)
-                            ? archiveVersionFilter.filter((v) => v !== version)
-                            : [...archiveVersionFilter, version]
-                        );
-                      }}
-                      selected={archiveVersionFilter}
-                      toggle={(toggleRef) => (
-                        <MenuToggle
-                          ref={toggleRef}
-                          onClick={() => setIsArchiveVersionFilterOpen(!isArchiveVersionFilterOpen)}
-                          isExpanded={isArchiveVersionFilterOpen}
-                        >
-                          Version
-                        </MenuToggle>
-                      )}
-                    >
-                      <SelectList>
-                        <SelectOption
-                          hasCheckbox
-                          isSelected={archiveVersionFilter.includes('Legacy V1')}
-                          value="Legacy V1"
-                        >
-                          Legacy V1
-                        </SelectOption>
-                        <SelectOption
-                          hasCheckbox
-                          isSelected={archiveVersionFilter.includes('NB 2.0 Compliant')}
-                          value="NB 2.0 Compliant"
-                        >
-                          NB 2.0 Compliant
-                        </SelectOption>
-                      </SelectList>
-                    </Select>
+                          <DropdownList>
+                            <DropdownItem onClick={() => {
+                              setArchiveFilterAttribute('name');
+                              setArchiveFilterInput('');
+                            }}>
+                              Name
+                            </DropdownItem>
+                            <DropdownItem onClick={() => {
+                              setArchiveFilterAttribute('status');
+                              setArchiveFilterInput('');
+                            }}>
+                              Status
+                            </DropdownItem>
+                            <DropdownItem onClick={() => {
+                              setArchiveFilterAttribute('version');
+                              setArchiveFilterInput('');
+                            }}>
+                              Version
+                            </DropdownItem>
+                          </DropdownList>
+                        </Dropdown>
+                      </InputGroupItem>
+                      <InputGroupItem isFill>
+                        <SearchInput
+                          placeholder={
+                            archiveFilterAttribute === 'name' ? 'Filter by name or project' :
+                            archiveFilterAttribute === 'status' ? 'Filter by status (Archived)' :
+                            'Filter by version (Legacy V1, NB 2.0 Compliant)'
+                          }
+                          value={archiveFilterInput}
+                          onChange={(_event, value) => setArchiveFilterInput(value)}
+                          onSearch={() => {
+                            if (archiveFilterInput.trim()) {
+                              addFilter('archive', archiveFilterAttribute, archiveFilterInput.trim());
+                            }
+                          }}
+                          onClear={() => setArchiveFilterInput('')}
+                          style={{
+                            borderTopLeftRadius: 0,
+                            borderBottomLeftRadius: 0
+                          }}
+                          id="archive-attribute-search"
+                        />
+                      </InputGroupItem>
+                    </InputGroup>
                   </ToolbarItem>
                 </ToolbarGroup>
                 <ToolbarGroup>
@@ -2363,6 +2821,53 @@ const Workbenches: React.FunctionComponent = () => {
               </ToolbarContent>
             </Toolbar>
           </PageSection>
+
+          {/* Active Filters */}
+          {(archiveActiveFilters.name.length > 0 || archiveActiveFilters.status.length > 0 || archiveActiveFilters.version.length > 0) && (
+            <div style={{ marginBottom: '16px', marginTop: '0px' }}>
+              <LabelGroup
+                categoryName="Active filters"
+                isClosable={false}
+                numLabels={archiveActiveFilters.name.length + archiveActiveFilters.status.length + archiveActiveFilters.version.length}
+              >
+                {archiveActiveFilters.name.map(filter => (
+                  <Label 
+                    key={`name-${filter}`}
+                    variant="outline"
+                    onClose={() => removeFilter('archive', 'name', filter)}
+                  >
+                    Name: {filter}
+                  </Label>
+                ))}
+                {archiveActiveFilters.status.map(filter => (
+                  <Label 
+                    key={`status-${filter}`}
+                    variant="outline"
+                    onClose={() => removeFilter('archive', 'status', filter)}
+                  >
+                    Status: {filter}
+                  </Label>
+                ))}
+                {archiveActiveFilters.version.map(filter => (
+                  <Label 
+                    key={`version-${filter}`}
+                    variant="outline"
+                    onClose={() => removeFilter('archive', 'version', filter)}
+                  >
+                    Version: {filter}
+                  </Label>
+                ))}
+              </LabelGroup>
+              <Button 
+                variant="link" 
+                onClick={() => clearAllFilters('archive')} 
+                style={{ marginTop: '0.5rem' }}
+              >
+                Clear all filters
+              </Button>
+            </div>
+          )}
+
           <PageSection>
             <Table aria-label="Archived workbenches table" id="archive-table" variant="compact">
               <Thead>

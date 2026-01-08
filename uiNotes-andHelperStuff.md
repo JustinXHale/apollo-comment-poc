@@ -1,7 +1,8 @@
 // Notes for UI Updates
 
 # Cmds
-- npm run start:dev // to start local server
+- 
+npm run start:dev // to start local server
 - netlify deploy --prod --dir=dist // to push to netlify
 - lsof -i :9000 // open instance
 - kill - 9 # // kill the deploy
