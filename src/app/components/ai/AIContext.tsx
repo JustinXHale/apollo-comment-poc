@@ -12,7 +12,7 @@ interface AIContextType {
   messages: AIMessage[];
   isLoading: boolean;
   toggleChatbot: () => void;
-  sendMessage: (content: string, commentContext?: { threads: any[]; version: string; route?: string }) => Promise<void>;
+  sendMessage: (content: string, commentContext?: { threads?: any[]; version?: string; route?: string }) => Promise<void>;
   clearHistory: () => void;
 }
 
@@ -69,7 +69,7 @@ export const AIProvider: React.FunctionComponent<{ children: React.ReactNode }> 
     setIsChatbotVisible(prev => !prev);
   }, []);
 
-  const sendMessage = React.useCallback(async (content: string, commentContext?: { threads: any[]; version: string; route?: string }) => {
+  const sendMessage = React.useCallback(async (content: string, commentContext?: { threads?: any[]; version?: string; route?: string }) => {
     if (!content.trim()) return;
 
     const userMessage: AIMessage = {

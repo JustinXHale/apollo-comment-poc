@@ -33,22 +33,10 @@ import {
   Tooltip
 } from '@patternfly/react-core';
 import { IAppRoute, IAppRouteGroup, routes, AppRouteConfig, filterRoutesByFlags } from '@app/routes';
-import { BarsIcon, BellIcon, CaretDownIcon, CogIcon, CommentIcon, FlagIcon, InfoCircleIcon, MoonIcon, SunIcon, SyncAltIcon, TrashIcon, UserIcon, GithubIcon, GitlabIcon } from '@patternfly/react-icons';
+import { BarsIcon, BellIcon, CaretDownIcon, CogIcon, FlagIcon, InfoCircleIcon, MoonIcon, SunIcon, TrashIcon, UserIcon } from '@patternfly/react-icons';
 import { useTheme } from '@app/utils/ThemeContext';
 import { useUserProfile } from '@app/utils/UserProfileContext';
 import { useFeatureFlags } from '@app/utils/FeatureFlagsContext';
-import { 
-  useComments,
-  useVersion,
-  CommentOverlay,
-  CommentDrawer,
-  useGitHubAuth,
-  useGitLabAuth,
-  AIProvider,
-  AIAssistant
-} from '@app/commenting-system';
-import { GitHubAuthButton } from '@app/components/GitHubAuthButton';
-import { GitLabAuthButton } from '@app/components/GitLabAuthButton';
 // Import custom logos
 import LightLogo from '@app/bgimages/Product_Logos_Light.svg';
 import DarkLogo from '@app/bgimages/Product-Logos_Dark.svg';
@@ -62,19 +50,12 @@ interface IAppLayout {
 const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = React.useState(true);
   const [userDropdownOpen, setUserDropdownOpen] = React.useState(false);
-  const [versionDropdownOpen, setVersionDropdownOpen] = React.useState(false);
   const [signInMenuOpen, setSignInMenuOpen] = React.useState(false);
-  const [selectedThreadId, setSelectedThreadId] = React.useState<string | null>(null);
-  const [bannerDismissed, setBannerDismissed] = React.useState(false);
   const signInToggleRef = React.useRef<HTMLButtonElement>(null);
   const signInMenuRef = React.useRef<HTMLDivElement>(null);
   const { userProfile, setUserProfile } = useUserProfile();
   const { theme, toggleTheme } = useTheme();
   const { flags } = useFeatureFlags();
-  const { showPins, enableCommenting, toggleShowPins, toggleEnableCommenting, clearAllThreads, threads, hasPendingSync, isSyncing, getThreadsForRoute } = useComments();
-  const { isAuthenticated: isGitHubAuthenticated, login: loginGitHub, logout: logoutGitHub, user: githubUser } = useGitHubAuth();
-  const { isAuthenticated: isGitLabAuthenticated, login: loginGitLab, logout: logoutGitLab, user: gitlabUser } = useGitLabAuth();
-  const { currentVersion, setCurrentVersion } = useVersion();
   const navigate = useNavigate();
   
   // Clear local storage handler
@@ -120,33 +101,6 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
               maxWidth: '200px' // Prevent logo from being too wide
             }}
           />
-          {/* Version Selector */}
-          <Dropdown
-            id="version-dropdown-masthead"
-            isOpen={versionDropdownOpen}
-            onSelect={() => setVersionDropdownOpen(false)}
-            onOpenChange={(isOpen: boolean) => setVersionDropdownOpen(isOpen)}
-            toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-              <MenuToggle
-                ref={toggleRef}
-                onClick={() => setVersionDropdownOpen(!versionDropdownOpen)}
-                isExpanded={versionDropdownOpen}
-                style={{ minWidth: '160px' }}
-              >
-                {BUILD_VERSION}
-              </MenuToggle>
-            )}
-          >
-            <DropdownList>
-              <DropdownItem
-                key="version-3"
-                onClick={() => setCurrentVersion('3')}
-                isSelected={currentVersion === '3'}
-              >
-                {BUILD_VERSION}
-              </DropdownItem>
-            </DropdownList>
-          </Dropdown>
         </MastheadBrand>
       </MastheadMain>
       <MastheadContent>
@@ -169,14 +123,7 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
                   isExpanded={signInMenuOpen}
                   id="sign-in-menu-toggle"
                 >
-                  {isGitHubAuthenticated || isGitLabAuthenticated ? (
-                    <>
-                      {isGitHubAuthenticated && githubUser?.login}
-                      {isGitLabAuthenticated && gitlabUser?.username}
-                    </>
-                  ) : (
-                    'Sign in'
-                  )}
+                  Sign in
                 </MenuToggle>
               }
               popper={
@@ -187,45 +134,9 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
                 >
                   <MenuContent>
                     <MenuList>
-                      {!isGitHubAuthenticated && !isGitLabAuthenticated ? (
-                        <>
-                          <MenuItem
-                            itemId="github-signin"
-                            onClick={loginGitHub}
-                            icon={<GithubIcon />}
-                          >
-                            Sign in with GitHub
-                          </MenuItem>
-                          <MenuItem
-                            itemId="gitlab-signin"
-                            onClick={loginGitLab}
-                            icon={<GitlabIcon />}
-                          >
-                            Sign in with GitLab
-                          </MenuItem>
-                        </>
-                      ) : (
-                        <>
-                          {isGitHubAuthenticated && (
-                            <MenuItem
-                              itemId="github-signout"
-                              onClick={logoutGitHub}
-                              icon={<GithubIcon />}
-                            >
-                              Sign out from GitHub ({githubUser?.login})
-                            </MenuItem>
-                          )}
-                          {isGitLabAuthenticated && (
-                            <MenuItem
-                              itemId="gitlab-signout"
-                              onClick={logoutGitLab}
-                              icon={<GitlabIcon />}
-                            >
-                              Sign out from GitLab ({gitlabUser?.username})
-                            </MenuItem>
-                          )}
-                        </>
-                      )}
+                      <MenuItem itemId="signin-placeholder">
+                        Sign in (disabled)
+                      </MenuItem>
                     </MenuList>
                   </MenuContent>
                 </Menu>
@@ -253,45 +164,6 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
               variant="plain"
               aria-label="Information"
             />
-            <Tooltip content={enableCommenting ? "Disable commenting" : "Enable commenting"}>
-              <Button
-                variant="plain"
-                onClick={() => {
-                  // If turning commenting ON and pins are OFF, turn pins ON
-                  if (!enableCommenting && !showPins) {
-                    toggleShowPins();
-                  }
-                  // If turning commenting OFF and pins are ON, turn pins OFF
-                  if (enableCommenting && showPins) {
-                    toggleShowPins();
-                  }
-                  toggleEnableCommenting();
-                }}
-                aria-label={enableCommenting ? "Disable commenting" : "Enable commenting"}
-              >
-                <CommentIcon 
-                  style={{ 
-                    color: enableCommenting ? '#C9190B' : '#151515',
-                    fontSize: '1.25rem'
-                  }}
-                />
-              </Button>
-            </Tooltip>
-            {(hasPendingSync || isSyncing) && (
-              <Tooltip content="Syncing comments with GitHub...">
-                <span style={{ display: 'flex', alignItems: 'center' }}>
-                  <SyncAltIcon style={{ animation: 'spin 2s linear infinite', color: 'var(--pf-t--global--icon--color--subtle)' }} />
-                  <style>
-                    {`
-                      @keyframes spin {
-                        from { transform: rotate(0deg); }
-                        to { transform: rotate(360deg); }
-                      }
-                    `}
-                  </style>
-                </span>
-              </Tooltip>
-            )}
             {flags.displayMode && (
               <Button
                 icon={theme === 'light' ? <MoonIcon /> : <SunIcon />}
@@ -394,19 +266,6 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
                 >
                   Clear local storage
                 </DropdownItem>
-                {threads.length > 0 && (
-                  <DropdownItem 
-                    key="clear-threads"
-                    icon={<CommentIcon />}
-                    onClick={() => {
-                      if (window.confirm(`Delete all ${threads.length} thread${threads.length === 1 ? '' : 's'}?`)) {
-                        clearAllThreads();
-                      }
-                    }}
-                  >
-                    Clear all threads ({threads.length})
-                  </DropdownItem>
-                )}
               </DropdownList>
             </Dropdown>
           </div>
@@ -420,10 +279,6 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
     const IconComponent = route.icon;
     const itemId = `${groupId ? `${groupId}_` : ''}${route.label}-${index}`;
     
-    // Get comment count for this route (only when commenting features are visible)
-    const routeThreads = showPins ? getThreadsForRoute(route.path, currentVersion) : [];
-    const commentCount = routeThreads.length;
-    const hasComments = commentCount > 0;
     
     return (
       <NavItem 
@@ -450,16 +305,6 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
               {route.label}
             </span>
             <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              {showPins && hasComments && (
-                <Tooltip content={`${commentCount} comment${commentCount !== 1 ? 's' : ''}`}>
-                  <CommentIcon 
-                    style={{ 
-                      fontSize: '0.875rem', 
-                      color: '#C9190B'
-                    }} 
-                  />
-                </Tooltip>
-              )}
               {(route as any).techPreview && (
                 <Label 
                   variant="outline" 
@@ -482,16 +327,6 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
               {route.label}
             </span>
             <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              {showPins && hasComments && (
-                <Tooltip content={`${commentCount} comment${commentCount !== 1 ? 's' : ''}`}>
-                  <CommentIcon 
-                    style={{ 
-                      fontSize: '0.875rem', 
-                      color: '#C9190B'
-                    }} 
-                  />
-                </Tooltip>
-              )}
               {(route as any).techPreview && (
                 <Label 
                   variant="outline" 
@@ -599,86 +434,55 @@ const AppLayout: React.FunctionComponent<IAppLayout> = ({ children }) => {
     </SkipToContent>
   );
   return (
-    <AIProvider>
-      <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-        {/* Apollo Canvas Masthead */}
-        {/* <ApolloCanvasMasthead /> */}
-        
-        {/* UXD Prototype Banner */}
-        <div style={{
-          backgroundColor: '#FF6F00',
-          color: 'white',
-          textAlign: 'center',
-          padding: '0.25rem',
-          fontSize: '0.75rem',
-          fontWeight: 600,
-          letterSpacing: '0.5px',
-          flexShrink: 0,
-          zIndex: 1000,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '0.5rem'
-        }}>
-          UXD PROTOTYPE
-          <Tooltip
-            content={
-              <div>
-                 This prototype demonstrates the <em>AI hub</em> and <em>Generative AI studio</em> features for 3.0. Not all features and interactions are fully represented and this does not represent a commitment on the part of Red Hat. Features are subject to change.
-              </div>
-            }
-            position="bottom"
-          >
-            <InfoCircleIcon 
-              style={{ 
-                fontSize: '0.75rem', 
-                cursor: 'pointer',
-                opacity: 0.8 
-              }} 
-            />
-          </Tooltip>
-        </div>
-        
-        {/* Sign In Banner */}
-        {!isGitHubAuthenticated && !isGitLabAuthenticated && !bannerDismissed && (
-          <Alert
-            variant="info"
-            isInline
-            title="Sign in with GitHub or GitLab to enable commenting and save your comments"
-            actionClose={<AlertActionCloseButton onClose={() => setBannerDismissed(true)} />}
-            style={{
-              margin: 0,
-              borderRadius: 0,
-              borderLeft: 'none',
-              borderRight: 'none',
-              borderTop: 'none'
-            }}
-          />
-        )}
-        
-        <Page
-          mainContainerId={pageId}
-          masthead={masthead}
-          sidebar={sidebarOpen && Sidebar}
-          skipToContent={PageSkipToContent}
-          style={{ flex: 1, minHeight: 0, position: 'relative' }}
-        >
-          <CommentDrawer
-            selectedThreadId={selectedThreadId}
-            onThreadSelect={setSelectedThreadId}
-          >
-            <div style={{ position: 'relative', height: '100%', width: '100%' }}>
-              {children}
-              <CommentOverlay
-                selectedThreadId={selectedThreadId}
-                onThreadSelect={setSelectedThreadId}
-              />
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+      {/* Apollo Canvas Masthead */}
+      {/* <ApolloCanvasMasthead /> */}
+      
+      {/* UXD Prototype Banner */}
+      <div style={{
+        backgroundColor: '#FF6F00',
+        color: 'white',
+        textAlign: 'center',
+        padding: '0.25rem',
+        fontSize: '0.75rem',
+        fontWeight: 600,
+        letterSpacing: '0.5px',
+        flexShrink: 0,
+        zIndex: 1000,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '0.5rem'
+      }}>
+        UXD PROTOTYPE
+        <Tooltip
+          content={
+            <div>
+               This prototype demonstrates the <em>AI hub</em> and <em>Generative AI studio</em> features for 3.0. Not all features and interactions are fully represented and this does not represent a commitment on the part of Red Hat. Features are subject to change.
             </div>
-          </CommentDrawer>
-          <AIAssistant />
-        </Page>
+          }
+          position="bottom"
+        >
+          <InfoCircleIcon 
+            style={{ 
+              fontSize: '0.75rem', 
+              cursor: 'pointer',
+              opacity: 0.8 
+            }} 
+          />
+        </Tooltip>
       </div>
-    </AIProvider>
+      
+      <Page
+        mainContainerId={pageId}
+        masthead={masthead}
+        sidebar={sidebarOpen && Sidebar}
+        skipToContent={PageSkipToContent}
+        style={{ flex: 1, minHeight: 0, position: 'relative' }}
+      >
+        {children}
+      </Page>
+    </div>
   );
 };
 

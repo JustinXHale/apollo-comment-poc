@@ -22,26 +22,15 @@ import {
 import { TimesIcon, PaperPlaneIcon, TrashIcon } from '@patternfly/react-icons';
 import { useLocation } from 'react-router-dom';
 import { useAIContext } from './AIContext';
-import { useVersion } from '@app/context/VersionContext';
-import { useComments } from '@app/context/CommentContext';
 
 export const AIChatPanel: React.FunctionComponent = () => {
   const { messages, isLoading, sendMessage, toggleChatbot, clearHistory } = useAIContext();
-  const { currentVersion } = useVersion();
-  const { threads } = useComments();
   const location = useLocation();
   const [inputValue, setInputValue] = React.useState('');
-
-  // Count comments in current version
-  const commentCount = React.useMemo(() => {
-    return threads.filter(t => t.version === currentVersion).reduce((acc, t) => acc + t.comments.length, 0);
-  }, [threads, currentVersion]);
 
   const handleSendMessage = async () => {
     if (inputValue.trim() && !isLoading) {
       await sendMessage(inputValue, {
-        threads,
-        version: currentVersion || 'unknown',
         route: location.pathname
       });
       setInputValue('');
@@ -77,16 +66,6 @@ export const AIChatPanel: React.FunctionComponent = () => {
           <ChatbotHeaderTitle>
             🤖 AI Feedback Assistant
           </ChatbotHeaderTitle>
-          {currentVersion && commentCount > 0 && (
-            <span style={{ marginLeft: '0.5rem' }}>
-              <Label color="blue" isCompact>
-                Version {currentVersion}
-              </Label>
-              <Label color="grey" isCompact style={{ marginLeft: '0.25rem' }}>
-                {commentCount} comments
-              </Label>
-            </span>
-          )}
         </ChatbotHeaderMain>
         <ChatbotHeaderActions>
           {messages.length > 0 && (
