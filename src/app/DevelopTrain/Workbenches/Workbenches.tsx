@@ -39,7 +39,15 @@ import {
   Checkbox,
   Switch,
   InputGroup,
-  InputGroupItem
+  InputGroupItem,
+  Drawer,
+  DrawerPanelContent,
+  DrawerContent,
+  DrawerContentBody,
+  DrawerPanelBody,
+  DrawerHead,
+  DrawerActions,
+  DrawerCloseButton
 } from '@patternfly/react-core';
 import {
   Table,
@@ -64,7 +72,8 @@ type VisualStyle =
   | 'combined'
   | 'dual-table-view'
   | 'expandable-dual-level'
-  | 'expandable-side-by-side';
+  | 'expandable-side-by-side'
+  | 'expandable-drawer';
 
 type WorkspaceKind = {
   id: string;
@@ -426,7 +435,8 @@ const visualStyleDescriptions: Record<VisualStyle, string> = {
   'combined': 'Combined view displaying 2-3 examples of each visual style in one table for side-by-side comparison. Each workbench demonstrates a different style approach, making it easy to evaluate all options together.',
   'dual-table-view': 'Shows migrated workbenches in one table and legacy workbenches in a separate table below. Each table has independent pagination and selection.',
   'expandable-dual-level': 'OPTION A: Dual-level expansion. Expanding a new workbench shows its details first. A nested collapsible section within shows the legacy workbench details. Requires two clicks to see legacy WB but creates clear hierarchy.',
-  'expandable-side-by-side': 'OPTION B: Side-by-side details (Recommended). Expanding a new workbench shows both the new and legacy workbench details side-by-side in a single expansion. One click shows everything, easy comparison.'
+  'expandable-side-by-side': 'OPTION B: Side-by-side details (Recommended). Expanding a new workbench shows both the new and legacy workbench details side-by-side in a single expansion. One click shows everything, easy comparison.',
+  'expandable-drawer': 'OPTION C: Drawer with tabs. Click any row to open a drawer panel from the right side. Tabs inside the drawer show V2 and Legacy workbench details. Clean table view, maximum space for details.'
 };
 
 // Mapping to limit examples to 3 per style for the first 4 radio options
@@ -440,7 +450,8 @@ const styleExampleLimitMap: Record<VisualStyle, string[]> = {
   'combined': [], // No limit for combined
   'dual-table-view': [], // No limit for dual table view
   'expandable-dual-level': ['wb-1', 'wb-19-v2', 'wb-19', 'wb-4a-v2', 'wb-4a', 'wb-15'], // 2 pairs + 2 migrating
-  'expandable-side-by-side': ['wb-1', 'wb-19-v2', 'wb-19', 'wb-4a-v2', 'wb-4a', 'wb-15'] // 2 pairs + 2 migrating
+  'expandable-side-by-side': ['wb-1', 'wb-19-v2', 'wb-19', 'wb-4a-v2', 'wb-4a', 'wb-15'], // 2 pairs + 2 migrating
+  'expandable-drawer': ['wb-1', 'wb-19-v2', 'wb-19', 'wb-4a-v2', 'wb-4a', 'wb-15'] // 2 pairs + 2 migrating
 };
 
 // Mock data for Workspace Kinds
@@ -585,6 +596,11 @@ const Workbenches: React.FunctionComponent = () => {
   // Expandable rows state
   const [expandedRows, setExpandedRows] = React.useState<string[]>([]);
   const [expandedSecondLevel, setExpandedSecondLevel] = React.useState<string[]>([]); // For Option A: dual-level
+
+  // Drawer state for Option C
+  const [isDrawerOpen, setIsDrawerOpen] = React.useState(false);
+  const [drawerSelectedRecord, setDrawerSelectedRecord] = React.useState<WorkbenchRecord | null>(null);
+  const [drawerActiveTab, setDrawerActiveTab] = React.useState(0);
 
   // Filtering state
   const [searchValue, setSearchValue] = React.useState('');
@@ -808,8 +824,8 @@ const Workbenches: React.FunctionComponent = () => {
 
       // For expandable mode: hide V1 workbenches that have a parent V2 (they show as nested content)
       if (visualStyle === 'expandable' || visualStyle === 'expandable-dual-level' ||
-          visualStyle === 'expandable-side-by-side') {
-        // Hide legacy children that have a parent - they'll be shown in the expanded row
+          visualStyle === 'expandable-side-by-side' || visualStyle === 'expandable-drawer') {
+        // Hide legacy children that have a parent - they'll be shown in the expanded row / drawer
         if (record.isLegacyChild && record.parentWorkbenchId) {
           return false;
         }
@@ -1211,9 +1227,9 @@ const Workbenches: React.FunctionComponent = () => {
     const statusColor = getStatusColor(record.status, !!record.isMigrating);
     const displayStatus = record.isMigrating ? 'Migrating' : record.status;
 
-    // For Option A and Option B: show stacked status labels when there's a related workbench
-    if ((effectiveStyle === 'expandable-dual-level' || effectiveStyle === 'expandable-side-by-side') &&
-        relatedWorkbench && !record.isLegacyChild) {
+    // For Option A, B, and C: show stacked status labels when there's a related workbench
+    if ((effectiveStyle === 'expandable-dual-level' || effectiveStyle === 'expandable-side-by-side' ||
+         effectiveStyle === 'expandable-drawer') && relatedWorkbench && !record.isLegacyChild) {
       const legacyStatusColor = getStatusColor(relatedWorkbench.status, false);
 
       return (
@@ -1496,6 +1512,15 @@ const Workbenches: React.FunctionComponent = () => {
                   onChange={() => setVisualStyle('expandable-side-by-side')}
                 />
               </FlexItem>
+              <FlexItem>
+                <Radio
+                  id="style-expandable-drawer"
+                  name="visual-style"
+                  label="Option C: Drawer"
+                  isChecked={visualStyle === 'expandable-drawer'}
+                  onChange={() => setVisualStyle('expandable-drawer')}
+                />
+              </FlexItem>
             </Flex>
             <Divider style={{ marginTop: 'calc(var(--pf-v6-global--spacer--md) + 4px)', marginBottom: 'var(--pf-v6-global--spacer--md)' }} />
             <div style={{
@@ -1739,7 +1764,167 @@ const Workbenches: React.FunctionComponent = () => {
         )}
 
         {visualStyle !== 'dual-table-view' && (
-          <>
+          <Drawer isExpanded={isDrawerOpen} isInline={visualStyle === 'expandable-drawer'}>
+            <DrawerContent
+              panelContent={
+                visualStyle === 'expandable-drawer' && drawerSelectedRecord && (
+                  <DrawerPanelContent>
+                    <DrawerHead>
+                      <Title headingLevel="h3">
+                        {drawerSelectedRecord.name}
+                      </Title>
+                      <DrawerActions>
+                        <DrawerCloseButton onClick={() => setIsDrawerOpen(false)} />
+                      </DrawerActions>
+                    </DrawerHead>
+                    <DrawerPanelBody>
+                      <Tabs
+                        activeKey={drawerActiveTab}
+                        onSelect={(_event, tabIndex) => setDrawerActiveTab(tabIndex as number)}
+                        aria-label="Workbench details tabs"
+                      >
+                        <Tab eventKey={0} title={<TabTitleText>New Workbench (V2)</TabTitleText>}>
+                          <div style={{ padding: '1rem' }}>
+                            <DescriptionList isHorizontal>
+                              <DescriptionListGroup>
+                                <DescriptionListTerm>Name</DescriptionListTerm>
+                                <DescriptionListDescription>{drawerSelectedRecord.name}</DescriptionListDescription>
+                              </DescriptionListGroup>
+                              <DescriptionListGroup>
+                                <DescriptionListTerm>Status</DescriptionListTerm>
+                                <DescriptionListDescription>{renderStatusCell(drawerSelectedRecord)}</DescriptionListDescription>
+                              </DescriptionListGroup>
+                              <DescriptionListGroup>
+                                <DescriptionListTerm>Project</DescriptionListTerm>
+                                <DescriptionListDescription>{drawerSelectedRecord.project}</DescriptionListDescription>
+                              </DescriptionListGroup>
+                              <DescriptionListGroup>
+                                <DescriptionListTerm>Version</DescriptionListTerm>
+                                <DescriptionListDescription>
+                                  <Label color="blue">NB 2.0 Compliant</Label>
+                                </DescriptionListDescription>
+                              </DescriptionListGroup>
+                              <DescriptionListGroup>
+                                <DescriptionListTerm>Workspace Kind</DescriptionListTerm>
+                                <DescriptionListDescription>{getWorkspaceKindName(drawerSelectedRecord)}</DescriptionListDescription>
+                              </DescriptionListGroup>
+                              <DescriptionListGroup>
+                                <DescriptionListTerm>Created By</DescriptionListTerm>
+                                <DescriptionListDescription>{drawerSelectedRecord.createdBy}</DescriptionListDescription>
+                              </DescriptionListGroup>
+                            </DescriptionList>
+                            <Flex style={{ marginTop: '1.5rem' }} spaceItems={{ default: 'spaceItemsMd' }}>
+                              <FlexItem>
+                                {drawerSelectedRecord.status === 'Stopped' ? (
+                                  <Button
+                                    variant="primary"
+                                    onClick={() => {
+                                      setRecords(prevRecords => prevRecords.map(rec =>
+                                        rec.id === drawerSelectedRecord.id ? { ...rec, status: 'Running' } : rec
+                                      ));
+                                      setDrawerSelectedRecord({ ...drawerSelectedRecord, status: 'Running' });
+                                    }}
+                                  >
+                                    Start
+                                  </Button>
+                                ) : (
+                                  <Button
+                                    variant="secondary"
+                                    onClick={() => {
+                                      setRecords(prevRecords => prevRecords.map(rec =>
+                                        rec.id === drawerSelectedRecord.id ? { ...rec, status: 'Stopped' } : rec
+                                      ));
+                                      setDrawerSelectedRecord({ ...drawerSelectedRecord, status: 'Stopped' });
+                                    }}
+                                  >
+                                    Stop
+                                  </Button>
+                                )}
+                              </FlexItem>
+                              <FlexItem>
+                                <Button variant="link">Open</Button>
+                              </FlexItem>
+                            </Flex>
+                          </div>
+                        </Tab>
+                        <Tab eventKey={1} title={<TabTitleText>Legacy Workbench (V1)</TabTitleText>}>
+                          {(() => {
+                            const legacyWorkbench = getRelatedWorkbench(drawerSelectedRecord);
+                            return legacyWorkbench ? (
+                              <div style={{ padding: '1rem' }}>
+                                <DescriptionList isHorizontal>
+                                  <DescriptionListGroup>
+                                    <DescriptionListTerm>Name</DescriptionListTerm>
+                                    <DescriptionListDescription>{legacyWorkbench.name}</DescriptionListDescription>
+                                  </DescriptionListGroup>
+                                  <DescriptionListGroup>
+                                    <DescriptionListTerm>Status</DescriptionListTerm>
+                                    <DescriptionListDescription>{legacyWorkbench.status}</DescriptionListDescription>
+                                  </DescriptionListGroup>
+                                  <DescriptionListGroup>
+                                    <DescriptionListTerm>Project</DescriptionListTerm>
+                                    <DescriptionListDescription>{legacyWorkbench.project}</DescriptionListDescription>
+                                  </DescriptionListGroup>
+                                  <DescriptionListGroup>
+                                    <DescriptionListTerm>Version</DescriptionListTerm>
+                                    <DescriptionListDescription>
+                                      <Label color="grey">Legacy V1</Label>
+                                    </DescriptionListDescription>
+                                  </DescriptionListGroup>
+                                  <DescriptionListGroup>
+                                    <DescriptionListTerm>Image</DescriptionListTerm>
+                                    <DescriptionListDescription>{legacyWorkbench.image}</DescriptionListDescription>
+                                  </DescriptionListGroup>
+                                  <DescriptionListGroup>
+                                    <DescriptionListTerm>Created By</DescriptionListTerm>
+                                    <DescriptionListDescription>{legacyWorkbench.createdBy}</DescriptionListDescription>
+                                  </DescriptionListGroup>
+                                </DescriptionList>
+                                <Flex style={{ marginTop: '1.5rem' }} spaceItems={{ default: 'spaceItemsMd' }}>
+                                  <FlexItem>
+                                    {legacyWorkbench.status === 'Stopped' ? (
+                                      <Button
+                                        variant="primary"
+                                        onClick={() => {
+                                          setRecords(prevRecords => prevRecords.map(rec =>
+                                            rec.id === legacyWorkbench.id ? { ...rec, status: 'Running' } : rec
+                                          ));
+                                        }}
+                                      >
+                                        Start
+                                      </Button>
+                                    ) : (
+                                      <Button
+                                        variant="secondary"
+                                        onClick={() => {
+                                          setRecords(prevRecords => prevRecords.map(rec =>
+                                            rec.id === legacyWorkbench.id ? { ...rec, status: 'Stopped' } : rec
+                                          ));
+                                        }}
+                                      >
+                                        Stop
+                                      </Button>
+                                    )}
+                                  </FlexItem>
+                                  <FlexItem>
+                                    <Button variant="danger" icon={<TrashIcon />}>
+                                      Delete Legacy Workbench
+                                    </Button>
+                                  </FlexItem>
+                                </Flex>
+                              </div>
+                            ) : (
+                              <div style={{ padding: '1rem' }}>No legacy workbench found.</div>
+                            );
+                          })()}
+                        </Tab>
+                      </Tabs>
+                    </DrawerPanelBody>
+                  </DrawerPanelContent>
+                )
+              }
+            >
+              <DrawerContentBody>
             <Table aria-label="Workbenches list" id="workbenches-table" variant="compact">
           <Thead>
             <Tr>
@@ -1840,9 +2025,25 @@ const Workbenches: React.FunctionComponent = () => {
                 effectiveStyle === 'expandable-side-by-side') && relatedWorkbench && !r.isLegacyChild;
               const isExpandedNested = shouldShowExpandForNested && expandedRows.includes(r.id);
 
+              // For drawer option: make rows clickable if they have a related workbench
+              const isDrawerClickable = effectiveStyle === 'expandable-drawer' && relatedWorkbench && !r.isLegacyChild;
+              const handleRowClick = () => {
+                if (isDrawerClickable) {
+                  setDrawerSelectedRecord(r);
+                  setIsDrawerOpen(true);
+                  setDrawerActiveTab(0); // Reset to first tab
+                }
+              };
+
               return (
               <React.Fragment key={r.id}>
-                <Tr style={getRowStyle(r)}>
+                <Tr
+                  style={{
+                    ...getRowStyle(r),
+                    ...(isDrawerClickable ? { cursor: 'pointer' } : {})
+                  }}
+                  onClick={handleRowClick}
+                >
                   {r.isMigrating || shouldShowExpandForNested ? (
                     <Td
                       expand={{
@@ -2302,7 +2503,9 @@ const Workbenches: React.FunctionComponent = () => {
           widgetId="workbenches-pagination"
           style={{ marginTop: '8px' }}
         />
-          </>
+              </DrawerContentBody>
+            </DrawerContent>
+          </Drawer>
         )}
 
         {visualStyle === 'dual-table-view' && (
