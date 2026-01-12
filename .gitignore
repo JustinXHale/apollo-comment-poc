@@ -31,3 +31,5 @@ logs/
 # MCP configuration with tokens
 .cursor-mcp-config.json
 .vercel
+
+.env.server

@@ -62,7 +62,9 @@ type VisualStyle =
   | 'badge-in-name'
   | 'migration-link-column'
   | 'combined'
-  | 'dual-table-view';
+  | 'dual-table-view'
+  | 'expandable-dual-level'
+  | 'expandable-side-by-side';
 
 type WorkspaceKind = {
   id: string;
@@ -422,7 +424,9 @@ const visualStyleDescriptions: Record<VisualStyle, string> = {
   'badge-in-name': 'Shows migration relationship badges directly below the workbench name. Both V1 and V2 workbenches remain as independent rows with full sorting capability. Clear visual relationship but adds vertical space to each row.',
   'migration-link-column': 'Uses a dedicated "Migration Link" column to show relationships with directional arrows (← From / → To). Both workbenches remain independent rows and fully sortable. Provides the clearest representation of migration relationships.',
   'combined': 'Combined view displaying 2-3 examples of each visual style in one table for side-by-side comparison. Each workbench demonstrates a different style approach, making it easy to evaluate all options together.',
-  'dual-table-view': 'Shows migrated workbenches in one table and legacy workbenches in a separate table below. Each table has independent pagination and selection.'
+  'dual-table-view': 'Shows migrated workbenches in one table and legacy workbenches in a separate table below. Each table has independent pagination and selection.',
+  'expandable-dual-level': 'OPTION A: Dual-level expansion. Expanding a new workbench shows its details first. A nested collapsible section within shows the legacy workbench details. Requires two clicks to see legacy WB but creates clear hierarchy.',
+  'expandable-side-by-side': 'OPTION B: Side-by-side details (Recommended). Expanding a new workbench shows both the new and legacy workbench details side-by-side in a single expansion. One click shows everything, easy comparison.'
 };
 
 // Mapping to limit examples to 3 per style for the first 4 radio options
@@ -434,7 +438,9 @@ const styleExampleLimitMap: Record<VisualStyle, string[]> = {
   'badge-in-name': ['wb-1', 'wb-20-v2', 'wb-20', 'wb-18-v2', 'wb-18', 'wb-15'], // 2 pairs + 2 migrating = ~6 rows
   'migration-link-column': ['wb-1', 'wb-17-v2', 'wb-17', 'wb-18-v2', 'wb-18', 'wb-15'], // 2 pairs + 2 migrating = ~6 rows
   'combined': [], // No limit for combined
-  'dual-table-view': [] // No limit for dual table view
+  'dual-table-view': [], // No limit for dual table view
+  'expandable-dual-level': ['wb-1', 'wb-19-v2', 'wb-19', 'wb-4a-v2', 'wb-4a', 'wb-15'], // 2 pairs + 2 migrating
+  'expandable-side-by-side': ['wb-1', 'wb-19-v2', 'wb-19', 'wb-4a-v2', 'wb-4a', 'wb-15'] // 2 pairs + 2 migrating
 };
 
 // Mock data for Workspace Kinds
@@ -578,6 +584,7 @@ const Workbenches: React.FunctionComponent = () => {
 
   // Expandable rows state
   const [expandedRows, setExpandedRows] = React.useState<string[]>([]);
+  const [expandedSecondLevel, setExpandedSecondLevel] = React.useState<string[]>([]); // For Option A: dual-level
 
   // Filtering state
   const [searchValue, setSearchValue] = React.useState('');
@@ -800,7 +807,8 @@ const Workbenches: React.FunctionComponent = () => {
         }));
 
       // For expandable mode: hide V1 workbenches that have a parent V2 (they show as nested content)
-      if (visualStyle === 'expandable') {
+      if (visualStyle === 'expandable' || visualStyle === 'expandable-dual-level' ||
+          visualStyle === 'expandable-side-by-side') {
         // Hide legacy children that have a parent - they'll be shown in the expanded row
         if (record.isLegacyChild && record.parentWorkbenchId) {
           return false;
@@ -1180,19 +1188,55 @@ const Workbenches: React.FunctionComponent = () => {
   };
 
   // Helper to render status cell based on visual style
-  const renderStatusCell = (record: WorkbenchRecord) => {
-    // Original rendering logic
-    if (record.isMigrating) {
+  const renderStatusCell = (record: WorkbenchRecord, effectiveStyle?: VisualStyle, relatedWorkbench?: WorkbenchRecord) => {
+    // Map status to badge color
+    const getStatusColor = (status: string, isMigrating: boolean) => {
+      if (isMigrating) {
+        return 'blue';
+      }
+      switch (status) {
+        case 'Running':
+          return 'blue';
+        case 'Stopped':
+          return 'grey';
+        case 'Ready':
+          return 'blue';
+        case 'Migrating':
+          return 'orange';
+        default:
+          return 'grey';
+      }
+    };
+
+    const statusColor = getStatusColor(record.status, !!record.isMigrating);
+    const displayStatus = record.isMigrating ? 'Migrating' : record.status;
+
+    // For Option A and Option B: show stacked status labels when there's a related workbench
+    if ((effectiveStyle === 'expandable-dual-level' || effectiveStyle === 'expandable-side-by-side') &&
+        relatedWorkbench && !record.isLegacyChild) {
+      const legacyStatusColor = getStatusColor(relatedWorkbench.status, false);
+
       return (
-        <Flex spaceItems={{ default: 'spaceItemsSm' }} alignItems={{ default: 'alignItemsCenter' }}>
-          <FlexItem>{record.status}</FlexItem>
+        <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsNone' }}>
           <FlexItem>
-            <ExchangeAltIcon />
+            <Label id={`status-${record.id}`} color={statusColor}>
+              {displayStatus}
+            </Label>
+          </FlexItem>
+          <FlexItem style={{ marginTop: '0.25rem' }}>
+            <Label id={`status-legacy-${record.id}`} color={legacyStatusColor} style={{ fontSize: '0.75rem' }}>
+              Legacy: {relatedWorkbench.status}
+            </Label>
           </FlexItem>
         </Flex>
       );
     }
-    return record.status;
+
+    return (
+      <Label id={`status-${record.id}`} color={statusColor}>
+        {displayStatus}
+      </Label>
+    );
   };
 
   // Helper to render version cell based on visual style
@@ -1432,6 +1476,24 @@ const Workbenches: React.FunctionComponent = () => {
                   label="Dual Table View"
                   isChecked={visualStyle === 'dual-table-view'}
                   onChange={() => setVisualStyle('dual-table-view')}
+                />
+              </FlexItem>
+              <FlexItem>
+                <Radio
+                  id="style-expandable-dual-level"
+                  name="visual-style"
+                  label="Option A: Dual-Level"
+                  isChecked={visualStyle === 'expandable-dual-level'}
+                  onChange={() => setVisualStyle('expandable-dual-level')}
+                />
+              </FlexItem>
+              <FlexItem>
+                <Radio
+                  id="style-expandable-side-by-side"
+                  name="visual-style"
+                  label="Option B: Side-by-Side"
+                  isChecked={visualStyle === 'expandable-side-by-side'}
+                  onChange={() => setVisualStyle('expandable-side-by-side')}
                 />
               </FlexItem>
             </Flex>
@@ -1773,7 +1835,9 @@ const Workbenches: React.FunctionComponent = () => {
             {paginatedRecords.map((r, rowIndex) => {
               const relatedWorkbench = getRelatedWorkbench(r);
               const effectiveStyle = getEffectiveVisualStyle(r);
-              const shouldShowExpandForNested = effectiveStyle === 'expandable' && relatedWorkbench && !r.isLegacyChild;
+              const shouldShowExpandForNested = (effectiveStyle === 'expandable' ||
+                effectiveStyle === 'expandable-dual-level' ||
+                effectiveStyle === 'expandable-side-by-side') && relatedWorkbench && !r.isLegacyChild;
               const isExpandedNested = shouldShowExpandForNested && expandedRows.includes(r.id);
 
               return (
@@ -1809,7 +1873,7 @@ const Workbenches: React.FunctionComponent = () => {
                   )}
                   {visibleColumns.status && (
                     <Td dataLabel="Status">
-                      {renderStatusCell(r)}
+                      {renderStatusCell(r, effectiveStyle, relatedWorkbench)}
                     </Td>
                   )}
                   {(visualStyle === 'migration-link-column' || visualStyle === 'combined') && visibleColumns.migrationLink && (
@@ -1913,11 +1977,11 @@ const Workbenches: React.FunctionComponent = () => {
                         <Flex style={{ marginTop: '1rem' }} spaceItems={{ default: 'spaceItemsMd' }}>
                           <FlexItem>
                             {relatedWorkbench.status === 'Stopped' ? (
-                              <Button 
-                                variant="primary" 
+                              <Button
+                                variant="primary"
                                 size="sm"
                                 onClick={() => {
-                                  setRecords(prevRecords => prevRecords.map(r => 
+                                  setRecords(prevRecords => prevRecords.map(r =>
                                     r.id === relatedWorkbench.id ? { ...r, status: 'Running' } : r
                                   ));
                                 }}
@@ -1925,11 +1989,11 @@ const Workbenches: React.FunctionComponent = () => {
                                 Start
                               </Button>
                             ) : (
-                              <Button 
-                                variant="secondary" 
+                              <Button
+                                variant="secondary"
                                 size="sm"
                                 onClick={() => {
-                                  setRecords(prevRecords => prevRecords.map(r => 
+                                  setRecords(prevRecords => prevRecords.map(r =>
                                     r.id === relatedWorkbench.id ? { ...r, status: 'Stopped' } : r
                                   ));
                                 }}
@@ -1942,6 +2006,279 @@ const Workbenches: React.FunctionComponent = () => {
                             <Button variant="danger" size="sm" icon={<TrashIcon />}>
                               Delete Legacy Workbench
                             </Button>
+                          </FlexItem>
+                        </Flex>
+                      </div>
+                    </Td>
+                  </Tr>
+                )}
+                {/* OPTION A: Dual-level expansion */}
+                {effectiveStyle === 'expandable-dual-level' && isExpandedNested && relatedWorkbench && (
+                  <Tr key={`${r.id}-dual-level`} isExpanded={true}>
+                    <Td />
+                    <Td colSpan={getColSpan()}>
+                      <div style={{ padding: '1rem', backgroundColor: '#f5f5f5', borderLeft: '3px solid #06c' }}>
+                        <Title headingLevel="h6" style={{ marginBottom: '0.75rem' }}>
+                          New Workbench Details
+                        </Title>
+                        <DescriptionList isHorizontal isCompact>
+                          <DescriptionListGroup>
+                            <DescriptionListTerm>Name</DescriptionListTerm>
+                            <DescriptionListDescription>{r.name}</DescriptionListDescription>
+                          </DescriptionListGroup>
+                          <DescriptionListGroup>
+                            <DescriptionListTerm>Status</DescriptionListTerm>
+                            <DescriptionListDescription>{renderStatusCell(r)}</DescriptionListDescription>
+                          </DescriptionListGroup>
+                          <DescriptionListGroup>
+                            <DescriptionListTerm>Version</DescriptionListTerm>
+                            <DescriptionListDescription>
+                              <Label color="blue">NB 2.0 Compliant</Label>
+                            </DescriptionListDescription>
+                          </DescriptionListGroup>
+                          <DescriptionListGroup>
+                            <DescriptionListTerm>Workspace Kind</DescriptionListTerm>
+                            <DescriptionListDescription>{getWorkspaceKindName(r)}</DescriptionListDescription>
+                          </DescriptionListGroup>
+                        </DescriptionList>
+                        <Flex style={{ marginTop: '1rem' }} spaceItems={{ default: 'spaceItemsMd' }}>
+                          <FlexItem>
+                            {r.status === 'Stopped' ? (
+                              <Button
+                                variant="primary"
+                                size="sm"
+                                onClick={() => {
+                                  setRecords(prevRecords => prevRecords.map(rec =>
+                                    rec.id === r.id ? { ...rec, status: 'Running' } : rec
+                                  ));
+                                }}
+                              >
+                                Start
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => {
+                                  setRecords(prevRecords => prevRecords.map(rec =>
+                                    rec.id === r.id ? { ...rec, status: 'Stopped' } : rec
+                                  ));
+                                }}
+                              >
+                                Stop
+                              </Button>
+                            )}
+                          </FlexItem>
+                          <FlexItem>
+                            <Button variant="link" size="sm">Open</Button>
+                          </FlexItem>
+                        </Flex>
+
+                        {/* Nested collapsible for legacy workbench */}
+                        <div style={{ marginTop: '1rem', borderTop: '1px solid #d2d2d2', paddingTop: '1rem' }}>
+                          <Button
+                            variant="link"
+                            onClick={() => {
+                              setExpandedSecondLevel(prev =>
+                                prev.includes(r.id) ? prev.filter(id => id !== r.id) : [...prev, r.id]
+                              );
+                            }}
+                            icon={<CaretDownIcon style={{
+                              transition: 'transform 0.2s',
+                              transform: expandedSecondLevel.includes(r.id) ? 'rotate(0deg)' : 'rotate(-90deg)'
+                            }} />}
+                          >
+                            Legacy Workbench Details
+                          </Button>
+                          {expandedSecondLevel.includes(r.id) && (
+                            <div style={{ marginTop: '0.5rem', padding: '1rem', backgroundColor: '#e6f3ff', borderRadius: '4px' }}>
+                              <DescriptionList isHorizontal isCompact>
+                                <DescriptionListGroup>
+                                  <DescriptionListTerm>Name</DescriptionListTerm>
+                                  <DescriptionListDescription>{relatedWorkbench.name}</DescriptionListDescription>
+                                </DescriptionListGroup>
+                                <DescriptionListGroup>
+                                  <DescriptionListTerm>Status</DescriptionListTerm>
+                                  <DescriptionListDescription>{relatedWorkbench.status}</DescriptionListDescription>
+                                </DescriptionListGroup>
+                                <DescriptionListGroup>
+                                  <DescriptionListTerm>Version</DescriptionListTerm>
+                                  <DescriptionListDescription>
+                                    <Label color="grey">Legacy V1</Label>
+                                  </DescriptionListDescription>
+                                </DescriptionListGroup>
+                                <DescriptionListGroup>
+                                  <DescriptionListTerm>Image</DescriptionListTerm>
+                                  <DescriptionListDescription>{relatedWorkbench.image}</DescriptionListDescription>
+                                </DescriptionListGroup>
+                              </DescriptionList>
+                              <Flex style={{ marginTop: '1rem' }} spaceItems={{ default: 'spaceItemsMd' }}>
+                                <FlexItem>
+                                  {relatedWorkbench.status === 'Stopped' ? (
+                                    <Button
+                                      variant="primary"
+                                      size="sm"
+                                      onClick={() => {
+                                        setRecords(prevRecords => prevRecords.map(rec =>
+                                          rec.id === relatedWorkbench.id ? { ...rec, status: 'Running' } : rec
+                                        ));
+                                      }}
+                                    >
+                                      Start
+                                    </Button>
+                                  ) : (
+                                    <Button
+                                      variant="secondary"
+                                      size="sm"
+                                      onClick={() => {
+                                        setRecords(prevRecords => prevRecords.map(rec =>
+                                          rec.id === relatedWorkbench.id ? { ...rec, status: 'Stopped' } : rec
+                                        ));
+                                      }}
+                                    >
+                                      Stop
+                                    </Button>
+                                  )}
+                                </FlexItem>
+                                <FlexItem>
+                                  <Button variant="danger" size="sm" icon={<TrashIcon />}>
+                                    Delete Legacy Workbench
+                                  </Button>
+                                </FlexItem>
+                              </Flex>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </Td>
+                  </Tr>
+                )}
+                {/* OPTION B: Side-by-side details */}
+                {effectiveStyle === 'expandable-side-by-side' && isExpandedNested && relatedWorkbench && (
+                  <Tr key={`${r.id}-side-by-side`} isExpanded={true}>
+                    <Td />
+                    <Td colSpan={getColSpan()}>
+                      <div style={{ padding: '1rem', backgroundColor: '#f5f5f5' }}>
+                        <Flex>
+                          <FlexItem flex={{ default: 'flex_1' }}>
+                            <div style={{ padding: '1rem', backgroundColor: '#fff', borderLeft: '3px solid #06c', marginRight: '0.5rem' }}>
+                              <Title headingLevel="h6" style={{ marginBottom: '0.75rem' }}>
+                                New Workbench (V2)
+                              </Title>
+                              <DescriptionList isHorizontal isCompact>
+                                <DescriptionListGroup>
+                                  <DescriptionListTerm>Name</DescriptionListTerm>
+                                  <DescriptionListDescription>{r.name}</DescriptionListDescription>
+                                </DescriptionListGroup>
+                                <DescriptionListGroup>
+                                  <DescriptionListTerm>Status</DescriptionListTerm>
+                                  <DescriptionListDescription>{renderStatusCell(r)}</DescriptionListDescription>
+                                </DescriptionListGroup>
+                                <DescriptionListGroup>
+                                  <DescriptionListTerm>Version</DescriptionListTerm>
+                                  <DescriptionListDescription>
+                                    <Label color="blue">NB 2.0 Compliant</Label>
+                                  </DescriptionListDescription>
+                                </DescriptionListGroup>
+                                <DescriptionListGroup>
+                                  <DescriptionListTerm>Workspace Kind</DescriptionListTerm>
+                                  <DescriptionListDescription>{getWorkspaceKindName(r)}</DescriptionListDescription>
+                                </DescriptionListGroup>
+                              </DescriptionList>
+                              <Flex style={{ marginTop: '1rem' }} spaceItems={{ default: 'spaceItemsMd' }}>
+                                <FlexItem>
+                                  {r.status === 'Stopped' ? (
+                                    <Button
+                                      variant="primary"
+                                      size="sm"
+                                      onClick={() => {
+                                        setRecords(prevRecords => prevRecords.map(rec =>
+                                          rec.id === r.id ? { ...rec, status: 'Running' } : rec
+                                        ));
+                                      }}
+                                    >
+                                      Start
+                                    </Button>
+                                  ) : (
+                                    <Button
+                                      variant="secondary"
+                                      size="sm"
+                                      onClick={() => {
+                                        setRecords(prevRecords => prevRecords.map(rec =>
+                                          rec.id === r.id ? { ...rec, status: 'Stopped' } : rec
+                                        ));
+                                      }}
+                                    >
+                                      Stop
+                                    </Button>
+                                  )}
+                                </FlexItem>
+                                <FlexItem>
+                                  <Button variant="link" size="sm">Open</Button>
+                                </FlexItem>
+                              </Flex>
+                            </div>
+                          </FlexItem>
+                          <FlexItem flex={{ default: 'flex_1' }}>
+                            <div style={{ padding: '1rem', backgroundColor: '#e6f3ff', borderLeft: '3px solid #0066cc', marginLeft: '0.5rem' }}>
+                              <Title headingLevel="h6" style={{ marginBottom: '0.75rem' }}>
+                                Legacy Workbench (V1)
+                              </Title>
+                              <DescriptionList isHorizontal isCompact>
+                                <DescriptionListGroup>
+                                  <DescriptionListTerm>Name</DescriptionListTerm>
+                                  <DescriptionListDescription>{relatedWorkbench.name}</DescriptionListDescription>
+                                </DescriptionListGroup>
+                                <DescriptionListGroup>
+                                  <DescriptionListTerm>Status</DescriptionListTerm>
+                                  <DescriptionListDescription>{relatedWorkbench.status}</DescriptionListDescription>
+                                </DescriptionListGroup>
+                                <DescriptionListGroup>
+                                  <DescriptionListTerm>Version</DescriptionListTerm>
+                                  <DescriptionListDescription>
+                                    <Label color="grey">Legacy V1</Label>
+                                  </DescriptionListDescription>
+                                </DescriptionListGroup>
+                                <DescriptionListGroup>
+                                  <DescriptionListTerm>Image</DescriptionListTerm>
+                                  <DescriptionListDescription>{relatedWorkbench.image}</DescriptionListDescription>
+                                </DescriptionListGroup>
+                              </DescriptionList>
+                              <Flex style={{ marginTop: '1rem' }} spaceItems={{ default: 'spaceItemsMd' }}>
+                                <FlexItem>
+                                  {relatedWorkbench.status === 'Stopped' ? (
+                                    <Button
+                                      variant="primary"
+                                      size="sm"
+                                      onClick={() => {
+                                        setRecords(prevRecords => prevRecords.map(rec =>
+                                          rec.id === relatedWorkbench.id ? { ...rec, status: 'Running' } : rec
+                                        ));
+                                      }}
+                                    >
+                                      Start
+                                    </Button>
+                                  ) : (
+                                    <Button
+                                      variant="secondary"
+                                      size="sm"
+                                      onClick={() => {
+                                        setRecords(prevRecords => prevRecords.map(rec =>
+                                          rec.id === relatedWorkbench.id ? { ...rec, status: 'Stopped' } : rec
+                                        ));
+                                      }}
+                                    >
+                                      Stop
+                                    </Button>
+                                  )}
+                                </FlexItem>
+                                <FlexItem>
+                                  <Button variant="danger" size="sm" icon={<TrashIcon />}>
+                                    Delete Legacy Workbench
+                                  </Button>
+                                </FlexItem>
+                              </Flex>
+                            </div>
                           </FlexItem>
                         </Flex>
                       </div>

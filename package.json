@@ -87,6 +87,7 @@
     "@patternfly/react-templates": "^6.3.1",
     "@types/react-syntax-highlighter": "^15.5.13",
     "axios": "^1.13.1",
+    "hale-commenting-system": "^3.7.0",
     "react": "^18",
     "react-dom": "^18",
     "react-syntax-highlighter": "^15.6.6",

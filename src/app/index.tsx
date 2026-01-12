@@ -9,21 +9,17 @@ import { FeatureFlagsProvider } from '@app/utils/FeatureFlagsContext';
 import { UserProfileProvider } from '@app/utils/UserProfileContext';
 import { ToasterProvider } from '@app/utils/ToasterContext';
 import '@app/app.css';
-
-const App: React.FunctionComponent = () => (
-  <FeatureFlagsProvider>
+import { CommentProvider, GitHubAuthProvider } from "hale-commenting-system";
+const App: React.FunctionComponent = () => <FeatureFlagsProvider>
     <UserProfileProvider>
       <ThemeProvider>
         <ToasterProvider>
-          <Router>
-            <AppLayout>
+          <Router><GitHubAuthProvider><CommentProvider><AppLayout>
               <AppRoutes />
             </AppLayout>
-          </Router>
+          </CommentProvider></GitHubAuthProvider></Router>
         </ToasterProvider>
       </ThemeProvider>
     </UserProfileProvider>
-  </FeatureFlagsProvider>
-);
-
+  </FeatureFlagsProvider>;
 export default App;
