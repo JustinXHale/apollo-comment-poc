@@ -1,0 +1,61 @@
+"List of what's shown in Kubeflow notebooks 2.0 & RHOAI, related to Workspaces/Workbenches:",,,,
+,,,,
+Kubeflow notebooks 2.0,Workspaces' page,Workspaces table,Table columns,Name
+,,,,Image
+,,,,Kind
+,,,,State(=status)
+,,,,Last activity
+,,,,(Connect action to the IDE)
+,,,Kebab menu,View details
+,,,,Edit
+,,,,Delete
+,,,,Stop
+,,,,Restart
+,,,Expandable section,Home volume
+,,,,Cluster storage
+,,,,Packages
+,,,,Pod config
+,,,,CPU
+,,,,Memory
+,,Workspace Drawer,Actions,Edit
+,,,,Delete
+,,,Overview (tab),Name
+,,,,Kind
+,,,,Labels
+,,,,Pod config
+,,,Activity (tab),Last activity
+,,,,Last update
+,,,,Pause time
+,,,,Pending restart
+,,,*Logs (tab) is currently hidden because its not fully supported,
+,,,*Pod (tab) is currently hidden because its not fully supported,
+,Workspace kinds' page,Workspaces table,Table columns,Name
+,,,,Description
+,,,,Status
+,,,,Workspaces
+,,,Kebab menu,View details
+,,,,Edit
+,,Workspace Drawer,Overview (tab),Name
+,,,,Description
+,,,,Hidden
+,,,,Status
+,,,,Icon + URL (?)
+,,,,Logo + URL (?)
+,,,Images (tab),Name (column)
+,,,,Workspaces (column)
+,,,Pod configs (tab),Name (column)
+,,,,Workspaces (column)
+,,,Namespaces (tab),Name (column)
+,,,,Workspaces (column)
+RHOAI (current implementation),Workbenches' page,Workbenches table,Table columns,Name + external link + (?) icon
+,,,,Workbench image
+,,,,Hardware profile
+,,,,Status
+,,,,Action (Stop/Start)
+,,,Kebab menu,Edit workbench
+,,,,Delete workbench
+,,,Expandable section,Cluster storage
+,,,,Packages
+,,,,Limits (CPU + Memory)
+,,,,Requests  (CPU + Memory)
+,,Workspace Drawer,*Not exists,-
