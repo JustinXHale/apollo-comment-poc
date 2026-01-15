@@ -6,6 +6,10 @@
   "homepage": "https://patternfly-react-seed.surge.sh",
   "license": "MIT",
   "private": true,
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
   "scripts": {
     "prebuild": "npm run type-check && npm run clean",
     "build": "webpack --config webpack.prod.js",

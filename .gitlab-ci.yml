@@ -1,6 +1,6 @@
 # GitLab CI/CD for Vercel Deployment
 # Based on: https://vercel.com/kb/guide/how-can-i-use-github-actions-with-vercel
-image: registry.redhat.io/ubi8/nodejs-18:latest
+image: registry.redhat.io/ubi9/nodejs-20:latest
 
 stages:
   - build
