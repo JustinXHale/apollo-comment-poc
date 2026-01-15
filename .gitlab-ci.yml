@@ -23,6 +23,8 @@ default:
 # Vercel Preview Deployment for hale-nb20-migration branch
 deploy-preview:
   stage: deploy
+  tags:
+    - itup-alm-x86
   variables:
     VERCEL_ORG_ID: $VERCEL_ORG_ID
     VERCEL_PROJECT_ID: $VERCEL_PROJECT_ID
@@ -44,6 +46,8 @@ deploy-preview:
 # Vercel Production Deployment (for when hale-nb20-migration is merged to main)
 deploy-production:
   stage: deploy
+  tags:
+    - itup-alm-x86
   variables:
     VERCEL_ORG_ID: $VERCEL_ORG_ID
     VERCEL_PROJECT_ID: $VERCEL_PROJECT_ID
