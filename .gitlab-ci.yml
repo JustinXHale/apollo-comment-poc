@@ -9,10 +9,6 @@ stages:
 variables:
   NODE_ENV: production
 
-# Default settings for all jobs
-default:
-  # No default tags - jobs will use any available runner
-
 # Cache disabled due to S3 upload timeouts in Red Hat GitLab environment
 # cache:
 #   key: ${CI_COMMIT_REF_SLUG}
