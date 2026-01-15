@@ -30,7 +30,7 @@ deploy-preview:
     VERCEL_PROJECT_ID: $VERCEL_PROJECT_ID
   script:
     - echo "Installing dependencies..."
-    - npm ci --include=dev
+    - npm install
     - echo "Installing Vercel CLI..."
     - npm install --global vercel@latest
     - echo "Pulling Vercel environment information..."
@@ -53,7 +53,7 @@ deploy-production:
     VERCEL_PROJECT_ID: $VERCEL_PROJECT_ID
   script:
     - echo "Installing dependencies..."
-    - npm ci --include=dev
+    - npm install
     - echo "Installing Vercel CLI..."
     - npm install --global vercel@latest
     - echo "Pulling Vercel environment information..."
