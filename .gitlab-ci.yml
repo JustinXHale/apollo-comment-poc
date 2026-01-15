@@ -26,16 +26,12 @@ deploy-preview:
     - echo "VERCEL_ORG_ID is set"
     - echo "VERCEL_PROJECT_ID is set"
     - echo "VERCEL_TOKEN is set"
-    - echo "Installing dependencies..."
-    - npm install
     - echo "Installing Vercel CLI..."
     - npm install --global vercel@latest
     - echo "Pulling Vercel environment information..."
     - vercel pull --yes --environment=preview --token=$VERCEL_TOKEN
-    - echo "Building project artifacts..."
-    - vercel build --token=$VERCEL_TOKEN
-    - echo "Deploying to Vercel Preview..."
-    - vercel deploy --prebuilt --token=$VERCEL_TOKEN
+    - echo "Deploying to Vercel Preview (build happens on Vercel infrastructure)..."
+    - vercel deploy --token=$VERCEL_TOKEN
   only:
     - hale-nb20-migration
   when: on_success
@@ -50,16 +46,12 @@ deploy-production:
     - echo "VERCEL_ORG_ID is set"
     - echo "VERCEL_PROJECT_ID is set"
     - echo "VERCEL_TOKEN is set"
-    - echo "Installing dependencies..."
-    - npm install
     - echo "Installing Vercel CLI..."
     - npm install --global vercel@latest
     - echo "Pulling Vercel environment information..."
     - vercel pull --yes --environment=production --token=$VERCEL_TOKEN
-    - echo "Building project artifacts for production..."
-    - vercel build --prod --token=$VERCEL_TOKEN
-    - echo "Deploying to Vercel Production..."
-    - vercel deploy --prebuilt --prod --token=$VERCEL_TOKEN
+    - echo "Deploying to Vercel Production (build happens on Vercel infrastructure)..."
+    - vercel deploy --prod --token=$VERCEL_TOKEN
   only:
     - main
   when: on_success
