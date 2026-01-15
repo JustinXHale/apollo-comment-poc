@@ -10,6 +10,7 @@ module.exports = {
     path.resolve(__dirname, 'node_modules/@patternfly/react-core/node_modules/@patternfly/react-styles/css'),
     path.resolve(__dirname, 'node_modules/@patternfly/react-table/node_modules/@patternfly/react-styles/css'),
     path.resolve(__dirname, 'node_modules/@patternfly/react-inline-edit-extension/node_modules/@patternfly/react-styles/css'),
-    path.resolve(__dirname, 'node_modules/@patternfly/chatbot/dist/css/main.css')
+    path.resolve(__dirname, 'node_modules/@patternfly/chatbot/dist/css/main.css'),
+    path.resolve(__dirname, 'node_modules/highlight.js')
   ]
 }
