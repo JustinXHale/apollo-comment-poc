@@ -22,10 +22,10 @@ deploy-preview:
   tags:
     - itup-alm-x86
   script:
-    - echo "DEBUG: Checking environment variables..."
-    - echo "VERCEL_ORG_ID value: ${VERCEL_ORG_ID:-NOT_SET}"
-    - echo "VERCEL_PROJECT_ID value: ${VERCEL_PROJECT_ID:-NOT_SET}"
-    - echo "VERCEL_TOKEN value: ${VERCEL_TOKEN:0:10}... (truncated for security)"
+    - echo "DEBUG - Checking environment variables..."
+    - echo "VERCEL_ORG_ID is set"
+    - echo "VERCEL_PROJECT_ID is set"
+    - echo "VERCEL_TOKEN is set"
     - echo "Installing dependencies..."
     - npm install
     - echo "Installing Vercel CLI..."
@@ -46,10 +46,10 @@ deploy-production:
   tags:
     - itup-alm-x86
   script:
-    - echo "DEBUG: Checking environment variables..."
-    - echo "VERCEL_ORG_ID value: ${VERCEL_ORG_ID:-NOT_SET}"
-    - echo "VERCEL_PROJECT_ID value: ${VERCEL_PROJECT_ID:-NOT_SET}"
-    - echo "VERCEL_TOKEN value: ${VERCEL_TOKEN:0:10}... (truncated for security)"
+    - echo "DEBUG - Checking environment variables..."
+    - echo "VERCEL_ORG_ID is set"
+    - echo "VERCEL_PROJECT_ID is set"
+    - echo "VERCEL_TOKEN is set"
     - echo "Installing dependencies..."
     - npm install
     - echo "Installing Vercel CLI..."
