@@ -1,5 +1,5 @@
-# GitLab Pages for Node.js Web App
-# Configured to deploy from 'gitlab-pages' branch to keep main branch clean
+# GitLab CI/CD for Vercel Deployment
+# Based on: https://vercel.com/kb/guide/how-can-i-use-github-actions-with-vercel
 image: registry.redhat.io/ubi8/nodejs-18:latest
 
 stages:
@@ -21,6 +21,49 @@ default:
 #     - .npm/
 #   policy: pull-push
 
+# Vercel Preview Deployment for hale-nb20-migration branch
+deploy-preview:
+  stage: deploy
+  variables:
+    VERCEL_ORG_ID: $VERCEL_ORG_ID
+    VERCEL_PROJECT_ID: $VERCEL_PROJECT_ID
+  script:
+    - echo "Installing dependencies..."
+    - npm ci --include=dev
+    - echo "Installing Vercel CLI..."
+    - npm install --global vercel@latest
+    - echo "Pulling Vercel environment information..."
+    - vercel pull --yes --environment=preview --token=$VERCEL_TOKEN
+    - echo "Building project artifacts..."
+    - vercel build --token=$VERCEL_TOKEN
+    - echo "Deploying to Vercel Preview..."
+    - vercel deploy --prebuilt --token=$VERCEL_TOKEN
+  only:
+    - hale-nb20-migration
+  when: on_success
+
+# Vercel Production Deployment (for when hale-nb20-migration is merged to main)
+deploy-production:
+  stage: deploy
+  variables:
+    VERCEL_ORG_ID: $VERCEL_ORG_ID
+    VERCEL_PROJECT_ID: $VERCEL_PROJECT_ID
+  script:
+    - echo "Installing dependencies..."
+    - npm ci --include=dev
+    - echo "Installing Vercel CLI..."
+    - npm install --global vercel@latest
+    - echo "Pulling Vercel environment information..."
+    - vercel pull --yes --environment=production --token=$VERCEL_TOKEN
+    - echo "Building project artifacts for production..."
+    - vercel build --prod --token=$VERCEL_TOKEN
+    - echo "Deploying to Vercel Production..."
+    - vercel deploy --prebuilt --prod --token=$VERCEL_TOKEN
+  only:
+    - main
+  when: on_success
+
+# GitLab Pages deployment for rhoai-3.1 branch (keeping existing functionality)
 build:
   stage: build
   script:

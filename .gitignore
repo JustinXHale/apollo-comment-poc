@@ -33,3 +33,4 @@ logs/
 .vercel
 
 .env.server
+.env*.local
