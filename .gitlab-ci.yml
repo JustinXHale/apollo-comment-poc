@@ -11,8 +11,7 @@ variables:
 
 # Default settings for all jobs
 default:
-  tags:
-    - shared-podman
+  # No default tags - jobs will use any available runner
 
 # Cache disabled due to S3 upload timeouts in Red Hat GitLab environment
 # cache:
@@ -66,6 +65,8 @@ deploy-production:
 # GitLab Pages deployment for rhoai-3.1 branch (keeping existing functionality)
 build:
   stage: build
+  tags:
+    - shared-podman
   script:
     - echo "Installing dependencies (including devDependencies for build tools)..."
     - npm ci --include=dev
@@ -86,6 +87,8 @@ build:
 
 pages:
   stage: deploy
+  tags:
+    - shared-podman
   script:
     - echo "Deploying to GitLab Pages..."
   artifacts:
