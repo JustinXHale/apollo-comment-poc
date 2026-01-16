@@ -73,18 +73,18 @@ async function main() {
     process.exit(1);
   }
 
-  // Step 5: Git push to GitHub (default remote, usually origin)
-  if (!execCommand('git push', 'Pushing to GitHub')) {
+  // Step 5: Git push to rhoai remote (new Red Hat repo)
+  if (!execCommand('git push rhoai hale-nb20-migration', 'Pushing to rhoai (Red Hat GitLab)')) {
     rl.close();
     process.exit(1);
   }
 
-  // Step 6: Git push to GitLab
-  if (!execCommand('git push gitlab main', 'Pushing to GitLab')) {
-    console.log('⚠️  GitLab push failed, but GitHub push succeeded');
+  // Step 6: Git push to GitHub (optional, if you want to keep it synced)
+  if (!execCommand('git push origin hale-nb20-migration', 'Pushing to GitHub')) {
+    console.log('⚠️  GitHub push failed, but rhoai push succeeded');
   }
 
-  console.log('\n🎉 All done! Your changes are live on both GitHub and GitLab!');
+  console.log('\n🎉 All done! Your changes are live on rhoai!');
   console.log(`📌 Version: ${version}`);
   rl.close();
 }

@@ -102,6 +102,11 @@ export interface IAppRouteGroup {
 
 export type AppRouteConfig = IAppRoute | IAppRouteGroup;
 
+// Component to redirect to Workspace Templates tab
+const WorkspaceTemplatesRedirect: React.FunctionComponent = () => {
+  return <Navigate to="/develop-train/workbenches?tab=templates" replace />;
+};
+
 const routes: AppRouteConfig[] = [
   {
     element: <Home />,
@@ -438,6 +443,13 @@ const routes: AppRouteConfig[] = [
             label: 'Connection types',
             path: '/settings/environment/connection-types',
             title: 'RHOAI 3.1 Console | Environment Setup - Connection Types',
+          },
+          {
+            element: <WorkspaceTemplatesRedirect />,
+            exact: true,
+            label: 'Workspace templates',
+            path: '/settings/environment/workspace-templates',
+            title: 'RHOAI 3.1 Console | Environment Setup - Workspace Templates',
           },
         ],
       },

@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { Link } from 'react-router-dom';
+import { useRef } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   PageSection,
   Title,
@@ -15,6 +16,10 @@ import {
   DrawerContent,
   DrawerContentBody,
   DrawerPanelContent,
+  DrawerPanelBody,
+  DrawerHead,
+  DrawerActions,
+  DrawerCloseButton,
   SearchInput,
   Select,
   SelectOption,
@@ -43,7 +48,8 @@ import {
   Checkbox,
   Switch,
   InputGroup,
-  InputGroupItem
+  InputGroupItem,
+  Stack
 } from '@patternfly/react-core';
 import {
   Table,
@@ -56,7 +62,7 @@ import {
   IAction,
   ThProps
 } from '@patternfly/react-table';
-import { ExchangeAltIcon, TrashIcon, CaretDownIcon, LinkIcon, ArrowRightIcon, ArrowLeftIcon, ThIcon, FilterIcon, EllipsisVIcon, TimesIcon } from '@patternfly/react-icons';
+import { ExchangeAltIcon, TrashIcon, CaretDownIcon, LinkIcon, ArrowRightIcon, ArrowLeftIcon, ThIcon, FilterIcon, EllipsisVIcon, TimesIcon, PlayIcon, ExclamationCircleIcon, InfoCircleIcon } from '@patternfly/react-icons';
 import MigrationAssistWizard, { LegacyWorkbenchConfig } from './MigrationAssistWizard';
 import CreateWorkspaceKindWizard from './CreateWorkspaceKindWizard';
 
@@ -70,6 +76,13 @@ type WorkspaceKind = {
   baseImage: string;
   usageCount: number;
   isActive: boolean; // Changed from isDeprecated to isActive (ON = Active, OFF = Inactive)
+  description?: string;
+  hidden?: boolean;
+  iconUrl?: string;
+  logoUrl?: string;
+  images?: Array<{ name: string; workspaces: number }>;
+  podConfigs?: Array<{ name: string; workspaces: number }>;
+  namespaces?: Array<{ name: string; workspaces: number }>;
 };
 
 type ArchivedWorkbench = {
@@ -111,6 +124,18 @@ type WorkbenchRecord = {
   parentWorkbenchId?: string;
   migratedFromId?: string;
   hasBeenStarted?: boolean;
+  kind?: string; // Separate Kind field
+  labels?: Record<string, string>; // Labels as key-value pairs
+  podConfig?: {
+    name: string;
+    cpu?: string;
+    memory?: string;
+    limits?: { cpu?: string; memory?: string };
+    requests?: { cpu?: string; memory?: string };
+  };
+  hardwareProfile?: string; // Hardware profile name
+  homeVolume?: string; // Home volume path
+  packages?: string[]; // List of installed packages
 };
 
 const initialRows: WorkbenchRecord[] = [
@@ -129,7 +154,19 @@ const initialRows: WorkbenchRecord[] = [
       newWorkbenchName: 'notebook-cpu-small-v2-2024-01-15',
       migrationStatus: 'in-progress',
       initiatedAt: '2024-01-15T10:30:00Z'
-    }
+    },
+    kind: 'VS Code Legacy',
+    labels: { 'app': 'workbench', 'version': '1.0', 'team': 'data-science' },
+    podConfig: {
+      name: 'Standard',
+      cpu: '2',
+      memory: '4Gi',
+      limits: { cpu: '4', memory: '8Gi' },
+      requests: { cpu: '1', memory: '2Gi' }
+    },
+    hardwareProfile: 'Standard CPU',
+    homeVolume: '/home/user',
+    packages: ['numpy', 'pandas', 'scipy']
   },
   {
     id: 'wb-3',
@@ -139,7 +176,10 @@ const initialRows: WorkbenchRecord[] = [
     isLegacyV1: true,
     createdBy: 'bob',
     image: 'quay.io/org/notebook:1.2.3',
-    workspaceKindId: 'kind-1' // Jupyter Notebook 2.0
+    workspaceKindId: 'kind-1', // Jupyter Notebook 2.0
+    hardwareProfile: 'Standard CPU',
+    homeVolume: '/home/user',
+    packages: ['pandas', 'numpy', 'matplotlib']
   },
   {
     id: 'wb-6',
@@ -149,7 +189,10 @@ const initialRows: WorkbenchRecord[] = [
     isLegacyV1: true,
     createdBy: 'dave',
     image: 'quay.io/org/notebook:1.2.5',
-    workspaceKindId: 'kind-2' // VS Code Legacy
+    workspaceKindId: 'kind-2', // VS Code Legacy
+    hardwareProfile: 'Standard CPU',
+    homeVolume: '/home/user',
+    packages: ['pandas', 'matplotlib', 'seaborn']
   },
   {
     id: 'wb-14',
@@ -159,7 +202,10 @@ const initialRows: WorkbenchRecord[] = [
     isLegacyV1: true,
     createdBy: 'lisa',
     image: 'quay.io/org/notebook:1.2.7',
-    workspaceKindId: 'kind-4' // TensorFlow Legacy
+    workspaceKindId: 'kind-4', // TensorFlow Legacy
+    hardwareProfile: 'Standard CPU',
+    homeVolume: '/home/user',
+    packages: ['tensorflow', 'keras', 'numpy']
   },
   {
     id: 'wb-15',
@@ -175,7 +221,10 @@ const initialRows: WorkbenchRecord[] = [
       newWorkbenchName: 'sentiment-analysis-v2-2024-01-17',
       migrationStatus: 'pending',
       initiatedAt: '2024-01-17T10:30:00Z'
-    }
+    },
+    hardwareProfile: 'Standard CPU',
+    homeVolume: '/home/user',
+    packages: ['nltk', 'scikit-learn', 'pandas']
   },
   // Stopped + Migrating
   {
@@ -186,13 +235,28 @@ const initialRows: WorkbenchRecord[] = [
     isLegacyV1: true,
     createdBy: 'sarah',
     image: 'quay.io/org/notebook:1.2.4',
-    workspaceKindId: 'kind-4' // TensorFlow Legacy
+    workspaceKindId: 'kind-4', // TensorFlow Legacy
+    hardwareProfile: 'Standard CPU',
+    homeVolume: '/home/user',
+    packages: ['apache-airflow', 'pandas', 'sqlalchemy']
   },
   {
     id: 'wb-4-v2',
     name: 'ml-training-gpu-v2-2024-01-15',
     project: 'ml-platform',
     status: 'Running',
+    kind: 'PyTorch Training 2.0',
+    labels: { 'app': 'workbench', 'version': '2.0', 'team': 'ml-platform', 'gpu': 'enabled' },
+    podConfig: {
+      name: 'Large',
+      cpu: '8',
+      memory: '16Gi',
+      limits: { cpu: '16', memory: '32Gi' },
+      requests: { cpu: '4', memory: '8Gi' }
+    },
+    hardwareProfile: 'Large GPU',
+    homeVolume: '/home/user',
+    packages: ['pytorch', 'torchvision', 'cuda', 'numpy'],
     isLegacyV1: false,
     createdBy: 'alice',
     image: 'quay.io/org/notebook-nb20:2.0.0',
@@ -241,7 +305,10 @@ const initialRows: WorkbenchRecord[] = [
     pendingRestart: false,
     clusterStorage: 'cluster-storage-inference',
     cpu: '1',
-    memory: '4Gi'
+    memory: '4Gi',
+    hardwareProfile: 'Small CPU',
+    homeVolume: '/home/user',
+    packages: ['jupyter', 'notebook', 'ipython']
   },
   {
     id: 'wb-4a',
@@ -257,6 +324,9 @@ const initialRows: WorkbenchRecord[] = [
     pauseTime: '11d',
     pendingRestart: false,
     clusterStorage: 'cluster-storage-inference',
+    hardwareProfile: 'Small CPU',
+    homeVolume: '/home/user',
+    packages: ['flask', 'gunicorn', 'numpy'],
     cpu: '1',
     memory: '2Gi',
     isLegacyChild: true,
@@ -354,7 +424,16 @@ const initialRows: WorkbenchRecord[] = [
     isLegacyV1: true,
     createdBy: 'quinn',
     image: 'quay.io/org/notebook:1.3.0',
-    workspaceKindId: 'kind-4' // TensorFlow Legacy
+    workspaceKindId: 'kind-4', // TensorFlow Legacy
+    packages: ['tensorflow', 'keras', 'numpy', 'pandas', 'scikit-learn'],
+    homeVolume: '/home/user',
+    podConfig: {
+      name: 'Standard',
+      cpu: '2',
+      memory: '4Gi',
+      limits: { cpu: '4', memory: '8Gi' },
+      requests: { cpu: '1', memory: '2Gi' }
+    }
   },
   // Standalone workbenches (not migrated)
   {
@@ -365,7 +444,17 @@ const initialRows: WorkbenchRecord[] = [
     isLegacyV1: false,
     createdBy: 'joel',
     image: 'quay.io/org/notebook-nb20:2.0.0',
-    workspaceKindId: 'kind-3' // PyTorch Training 2.0
+    workspaceKindId: 'kind-3', // PyTorch Training 2.0
+    kind: 'PyTorch Training 2.0',
+    labels: {},
+    podConfig: {
+      name: 'Standard',
+      cpu: '2',
+      memory: '4Gi',
+      limits: { cpu: '4', memory: '8Gi' },
+      requests: { cpu: '1', memory: '2Gi' }
+    },
+    packages: []
   },
   {
     id: 'wb-5',
@@ -445,7 +534,16 @@ const initialRows: WorkbenchRecord[] = [
     isLegacyV1: false,
     createdBy: 'karen',
     image: 'quay.io/org/notebook-nb20:2.0.3',
-    workspaceKindId: 'kind-3' // PyTorch Training 2.0
+    workspaceKindId: 'kind-3', // PyTorch Training 2.0
+    kind: 'PyTorch Training 2.0',
+    labels: { 'app': 'workbench', 'version': '2.0', 'team': 'data-science', 'workload': 'inference' },
+    podConfig: {
+      name: 'Medium',
+      cpu: '4',
+      memory: '8Gi',
+      limits: { cpu: '8', memory: '16Gi' },
+      requests: { cpu: '2', memory: '4Gi' }
+    }
   }
 ];
 
@@ -459,7 +557,23 @@ const initialWorkspaceKinds: WorkspaceKind[] = [
     isLegacyV1: false,
     baseImage: 'quay.io/org/notebook-nb20:2.0.0',
     usageCount: 12,
-    isActive: true
+    isActive: true,
+    description: 'Jupyter Notebook environment with NB 2.0 compliance',
+    hidden: false,
+    iconUrl: 'https://jupyter.org/assets/logos/rectanglelogo-greytext-orangebody-greytools.svg',
+    logoUrl: 'https://jupyter.org/assets/logos/rectanglelogo-greytext-orangebody-greytools.svg',
+    images: [
+      { name: 'quay.io/org/notebook-nb20:2.0.0', workspaces: 12 },
+      { name: 'quay.io/org/notebook-nb20:2.0.1', workspaces: 0 }
+    ],
+    podConfigs: [
+      { name: 'Standard', workspaces: 8 },
+      { name: 'Large', workspaces: 4 }
+    ],
+    namespaces: [
+      { name: 'data-science', workspaces: 7 },
+      { name: 'research', workspaces: 5 }
+    ]
   },
   {
     id: 'kind-2',
@@ -468,7 +582,21 @@ const initialWorkspaceKinds: WorkspaceKind[] = [
     isLegacyV1: true,
     baseImage: 'quay.io/org/vscode:1.3.0',
     usageCount: 5,
-    isActive: true
+    isActive: true,
+    description: 'Legacy VS Code development environment',
+    hidden: false,
+    iconUrl: 'https://code.visualstudio.com/assets/images/code-logo.svg',
+    logoUrl: 'https://code.visualstudio.com/assets/images/code-logo.svg',
+    images: [
+      { name: 'quay.io/org/vscode:1.3.0', workspaces: 5 }
+    ],
+    podConfigs: [
+      { name: 'Standard', workspaces: 5 }
+    ],
+    namespaces: [
+      { name: 'development', workspaces: 3 },
+      { name: 'data-science', workspaces: 2 }
+    ]
   },
   {
     id: 'kind-3',
@@ -477,7 +605,22 @@ const initialWorkspaceKinds: WorkspaceKind[] = [
     isLegacyV1: false,
     baseImage: 'quay.io/org/pytorch-nb20:2.1.0',
     usageCount: 8,
-    isActive: true
+    isActive: true,
+    description: 'PyTorch training environment with GPU support',
+    hidden: false,
+    iconUrl: 'https://pytorch.org/assets/images/pytorch-logo.png',
+    logoUrl: 'https://pytorch.org/assets/images/pytorch-logo.png',
+    images: [
+      { name: 'quay.io/org/pytorch-nb20:2.1.0', workspaces: 8 }
+    ],
+    podConfigs: [
+      { name: 'Medium', workspaces: 4 },
+      { name: 'Large', workspaces: 4 }
+    ],
+    namespaces: [
+      { name: 'ml-platform', workspaces: 6 },
+      { name: 'research', workspaces: 2 }
+    ]
   },
   {
     id: 'kind-4',
@@ -486,7 +629,20 @@ const initialWorkspaceKinds: WorkspaceKind[] = [
     isLegacyV1: true,
     baseImage: 'quay.io/org/tensorflow:1.2.8',
     usageCount: 3,
-    isActive: false
+    isActive: false,
+    description: 'Legacy TensorFlow environment (deprecated)',
+    hidden: true,
+    iconUrl: 'https://www.tensorflow.org/images/tf_logo_social.png',
+    logoUrl: 'https://www.tensorflow.org/images/tf_logo_social.png',
+    images: [
+      { name: 'quay.io/org/tensorflow:1.2.8', workspaces: 3 }
+    ],
+    podConfigs: [
+      { name: 'Standard', workspaces: 3 }
+    ],
+    namespaces: [
+      { name: 'legacy', workspaces: 3 }
+    ]
   },
   {
     id: 'kind-5',
@@ -495,7 +651,21 @@ const initialWorkspaceKinds: WorkspaceKind[] = [
     isLegacyV1: false,
     baseImage: 'quay.io/org/rstudio-nb20:2.0.2',
     usageCount: 4,
-    isActive: true
+    isActive: true,
+    description: 'R Studio environment for statistical analysis',
+    hidden: false,
+    iconUrl: 'https://www.rstudio.com/wp-content/uploads/2018/10/RStudio-Logo.png',
+    logoUrl: 'https://www.rstudio.com/wp-content/uploads/2018/10/RStudio-Logo.png',
+    images: [
+      { name: 'quay.io/org/rstudio-nb20:2.0.2', workspaces: 4 }
+    ],
+    podConfigs: [
+      { name: 'Standard', workspaces: 4 }
+    ],
+    namespaces: [
+      { name: 'statistics', workspaces: 2 },
+      { name: 'research', workspaces: 2 }
+    ]
   }
 ];
 
@@ -554,6 +724,8 @@ const initialArchivedWorkbenches: ArchivedWorkbench[] = [
 
 
 const Workbenches: React.FunctionComponent = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  
   const [records, setRecords] = React.useState<WorkbenchRecord[]>(initialRows);
   const [workspaceKinds, setWorkspaceKinds] = React.useState<WorkspaceKind[]>(initialWorkspaceKinds);
   const [archivedWorkbenches, setArchivedWorkbenches] = React.useState<ArchivedWorkbench[]>(initialArchivedWorkbenches);
@@ -575,6 +747,11 @@ const Workbenches: React.FunctionComponent = () => {
   const [workbenchDetailsRecord, setWorkbenchDetailsRecord] = React.useState<WorkbenchRecord | null>(null);
   const [workbenchDetailsRelated, setWorkbenchDetailsRelated] = React.useState<WorkbenchRecord | undefined>(undefined);
 
+  // Workspace Templates drawer state
+  const [isWorkspaceKindDetailsDrawerExpanded, setIsWorkspaceKindDetailsDrawerExpanded] = React.useState(false);
+  const [workspaceKindDetailsTab, setWorkspaceKindDetailsTab] = React.useState<string | number>(0);
+  const [workspaceKindDetailsRecord, setWorkspaceKindDetailsRecord] = React.useState<WorkspaceKind | null>(null);
+
   // Filtering state
   const [searchValue, setSearchValue] = React.useState('');
   const [statusFilters, setStatusFilters] = React.useState<string[]>([]);
@@ -589,8 +766,33 @@ const Workbenches: React.FunctionComponent = () => {
   const [page, setPage] = React.useState(1);
   const [perPage, setPerPage] = React.useState(15);
 
-  // Tab state
-  const [activeTab, setActiveTab] = React.useState<string | number>(0);
+  // Tab state with URL synchronization
+  const getTabFromUrl = (): string | number => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam === 'templates') return 1;
+    if (tabParam === 'archive') return 2;
+    return 0; // default to workbenches
+  };
+
+  const [activeTab, setActiveTabState] = React.useState<string | number>(getTabFromUrl());
+
+  // Sync URL param to tab state on mount and when URL changes
+  React.useEffect(() => {
+    const tabFromUrl = getTabFromUrl();
+    setActiveTabState(tabFromUrl);
+  }, [searchParams]);
+
+  // Handler to update both state and URL
+  const setActiveTab = React.useCallback((tabIndex: string | number) => {
+    setActiveTabState(tabIndex);
+    const tabMap: Record<string | number, string> = {
+      0: 'workbenches',
+      1: 'templates',
+      2: 'archive'
+    };
+    const tabValue = tabMap[tabIndex] || 'workbenches';
+    setSearchParams({ tab: tabValue }, { replace: true });
+  }, [setSearchParams]);
 
   // Column visibility state
   const [isColumnSelectorOpen, setIsColumnSelectorOpen] = React.useState(false);
@@ -601,7 +803,20 @@ const Workbenches: React.FunctionComponent = () => {
     lastActivity: false, // Hidden by default
     version: true,
     createdBy: true,
-    templateImage: true // Shows template name for V2, image name for V1
+    templateImage: true, // Shows template name for V2, image name for V1
+    hardwareProfile: true
+  });
+
+  // Workspace Templates column visibility state
+  const [isWorkspaceTemplatesColumnSelectorOpen, setIsWorkspaceTemplatesColumnSelectorOpen] = React.useState(false);
+  const [workspaceTemplatesVisibleColumns, setWorkspaceTemplatesVisibleColumns] = React.useState({
+    name: true,
+    description: true,
+    type: true,
+    compliance: true,
+    baseImage: true,
+    usageCount: true,
+    status: true
   });
 
   // Workspace Kinds filter state - Attribute search
@@ -971,6 +1186,77 @@ const Workbenches: React.FunctionComponent = () => {
     setWorkbenchDetailsRelated(undefined);
   };
 
+  const onWorkbenchDrawerExpand = () => {
+    // Focus the drawer title for accessibility
+    setTimeout(() => {
+      const titleElement = document.getElementById('workbench-details-title');
+      if (titleElement) {
+        (titleElement as HTMLElement).focus({ preventScroll: true });
+      }
+    }, 100);
+  };
+
+  const onWorkbenchDrawerResize = (_event: MouseEvent | TouchEvent | React.KeyboardEvent, newWidth: number, id: string) => {
+    // Optional: Log resize events for debugging
+    // eslint-disable-next-line no-console
+    // console.log(`${id} has new width of: ${newWidth}`);
+  };
+
+  // Handle clicking outside drawer to close it
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isWorkbenchDetailsDrawerExpanded) {
+        const target = event.target as HTMLElement;
+        // Check if click is outside the drawer panel
+        const drawerPanel = document.getElementById('workbench-details-drawer-panel');
+        const isClickOnPanel = drawerPanel && drawerPanel.contains(target);
+        const isClickOnDrawerContent = target.closest('#workbench-details-drawer-body');
+        const isClickOnTableRow = target.closest('tr[data-ouia-component-type="PF4/TableRow"]');
+        
+        // Close if clicking on backdrop (DrawerContentBody) but not on panel or table row
+        if (isClickOnDrawerContent && !isClickOnPanel && !isClickOnTableRow) {
+          closeWorkbenchDetailsDrawer();
+        }
+      }
+    };
+
+    if (isWorkbenchDetailsDrawerExpanded) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isWorkbenchDetailsDrawerExpanded]);
+
+  // Workspace Templates drawer helpers
+  const openWorkspaceKindDetailsDrawer = (kind: WorkspaceKind) => {
+    setWorkspaceKindDetailsRecord(kind);
+    setWorkspaceKindDetailsTab(0);
+    setIsWorkspaceKindDetailsDrawerExpanded(true);
+  };
+
+  const closeWorkspaceKindDetailsDrawer = () => {
+    setIsWorkspaceKindDetailsDrawerExpanded(false);
+    setWorkspaceKindDetailsRecord(null);
+  };
+
+  const onWorkspaceKindDrawerExpand = () => {
+    // Focus the drawer title for accessibility
+    setTimeout(() => {
+      const titleElement = document.getElementById('workspace-kind-details-title');
+      if (titleElement) {
+        (titleElement as HTMLElement).focus({ preventScroll: true });
+      }
+    }, 100);
+  };
+
+  const onWorkspaceKindDrawerResize = (_event: MouseEvent | TouchEvent | React.KeyboardEvent, newWidth: number, id: string) => {
+    // Optional: Log resize events for debugging
+    // eslint-disable-next-line no-console
+    // console.log(`${id} has new width of: ${newWidth}`);
+  };
+
   // Helper to get workspace kind name for a workbench
   const getWorkspaceKindName = (record: WorkbenchRecord): string => {
     if (record.workspaceKindId) {
@@ -1001,32 +1287,34 @@ const Workbenches: React.FunctionComponent = () => {
     return record.name;
   };
 
-  // Helper to get status color
-  const getStatusColor = (status: string, isMigrating: boolean) => {
+  // Helper to get status color and icon
+  const getStatusConfig = (status: string, isMigrating: boolean) => {
     if (isMigrating) {
-      return 'blue';
+      return { color: 'blue' as const, icon: <ExchangeAltIcon /> };
     }
     switch (status) {
       case 'Running':
-        return 'blue';
+        return { color: 'green' as const, icon: <PlayIcon /> };
       case 'Stopped':
-        return 'grey';
+        return { color: 'grey' as const, icon: <InfoCircleIcon /> };
+      case 'Failed':
+        return { color: 'red' as const, icon: <ExclamationCircleIcon /> };
       case 'Ready':
-        return 'blue';
+        return { color: 'green' as const, icon: <PlayIcon /> };
       case 'Migrating':
-        return 'orange';
+        return { color: 'orange' as const, icon: <ExchangeAltIcon /> };
       default:
-        return 'grey';
+        return { color: 'grey' as const, icon: <InfoCircleIcon /> };
     }
   };
 
   // Helper to render status cell
   const renderPrimaryStatusLabel = (record: WorkbenchRecord) => {
-    const statusColor = getStatusColor(record.status, !!record.isMigrating);
+    const statusConfig = getStatusConfig(record.status, !!record.isMigrating);
     const displayStatus = record.isMigrating ? 'Migrating' : record.status;
 
     return (
-      <Label id={`status-${record.id}`} color={statusColor}>
+      <Label id={`status-${record.id}`} color={statusConfig.color} icon={statusConfig.icon}>
         {displayStatus}
       </Label>
     );
@@ -1037,15 +1325,15 @@ const Workbenches: React.FunctionComponent = () => {
 
     // For side-by-side: show stacked status labels when there's a related workbench
     if (relatedWorkbench && !record.isLegacyChild) {
-      const legacyStatusColor = getStatusColor(relatedWorkbench.status, false);
+      const legacyStatusConfig = getStatusConfig(relatedWorkbench.status, false);
 
       return (
-        <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsNone' }}>
+        <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsXs' }}>
           <FlexItem>
             {renderPrimaryStatusLabel(record)}
           </FlexItem>
-          <FlexItem style={{ marginTop: '0.25rem' }}>
-            <Label id={`status-legacy-${record.id}`} color={legacyStatusColor} style={{ fontSize: '0.75rem' }}>
+          <FlexItem>
+            <Label id={`status-legacy-${record.id}`} color={legacyStatusConfig.color} icon={legacyStatusConfig.icon}>
               Legacy: {relatedWorkbench.status}
             </Label>
           </FlexItem>
@@ -1059,7 +1347,11 @@ const Workbenches: React.FunctionComponent = () => {
   // Helper to render version cell
   const renderVersionCell = (record: WorkbenchRecord) => {
     return (
-      <Label id={record.isLegacyV1 ? 'label-legacy-v1' : 'label-nb20'} color={record.isLegacyV1 ? 'grey' : 'blue'}>
+      <Label 
+        id={record.isLegacyV1 ? 'label-legacy-v1' : 'label-nb20'} 
+        color={record.isLegacyV1 ? 'grey' : 'blue'}
+        variant="outline"
+      >
         {record.isLegacyV1 ? 'Legacy V1' : 'NB 2.0 Compliant'}
       </Label>
     );
@@ -1067,7 +1359,7 @@ const Workbenches: React.FunctionComponent = () => {
 
   // Helper to get row styling based on visual style
   const getRowStyle = (record: WorkbenchRecord): React.CSSProperties => {
-    return {};
+    return { cursor: 'pointer' };
   };
 
   const buildActions = (record: WorkbenchRecord): IAction[] => {
@@ -1103,13 +1395,30 @@ const Workbenches: React.FunctionComponent = () => {
       }
     };
 
-    const deleteLegacy: IAction = {
-      title: 'Delete Legacy Workbench',
+    const archiveLegacy: IAction = {
+      title: 'Archive Legacy Workbench',
       // eslint-disable-next-line no-console
-      onClick: () => console.log('Delete legacy workbench clicked for', record.id)
+      onClick: () => {
+        // Archive the legacy workbench
+        const workbenchToArchive = records.find(r => r.id === record.id);
+        if (workbenchToArchive) {
+          const archived: ArchivedWorkbench = {
+            id: workbenchToArchive.id,
+            name: workbenchToArchive.name,
+            project: workbenchToArchive.project,
+            status: 'Archived',
+            isLegacyV1: workbenchToArchive.isLegacyV1,
+            image: workbenchToArchive.image,
+            createdBy: workbenchToArchive.createdBy,
+            archivedDate: new Date().toISOString()
+          };
+          setArchivedWorkbenches(prev => [...prev, archived]);
+          setRecords(prev => prev.filter(r => r.id !== record.id));
+        }
+      }
     };
 
-    // Legacy child workbenches get Start/Stop + Delete actions
+    // Legacy child workbenches get Start/Stop + Archive actions
     if (record.isLegacyChild) {
       const actions: IAction[] = [];
       if (record.status === 'Stopped') {
@@ -1117,7 +1426,7 @@ const Workbenches: React.FunctionComponent = () => {
       } else if (record.status === 'Running') {
         actions.push(stop);
       }
-      actions.push(deleteLegacy);
+      actions.push(archiveLegacy);
       return actions;
     }
 
@@ -1179,32 +1488,45 @@ const Workbenches: React.FunctionComponent = () => {
       }
     };
 
-    const deleteAction: IAction = {
-      title: 'Delete',
+    const archiveAction: IAction = {
+      title: 'Archive',
       // eslint-disable-next-line no-console
-      onClick: () => console.log('Delete clicked for', record.id)
+      onClick: () => {
+        // Archive the workbench
+        const workbenchToArchive = records.find(r => r.id === record.id);
+        if (workbenchToArchive) {
+          const archived: ArchivedWorkbench = {
+            id: workbenchToArchive.id,
+            name: workbenchToArchive.name,
+            project: workbenchToArchive.project,
+            status: 'Archived',
+            isLegacyV1: workbenchToArchive.isLegacyV1,
+            image: workbenchToArchive.image,
+            createdBy: workbenchToArchive.createdBy,
+            archivedDate: new Date().toISOString()
+          };
+          setArchivedWorkbenches(prev => [...prev, archived]);
+          setRecords(prev => prev.filter(r => r.id !== record.id));
+        }
+      }
     };
 
-    // Build actions based on status and type
+    // Build actions to match the standard kebab menu: View Details, Edit, Archive, separator, Stop, Restart
     const actions: IAction[] = [];
     
-    // Add Start/Stop/Restart based on status
+    // Always show: View Details, Edit, Archive
+    actions.push(viewDetails, edit, archiveAction);
+    
+    // Separator
+    actions.push({ isSeparator: true });
+    
+    // Add Stop (when running) or Start (when stopped)
     if (record.status === 'Stopped') {
       actions.push(start);
     } else if (record.status === 'Running') {
       actions.push(stop);
       actions.push(restart);
     }
-
-    // Add other actions
-    if (record.isLegacyV1) {
-      actions.push(migrate);
-    }
-    actions.push(open);
-    actions.push({ isSeparator: true });
-    actions.push(viewDetails, edit);
-    actions.push({ isSeparator: true });
-    actions.push(deleteAction);
 
     return actions;
   };
@@ -1219,7 +1541,7 @@ const Workbenches: React.FunctionComponent = () => {
         >
           <Tab eventKey={0} title={<TabTitleText>Workbenches</TabTitleText>}>
           </Tab>
-          <Tab eventKey={1} title={<TabTitleText>Workspace Kinds</TabTitleText>}>
+          <Tab eventKey={1} title={<TabTitleText>Workspace Templates</TabTitleText>}>
           </Tab>
           <Tab eventKey={2} title={<TabTitleText>Archive</TabTitleText>}>
           </Tab>
@@ -1227,153 +1549,248 @@ const Workbenches: React.FunctionComponent = () => {
       </PageSection>
 
       {activeTab === 0 && (
-        <Drawer id="workbench-details-drawer" isExpanded={isWorkbenchDetailsDrawerExpanded}>
+        <Drawer id="workbench-details-drawer" isExpanded={isWorkbenchDetailsDrawerExpanded} onExpand={onWorkbenchDrawerExpand} position="end">
           <DrawerContent
             panelContent={
-              <DrawerPanelContent id="workbench-details-drawer-panel">
-                <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }}>
-                  <FlexItem>
-                    <Title headingLevel="h3" id="workbench-details-title">
-                      Workbench details
-                    </Title>
-                  </FlexItem>
-                  <FlexItem>
-                    <Button
-                      id="workbench-details-close"
-                      variant="plain"
-                      aria-label="Close workbench details"
-                      onClick={closeWorkbenchDetailsDrawer}
-                    >
-                      <TimesIcon />
-                    </Button>
-                  </FlexItem>
-                </Flex>
+              <DrawerPanelContent 
+                id="workbench-details-drawer-panel" 
+                isResizable 
+                onResize={onWorkbenchDrawerResize} 
+                defaultSize="500px" 
+                minSize="150px"
+              >
+                <DrawerHead>
+                  <Title headingLevel="h3" id="workbench-details-title" tabIndex={isWorkbenchDetailsDrawerExpanded ? 0 : -1}>
+                    {workbenchDetailsRecord ? workbenchDetailsRecord.name : 'Workbench details'}
+                  </Title>
+                  <DrawerActions>
+                    <DrawerCloseButton onClick={closeWorkbenchDetailsDrawer} />
+                  </DrawerActions>
+                </DrawerHead>
+                <DrawerPanelBody>
+                  <Stack hasGutter>
+                    {workbenchDetailsRecord && (
+                      <Flex spaceItems={{ default: 'spaceItemsMd' }}>
+                        <FlexItem>
+                          <Button
+                            variant="primary"
+                            onClick={() => {
+                              // eslint-disable-next-line no-console
+                              console.log('Edit clicked for', workbenchDetailsRecord.id);
+                              // TODO: Open edit dialog/modal
+                            }}
+                          >
+                            Edit
+                          </Button>
+                        </FlexItem>
+                        <FlexItem>
+                          <Button
+                            variant="secondary"
+                            onClick={() => {
+                              // Archive the workbench
+                              const workbenchToArchive = records.find(r => r.id === workbenchDetailsRecord.id);
+                              if (workbenchToArchive) {
+                                const archived: ArchivedWorkbench = {
+                                  id: workbenchToArchive.id,
+                                  name: workbenchToArchive.name,
+                                  project: workbenchToArchive.project,
+                                  status: 'Archived',
+                                  isLegacyV1: workbenchToArchive.isLegacyV1,
+                                  image: workbenchToArchive.image,
+                                  createdBy: workbenchToArchive.createdBy,
+                                  archivedDate: new Date().toISOString()
+                                };
+                                setArchivedWorkbenches(prev => [...prev, archived]);
+                                setRecords(prev => prev.filter(r => r.id !== workbenchDetailsRecord.id));
+                                closeWorkbenchDetailsDrawer();
+                              }
+                            }}
+                          >
+                            Archive
+                          </Button>
+                        </FlexItem>
+                      </Flex>
+                    )}
 
-                <Tabs
-                  id="workbench-details-tabs"
-                  activeKey={workbenchDetailsTab}
-                  onSelect={(_event, tabIndex) => setWorkbenchDetailsTab(tabIndex)}
-                  aria-label="Workbench details tabs"
-                >
-                  <Tab eventKey={0} title={<TabTitleText>Overview</TabTitleText>} />
-                  <Tab eventKey={1} title={<TabTitleText>Activity</TabTitleText>} />
-                </Tabs>
-
-                <div style={{ marginTop: 'var(--pf-v6-global--spacer--md)' }}>
-                  {!workbenchDetailsRecord && (
-                    <Content component={ContentVariants.p} id="workbench-details-empty">
-                      Select <strong>View details</strong> to see workbench information.
-                    </Content>
-                  )}
-
-                  {workbenchDetailsRecord && workbenchDetailsTab === 0 && (
-                    <DescriptionList isHorizontal isCompact id="workbench-details-overview">
-                      <DescriptionListGroup>
-                        <DescriptionListTerm>Name</DescriptionListTerm>
-                        <DescriptionListDescription>{workbenchDetailsRecord.name}</DescriptionListDescription>
-                      </DescriptionListGroup>
-                      <DescriptionListGroup>
-                        <DescriptionListTerm>Project</DescriptionListTerm>
-                        <DescriptionListDescription>{workbenchDetailsRecord.project}</DescriptionListDescription>
-                      </DescriptionListGroup>
-                      <DescriptionListGroup>
-                        <DescriptionListTerm>Status</DescriptionListTerm>
-                        <DescriptionListDescription>{renderPrimaryStatusLabel(workbenchDetailsRecord)}</DescriptionListDescription>
-                      </DescriptionListGroup>
-                      <DescriptionListGroup>
-                        <DescriptionListTerm>Version</DescriptionListTerm>
-                        <DescriptionListDescription>{renderVersionCell(workbenchDetailsRecord)}</DescriptionListDescription>
-                      </DescriptionListGroup>
-                      <DescriptionListGroup>
-                        <DescriptionListTerm>Template/Image</DescriptionListTerm>
-                        <DescriptionListDescription>{getTemplateImageDisplay(workbenchDetailsRecord)}</DescriptionListDescription>
-                      </DescriptionListGroup>
-                      <DescriptionListGroup>
-                        <DescriptionListTerm>Created by</DescriptionListTerm>
-                        <DescriptionListDescription>{workbenchDetailsRecord.createdBy}</DescriptionListDescription>
-                      </DescriptionListGroup>
-                      <DescriptionListGroup>
-                        <DescriptionListTerm>Cluster storage</DescriptionListTerm>
-                        <DescriptionListDescription>{workbenchDetailsRecord.clusterStorage || '-'}</DescriptionListDescription>
-                      </DescriptionListGroup>
-                      <DescriptionListGroup>
-                        <DescriptionListTerm>CPU / Memory</DescriptionListTerm>
-                        <DescriptionListDescription>
-                          {workbenchDetailsRecord.cpu && workbenchDetailsRecord.memory
-                            ? `${workbenchDetailsRecord.cpu} / ${workbenchDetailsRecord.memory}`
-                            : '-'}
-                        </DescriptionListDescription>
-                      </DescriptionListGroup>
-                      <DescriptionListGroup>
-                        <DescriptionListTerm>Image</DescriptionListTerm>
-                        <DescriptionListDescription>{workbenchDetailsRecord.image}</DescriptionListDescription>
-                      </DescriptionListGroup>
-                      {workbenchDetailsRelated && (
-                        <DescriptionListGroup>
-                          <DescriptionListTerm>Related workbench</DescriptionListTerm>
-                          <DescriptionListDescription>{workbenchDetailsRelated.name}</DescriptionListDescription>
-                        </DescriptionListGroup>
-                      )}
-                    </DescriptionList>
-                  )}
-
-                  {workbenchDetailsRecord && workbenchDetailsTab === 1 && (
-                    <DescriptionList isHorizontal isCompact id="workbench-details-activity">
-                      <DescriptionListGroup>
-                        <DescriptionListTerm>Last activity</DescriptionListTerm>
-                        <DescriptionListDescription>
-                          {workbenchDetailsRecord.lastActivity
-                            ? new Date(workbenchDetailsRecord.lastActivity).toLocaleString()
-                            : '-'}
-                        </DescriptionListDescription>
-                      </DescriptionListGroup>
-                      <DescriptionListGroup>
-                        <DescriptionListTerm>Last update</DescriptionListTerm>
-                        <DescriptionListDescription>
-                          {workbenchDetailsRecord.lastUpdate
-                            ? new Date(workbenchDetailsRecord.lastUpdate).toLocaleString()
-                            : '-'}
-                        </DescriptionListDescription>
-                      </DescriptionListGroup>
-                      <DescriptionListGroup>
-                        <DescriptionListTerm>Pause time</DescriptionListTerm>
-                        <DescriptionListDescription>{workbenchDetailsRecord.pauseTime || '-'}</DescriptionListDescription>
-                      </DescriptionListGroup>
-                      <DescriptionListGroup>
-                        <DescriptionListTerm>Pending restart</DescriptionListTerm>
-                        <DescriptionListDescription>
-                          {typeof workbenchDetailsRecord.pendingRestart === 'boolean'
-                            ? (workbenchDetailsRecord.pendingRestart ? 'Yes' : 'No')
-                            : '-'}
-                        </DescriptionListDescription>
-                      </DescriptionListGroup>
-                    </DescriptionList>
-                  )}
-                </div>
+                    {!workbenchDetailsRecord ? (
+                      <Content component={ContentVariants.p} id="workbench-details-empty">
+                        Select <strong>View details</strong> to see workbench information.
+                      </Content>
+                    ) : (
+                      <Tabs
+                        id="workbench-details-tabs"
+                        activeKey={workbenchDetailsTab}
+                        onSelect={(_event, tabIndex) => setWorkbenchDetailsTab(tabIndex)}
+                        aria-label="Workbench details tabs"
+                      >
+                        <Tab eventKey={0} title={<TabTitleText>Overview</TabTitleText>}>
+                          <DescriptionList isHorizontal isCompact id="workbench-details-overview">
+                            <DescriptionListGroup>
+                              <DescriptionListTerm>Project</DescriptionListTerm>
+                              <DescriptionListDescription>{workbenchDetailsRecord.project}</DescriptionListDescription>
+                            </DescriptionListGroup>
+                            <DescriptionListGroup>
+                              <DescriptionListTerm>Status</DescriptionListTerm>
+                              <DescriptionListDescription>{renderPrimaryStatusLabel(workbenchDetailsRecord)}</DescriptionListDescription>
+                            </DescriptionListGroup>
+                            <DescriptionListGroup>
+                              <DescriptionListTerm>Version</DescriptionListTerm>
+                              <DescriptionListDescription>{renderVersionCell(workbenchDetailsRecord)}</DescriptionListDescription>
+                            </DescriptionListGroup>
+                            {!workbenchDetailsRecord.isLegacyV1 && (
+                              <DescriptionListGroup>
+                                <DescriptionListTerm>Labels</DescriptionListTerm>
+                                <DescriptionListDescription>
+                                  {workbenchDetailsRecord.labels && Object.keys(workbenchDetailsRecord.labels).length > 0 ? (
+                                    <LabelGroup>
+                                      {Object.entries(workbenchDetailsRecord.labels).map(([key, value]) => (
+                                        <Label key={key} variant="outline">
+                                          {key}: {value}
+                                        </Label>
+                                      ))}
+                                    </LabelGroup>
+                                  ) : (
+                                    '-'
+                                  )}
+                                </DescriptionListDescription>
+                              </DescriptionListGroup>
+                            )}
+                            <DescriptionListGroup>
+                              <DescriptionListTerm>Created by</DescriptionListTerm>
+                              <DescriptionListDescription>{workbenchDetailsRecord.createdBy}</DescriptionListDescription>
+                            </DescriptionListGroup>
+                            <DescriptionListGroup>
+                              <DescriptionListTerm>Cluster storage</DescriptionListTerm>
+                              <DescriptionListDescription>{workbenchDetailsRecord.clusterStorage || '-'}</DescriptionListDescription>
+                            </DescriptionListGroup>
+                            <DescriptionListGroup>
+                              <DescriptionListTerm>CPU / Memory</DescriptionListTerm>
+                              <DescriptionListDescription>
+                                {workbenchDetailsRecord.cpu && workbenchDetailsRecord.memory
+                                  ? `${workbenchDetailsRecord.cpu} / ${workbenchDetailsRecord.memory}`
+                                  : '-'}
+                              </DescriptionListDescription>
+                            </DescriptionListGroup>
+                            <DescriptionListGroup>
+                              <DescriptionListTerm>Image</DescriptionListTerm>
+                              <DescriptionListDescription>{workbenchDetailsRecord.image}</DescriptionListDescription>
+                            </DescriptionListGroup>
+                            {workbenchDetailsRelated && (
+                              <DescriptionListGroup>
+                                <DescriptionListTerm>Related workbench</DescriptionListTerm>
+                                <DescriptionListDescription>{workbenchDetailsRelated.name}</DescriptionListDescription>
+                              </DescriptionListGroup>
+                            )}
+                          </DescriptionList>
+                          {!workbenchDetailsRecord.isLegacyV1 && (
+                            <Stack hasGutter style={{ marginTop: 'var(--pf-t--global--spacer--md)' }}>
+                              <Title headingLevel="h4">Packages</Title>
+                              {workbenchDetailsRecord.packages && workbenchDetailsRecord.packages.length > 0 ? (
+                                <LabelGroup>
+                                  {workbenchDetailsRecord.packages.map((pkg, idx) => (
+                                    <Label key={idx} variant="outline">
+                                      {pkg}
+                                    </Label>
+                                  ))}
+                                </LabelGroup>
+                              ) : (
+                                <Content>-</Content>
+                              )}
+                            </Stack>
+                          )}
+                          {!workbenchDetailsRecord.isLegacyV1 && workbenchDetailsRecord.podConfig && (
+                            <Stack hasGutter style={{ marginTop: 'var(--pf-t--global--spacer--md)' }}>
+                              <Title headingLevel="h4">Pod Config</Title>
+                              <DescriptionList isHorizontal isCompact>
+                                <DescriptionListGroup>
+                                  <DescriptionListTerm>Name</DescriptionListTerm>
+                                  <DescriptionListDescription>{workbenchDetailsRecord.podConfig.name}</DescriptionListDescription>
+                                </DescriptionListGroup>
+                                {workbenchDetailsRecord.podConfig.cpu && (
+                                  <DescriptionListGroup>
+                                    <DescriptionListTerm>CPU</DescriptionListTerm>
+                                    <DescriptionListDescription>{workbenchDetailsRecord.podConfig.cpu}</DescriptionListDescription>
+                                  </DescriptionListGroup>
+                                )}
+                                {workbenchDetailsRecord.podConfig.memory && (
+                                  <DescriptionListGroup>
+                                    <DescriptionListTerm>Memory</DescriptionListTerm>
+                                    <DescriptionListDescription>{workbenchDetailsRecord.podConfig.memory}</DescriptionListDescription>
+                                  </DescriptionListGroup>
+                                )}
+                                {workbenchDetailsRecord.podConfig.limits && (
+                                  <DescriptionListGroup>
+                                    <DescriptionListTerm>Limits</DescriptionListTerm>
+                                    <DescriptionListDescription>
+                                      {workbenchDetailsRecord.podConfig.limits.cpu || '-'} CPU, {workbenchDetailsRecord.podConfig.limits.memory || '-'} Memory
+                                    </DescriptionListDescription>
+                                  </DescriptionListGroup>
+                                )}
+                                {workbenchDetailsRecord.podConfig.requests && (
+                                  <DescriptionListGroup>
+                                    <DescriptionListTerm>Requests</DescriptionListTerm>
+                                    <DescriptionListDescription>
+                                      {workbenchDetailsRecord.podConfig.requests.cpu || '-'} CPU, {workbenchDetailsRecord.podConfig.requests.memory || '-'} Memory
+                                    </DescriptionListDescription>
+                                  </DescriptionListGroup>
+                                )}
+                              </DescriptionList>
+                            </Stack>
+                          )}
+                        </Tab>
+                        <Tab eventKey={1} title={<TabTitleText>Activity</TabTitleText>}>
+                          <DescriptionList isHorizontal isCompact id="workbench-details-activity">
+                            <DescriptionListGroup>
+                              <DescriptionListTerm>Last activity</DescriptionListTerm>
+                              <DescriptionListDescription>
+                                {workbenchDetailsRecord.lastActivity
+                                  ? new Date(workbenchDetailsRecord.lastActivity).toLocaleString()
+                                  : '-'}
+                              </DescriptionListDescription>
+                            </DescriptionListGroup>
+                            <DescriptionListGroup>
+                              <DescriptionListTerm>Last update</DescriptionListTerm>
+                              <DescriptionListDescription>
+                                {workbenchDetailsRecord.lastUpdate
+                                  ? new Date(workbenchDetailsRecord.lastUpdate).toLocaleString()
+                                  : '-'}
+                              </DescriptionListDescription>
+                            </DescriptionListGroup>
+                            <DescriptionListGroup>
+                              <DescriptionListTerm>Pause time</DescriptionListTerm>
+                              <DescriptionListDescription>{workbenchDetailsRecord.pauseTime || '-'}</DescriptionListDescription>
+                            </DescriptionListGroup>
+                            <DescriptionListGroup>
+                              <DescriptionListTerm>Pending restart</DescriptionListTerm>
+                              <DescriptionListDescription>
+                                {typeof workbenchDetailsRecord.pendingRestart === 'boolean'
+                                  ? (workbenchDetailsRecord.pendingRestart ? 'Yes' : 'No')
+                                  : '-'}
+                              </DescriptionListDescription>
+                            </DescriptionListGroup>
+                          </DescriptionList>
+                        </Tab>
+                      </Tabs>
+                    )}
+                  </Stack>
+                </DrawerPanelBody>
               </DrawerPanelContent>
             }
           >
             <DrawerContentBody id="workbench-details-drawer-body">
               <PageSection aria-label="Workbenches Header" id="workbenches-header">
-                <div style={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
-                  alignItems: 'flex-start',
-                  marginBottom: 'var(--pf-v6-global--spacer--md)',
-                }}>
-                  <div>
-                    <Title headingLevel="h2" id="workbenches-title">
-                      Workbenches
-                    </Title>
-                    <Content component={ContentVariants.p}>
-                      Monitor and manage all active workbenches. Use bulk actions below to migrate legacy V1 resources.
-                    </Content>
-                  </div>
-                </div>
+                <Stack hasGutter>
+                  <Title headingLevel="h2" id="workbenches-title">
+                    Workbenches
+                  </Title>
+                  <Content component={ContentVariants.p}>
+                    Monitor and manage all active workbenches. Use bulk actions below to migrate legacy V1 resources.
+                  </Content>
+                </Stack>
               </PageSection>
 
-              <PageSection id="workbenches-content-section">
-        <Toolbar id="workbenches-toolbar" inset={{ default: 'insetNone' }} style={{ columnGap: '16px', paddingBottom: '0px' }} clearAllFilters={() => clearAllFilters('workbenches')}>
+              <PageSection id="workbenches-content-section" hasBodyWrapper>
+        <Toolbar id="workbenches-toolbar" inset={{ default: 'insetNone' }} clearAllFilters={() => clearAllFilters('workbenches')}>
           <ToolbarContent>
             <ToolbarGroup variant="filter-group">
               <ToolbarItem>
@@ -1387,7 +1804,7 @@ const Workbenches: React.FunctionComponent = () => {
                           ref={toggleRef}
                           onClick={() => setWorkbenchesFilterDropdownOpen(!workbenchesFilterDropdownOpen)}
                           isExpanded={workbenchesFilterDropdownOpen}
-                          icon={<FilterIcon style={{ marginRight: '0.5rem' }} />}
+                          icon={<FilterIcon />}
                         >
                           {workbenchesFilterAttribute === 'name' ? 'Name' :
                            workbenchesFilterAttribute === 'status' ? 'Status' :
@@ -1422,6 +1839,41 @@ const Workbenches: React.FunctionComponent = () => {
                     />
                   </InputGroupItem>
                 </InputGroup>
+              </ToolbarItem>
+              <ToolbarItem>
+                <Button
+                  id="archive-selected-button"
+                  variant="plain"
+                  icon={<TrashIcon />}
+                  isDisabled={selectedCount === 0}
+                  onClick={() => {
+                    // Archive all selected workbenches
+                    selectedRowIds.forEach(id => {
+                      const workbenchToArchive = records.find(r => r.id === id);
+                      if (workbenchToArchive) {
+                        const archived: ArchivedWorkbench = {
+                          id: workbenchToArchive.id,
+                          name: workbenchToArchive.name,
+                          project: workbenchToArchive.project,
+                          status: 'Archived',
+                          isLegacyV1: workbenchToArchive.isLegacyV1,
+                          image: workbenchToArchive.image,
+                          createdBy: workbenchToArchive.createdBy,
+                          archivedDate: new Date().toISOString()
+                        };
+                        setArchivedWorkbenches(prev => [...prev, archived]);
+                      }
+                    });
+                    setRecords(prev => prev.filter(r => !selectedRowIds.includes(r.id)));
+                    setSelectedRowIds([]);
+                  }}
+                  style={{
+                    color: selectedCount > 0 ? 'var(--pf-t--global--text--color--link)' : 'var(--pf-t--global--text--color--disabled)'
+                  }}
+                  aria-label={`Archive ${selectedCount} selected workbench${selectedCount !== 1 ? 'es' : ''}`}
+                >
+                  {selectedCount > 0 && `(${selectedCount})`}
+                </Button>
               </ToolbarItem>
               <ToolbarItem>
                 <Select
@@ -1497,26 +1949,16 @@ const Workbenches: React.FunctionComponent = () => {
                     >
                       Template/Image
                     </SelectOption>
+                    <SelectOption
+                      hasCheckbox
+                      isSelected={visibleColumns.hardwareProfile}
+                      value="hardwareProfile"
+                      onClick={() => setVisibleColumns({ ...visibleColumns, hardwareProfile: !visibleColumns.hardwareProfile })}
+                    >
+                      Hardware profile
+                    </SelectOption>
                   </SelectList>
                 </Select>
-              </ToolbarItem>
-              <ToolbarItem>
-                <Button
-                  id="delete-selected-button"
-                  variant="plain"
-                  icon={<TrashIcon />}
-                  isDisabled={selectedCount === 0}
-                  onClick={() => {
-                    // eslint-disable-next-line no-console
-                    console.log('Delete selected workbenches:', selectedRowIds);
-                  }}
-                  style={{
-                    color: selectedCount > 0 ? 'var(--pf-v5-global--primary-color--100)' : 'var(--pf-v5-global--disabled-color--100)'
-                  }}
-                  aria-label={`Delete ${selectedCount} selected workbench${selectedCount !== 1 ? 'es' : ''}`}
-                >
-                  {selectedCount > 0 && `(${selectedCount})`}
-                </Button>
               </ToolbarItem>
             </ToolbarGroup>
             <ToolbarGroup>
@@ -1541,7 +1983,7 @@ const Workbenches: React.FunctionComponent = () => {
 
         {/* Active Filters */}
         {(activeFilters.name.length > 0 || activeFilters.status.length > 0 || activeFilters.version.length > 0 || activeFilters.workspaceKind.length > 0) && (
-          <div style={{ marginBottom: '16px', marginTop: '0px' }}>
+          <Stack hasGutter>
             <LabelGroup
               categoryName="Active filters"
               isClosable={false}
@@ -1589,12 +2031,11 @@ const Workbenches: React.FunctionComponent = () => {
             </LabelGroup>
             <Button 
               variant="link" 
-              onClick={() => clearAllFilters('workbenches')} 
-              style={{ marginTop: '0.5rem' }}
+              onClick={() => clearAllFilters('workbenches')}
             >
               Clear all filters
             </Button>
-          </div>
+          </Stack>
         )}
 
         <Table aria-label="Workbenches list" id="workbenches-table" variant="compact">
@@ -1685,6 +2126,17 @@ const Workbenches: React.FunctionComponent = () => {
                       Template/Image
                     </Th>
                   )}
+                  {visibleColumns.hardwareProfile && (
+                    <Th
+                      sort={{
+                    sortBy: sortBy?.index === 7 ? sortBy : { index: 7, direction: 'asc' as const },
+                        onSort: handleSort,
+                    columnIndex: 7
+                      }}
+                    >
+                      Hardware profile
+                    </Th>
+                  )}
               <Th screenReaderText="Actions"></Th>
             </Tr>
           </Thead>
@@ -1696,13 +2148,45 @@ const Workbenches: React.FunctionComponent = () => {
 
               return (
               <React.Fragment key={r.id}>
-                <Tr style={getRowStyle(r)}>
+                <Tr 
+                  style={getRowStyle(r)}
+                  onClick={(event) => {
+                    // Don't open drawer if clicking on:
+                    // - Checkbox (select)
+                    // - Expand arrow
+                    // - Kebab menu (ActionsColumn)
+                    const target = event.target as HTMLElement;
+                    const isCheckbox = target.closest('input[type="checkbox"]') || target.closest('[data-ouia-component-type="PF4/TableCheckbox"]');
+                    const isExpandArrow = target.closest('button[aria-label*="expand"]') || 
+                                         target.closest('[data-ouia-component-type="PF4/TableExpand"]') ||
+                                         target.closest('button[aria-label*="Expand"]') ||
+                                         target.closest('button[aria-label*="Collapse"]') ||
+                                         target.closest('td[data-label=""]') || // Expand column Td
+                                         target.closest('.pf-v6-c-table__toggle') ||
+                                         target.closest('.pf-v6-c-button[aria-label*="expand"]') ||
+                                         target.closest('.pf-v6-c-button[aria-label*="Expand"]') ||
+                                         target.closest('.pf-v6-c-button[aria-label*="Collapse"]');
+                    const isKebab = target.closest('[data-ouia-component-type="PF4/Dropdown"]') || 
+                                   target.closest('[data-ouia-component-type="PF4/MenuToggle"]') ||
+                                   target.closest('[data-ouia-component-type="PF4/ActionsColumn"]') ||
+                                   target.closest('td[data-label="Actions"]') ||
+                                   target.closest('.pf-v6-c-menu-toggle') ||
+                                   target.closest('.pf-v6-c-dropdown');
+                    
+                    if (!isCheckbox && !isExpandArrow && !isKebab) {
+                      openWorkbenchDetailsDrawer(r);
+                    }
+                  }}
+                >
                   {canExpand || r.isMigrating ? (
                     <Td
                       expand={{
                         rowIndex: rowIndex,
                         isExpanded: isExpanded,
-                        onToggle: () => toggleRowExpansion(r.id),
+                        onToggle: (event) => {
+                          event?.stopPropagation();
+                          toggleRowExpansion(r.id);
+                        },
                         expandId: `expandable-${r.id}`
                       }}
                     />
@@ -1752,7 +2236,14 @@ const Workbenches: React.FunctionComponent = () => {
                       )}
                     </Td>
                   )}
-                  <Td isActionCell dataLabel="Actions">
+                  {visibleColumns.hardwareProfile && (
+                    <Td dataLabel="Hardware profile">{r.hardwareProfile || '-'}</Td>
+                  )}
+                  <Td 
+                    isActionCell 
+                    dataLabel="Actions"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     {/* For expandable (V2 + legacy) rows, actions live inside the expanded panels */}
                     {!canExpand && <ActionsColumn items={buildActions(r)} popperProps={{ position: 'right' }} />}
                   </Td>
@@ -1762,8 +2253,10 @@ const Workbenches: React.FunctionComponent = () => {
                     <Td />
                     <Td colSpan={getColSpan()}>
                       {expandedRows.includes(r.id) && (
-                        <div style={{ padding: '1rem', backgroundColor: '#f0f0f0' }}>
-                          <Title headingLevel="h6" id={`migration-title-${r.id}`}>Migration Details</Title>
+                        <Card>
+                          <CardBody>
+                            <Stack hasGutter>
+                              <Title headingLevel="h6" id={`migration-title-${r.id}`}>Migration Details</Title>
                           <DescriptionList isHorizontal>
                             <DescriptionListGroup>
                               <DescriptionListTerm>New Workbench Name</DescriptionListTerm>
@@ -1790,7 +2283,9 @@ const Workbenches: React.FunctionComponent = () => {
                               </DescriptionListDescription>
                             </DescriptionListGroup>
                           </DescriptionList>
-                        </div>
+                            </Stack>
+                          </CardBody>
+                        </Card>
                       )}
                     </Td>
                   </Tr>
@@ -1800,18 +2295,20 @@ const Workbenches: React.FunctionComponent = () => {
                   <Tr key={`${r.id}-side-by-side`} isExpanded={true}>
                     <Td />
                     <Td colSpan={getColSpan()}>
-                      <div style={{ padding: '1rem', backgroundColor: '#f5f5f5' }}>
-                        <Flex>
+                      <PageSection variant="secondary">
+                        <Flex spaceItems={{ default: 'spaceItemsSm' }}>
                           <FlexItem flex={{ default: 'flex_1' }}>
-                            <div style={{ padding: '1rem', backgroundColor: '#fff', borderLeft: '3px solid #06c', marginRight: '0.5rem' }}>
-                              <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }}>
-                                <FlexItem>
-                                  <Title headingLevel="h6" style={{ marginBottom: '0.75rem' }}>
-                                    New Workbench (V2)
-                                  </Title>
-                                </FlexItem>
-                                <FlexItem>
-                                  <Dropdown
+                            <Card>
+                              <CardBody>
+                                <Stack hasGutter>
+                                  <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }}>
+                                    <FlexItem>
+                                      <Title headingLevel="h6">
+                                        New Workbench (V2)
+                                      </Title>
+                                    </FlexItem>
+                                    <FlexItem>
+                                      <Dropdown
                                     id={`expanded-v2-kebab-${r.id}`}
                                     isOpen={expandedPanelKebabOpenId === `${r.id}-v2`}
                                     onOpenChange={(isOpen) => setExpandedPanelKebabOpenId(isOpen ? `${r.id}-v2` : null)}
@@ -1822,6 +2319,7 @@ const Workbenches: React.FunctionComponent = () => {
                                         variant="plain"
                                         aria-label={`Actions for new workbench ${r.name}`}
                                         isExpanded={expandedPanelKebabOpenId === `${r.id}-v2`}
+                                        onClick={() => setExpandedPanelKebabOpenId(expandedPanelKebabOpenId === `${r.id}-v2` ? null : `${r.id}-v2`)}
                                       >
                                         <EllipsisVIcon />
                                       </MenuToggle>
@@ -1835,7 +2333,7 @@ const Workbenches: React.FunctionComponent = () => {
                                           openWorkbenchDetailsDrawer(r);
                                         }}
                                       >
-                                        View details
+                                        View Details
                                       </DropdownItem>
                                       <DropdownItem
                                         id={`expanded-v2-edit-${r.id}`}
@@ -1848,35 +2346,77 @@ const Workbenches: React.FunctionComponent = () => {
                                         Edit
                                       </DropdownItem>
                                       <DropdownItem
-                                        id={`expanded-v2-restart-${r.id}`}
+                                        id={`expanded-v2-archive-${r.id}`}
                                         onClick={() => {
                                           setExpandedPanelKebabOpenId(null);
-                                          // eslint-disable-next-line no-console
-                                          console.log('Restart (V2) clicked for', r.id);
-                                          // Simulate restart: stop then start
-                                          setRecords(prevRecords => prevRecords.map(rec => (
-                                            rec.id === r.id ? { ...rec, status: 'Stopped' } : rec
-                                          )));
-                                          setTimeout(() => {
+                                          // Archive the workbench
+                                          const workbenchToArchive = records.find(rec => rec.id === r.id);
+                                          if (workbenchToArchive) {
+                                            const archived: ArchivedWorkbench = {
+                                              id: workbenchToArchive.id,
+                                              name: workbenchToArchive.name,
+                                              project: workbenchToArchive.project,
+                                              status: 'Archived',
+                                              isLegacyV1: workbenchToArchive.isLegacyV1,
+                                              image: workbenchToArchive.image,
+                                              createdBy: workbenchToArchive.createdBy,
+                                              archivedDate: new Date().toISOString()
+                                            };
+                                            setArchivedWorkbenches(prev => [...prev, archived]);
+                                            setRecords(prev => prev.filter(rec => rec.id !== r.id));
+                                          }
+                                        }}
+                                      >
+                                        Archive
+                                      </DropdownItem>
+                                      <Divider component="li" />
+                                      {r.status === 'Stopped' ? (
+                                        <DropdownItem
+                                          id={`expanded-v2-start-${r.id}`}
+                                          onClick={() => {
+                                            setExpandedPanelKebabOpenId(null);
+                                            setRecords(prevRecords => prevRecords.map(rec => {
+                                              if (rec.id === r.id) {
+                                                return { ...rec, status: 'Running', hasBeenStarted: true };
+                                              }
+                                              return rec;
+                                            }));
+                                          }}
+                                        >
+                                          Start
+                                        </DropdownItem>
+                                      ) : (
+                                        <>
+                                          <DropdownItem
+                                            id={`expanded-v2-stop-${r.id}`}
+                                            onClick={() => {
+                                              setExpandedPanelKebabOpenId(null);
+                                              setRecords(prevRecords => prevRecords.map(rec => 
+                                                rec.id === r.id ? { ...rec, status: 'Stopped' } : rec
+                                              ));
+                                            }}
+                                          >
+                                            Stop
+                                          </DropdownItem>
+                                          <DropdownItem
+                                            id={`expanded-v2-restart-${r.id}`}
+                                          onClick={() => {
+                                            setExpandedPanelKebabOpenId(null);
+                                            // Simulate restart: stop then start
                                             setRecords(prevRecords => prevRecords.map(rec => (
-                                              rec.id === r.id ? { ...rec, status: 'Running', hasBeenStarted: true } : rec
+                                              rec.id === r.id ? { ...rec, status: 'Stopped' } : rec
                                             )));
-                                          }, 1000);
-                                        }}
-                                      >
-                                        Restart
-                                      </DropdownItem>
-                                      <DropdownItem
-                                        id={`expanded-v2-delete-${r.id}`}
-                                        isDanger
-                                        onClick={() => {
-                                          setExpandedPanelKebabOpenId(null);
-                                          // eslint-disable-next-line no-console
-                                          console.log('Delete (V2) clicked for', r.id);
-                                        }}
-                                      >
-                                        Delete
-                                      </DropdownItem>
+                                            setTimeout(() => {
+                                              setRecords(prevRecords => prevRecords.map(rec => (
+                                                rec.id === r.id ? { ...rec, status: 'Running', hasBeenStarted: true } : rec
+                                              )));
+                                            }, 1000);
+                                          }}
+                                        >
+                                          Restart
+                                        </DropdownItem>
+                                        </>
+                                      )}
                                     </DropdownList>
                                   </Dropdown>
                                 </FlexItem>
@@ -1893,7 +2433,7 @@ const Workbenches: React.FunctionComponent = () => {
                                 <DescriptionListGroup>
                                   <DescriptionListTerm>Version</DescriptionListTerm>
                                   <DescriptionListDescription>
-                                    <Label color="blue">NB 2.0 Compliant</Label>
+                                    <Label color="blue" variant="outline">NB 2.0 Compliant</Label>
                                   </DescriptionListDescription>
                                 </DescriptionListGroup>
                                 <DescriptionListGroup>
@@ -1908,51 +2448,142 @@ const Workbenches: React.FunctionComponent = () => {
                                   <DescriptionListTerm>CPU / Memory</DescriptionListTerm>
                                   <DescriptionListDescription>{r.cpu && r.memory ? `${r.cpu} / ${r.memory}` : '-'}</DescriptionListDescription>
                                 </DescriptionListGroup>
+                                {r.podConfig && r.podConfig.limits && (
+                                  <DescriptionListGroup>
+                                    <DescriptionListTerm>Limits (CPU + Memory)</DescriptionListTerm>
+                                    <DescriptionListDescription>
+                                      {r.podConfig.limits.cpu || '-'} CPU, {r.podConfig.limits.memory || '-'} Memory
+                                    </DescriptionListDescription>
+                                  </DescriptionListGroup>
+                                )}
+                                {r.podConfig && r.podConfig.requests && (
+                                  <DescriptionListGroup>
+                                    <DescriptionListTerm>Requests (CPU + Memory)</DescriptionListTerm>
+                                    <DescriptionListDescription>
+                                      {r.podConfig.requests.cpu || '-'} CPU, {r.podConfig.requests.memory || '-'} Memory
+                                    </DescriptionListDescription>
+                                  </DescriptionListGroup>
+                                )}
                               </DescriptionList>
-                              <Flex style={{ marginTop: '1rem' }} spaceItems={{ default: 'spaceItemsMd' }}>
-                                <FlexItem>
-                                  {r.status === 'Stopped' ? (
-                                    <Button
-                                      variant="primary"
-                                      size="sm"
-                                      onClick={() => {
-                                        setRecords(prevRecords => prevRecords.map(rec =>
-                                          rec.id === r.id ? { ...rec, status: 'Running' } : rec
-                                        ));
-                                      }}
-                                    >
-                                      Start
-                                    </Button>
-                                  ) : (
-                                    <Button
-                                      variant="secondary"
-                                      size="sm"
-                                      onClick={() => {
-                                        setRecords(prevRecords => prevRecords.map(rec =>
-                                          rec.id === r.id ? { ...rec, status: 'Stopped' } : rec
-                                        ));
-                                      }}
-                                    >
-                                      Stop
-                                    </Button>
-                                  )}
-                                </FlexItem>
-                                <FlexItem>
-                                  <Button variant="link" size="sm">Open</Button>
-                                </FlexItem>
-                              </Flex>
-                            </div>
+                              {r.homeVolume && (
+                                <Stack hasGutter style={{ marginTop: 'var(--pf-t--global--spacer--md)' }}>
+                                  <Title headingLevel="h6">Home volume</Title>
+                                  <Content>{r.homeVolume}</Content>
+                                </Stack>
+                              )}
+                              {r.packages && r.packages.length > 0 && (
+                                <Stack hasGutter style={{ marginTop: 'var(--pf-t--global--spacer--md)' }}>
+                                  <Title headingLevel="h6">Packages</Title>
+                                  <LabelGroup>
+                                    {r.packages.map((pkg, idx) => (
+                                      <Label key={idx} variant="outline">
+                                        {pkg}
+                                      </Label>
+                                    ))}
+                                  </LabelGroup>
+                                </Stack>
+                              )}
+                              {r.podConfig && (
+                                <Stack hasGutter style={{ marginTop: 'var(--pf-t--global--spacer--md)' }}>
+                                  <Title headingLevel="h6">Pod config</Title>
+                                  <DescriptionList isHorizontal isCompact>
+                                    <DescriptionListGroup>
+                                      <DescriptionListTerm>Name</DescriptionListTerm>
+                                      <DescriptionListDescription>{r.podConfig.name}</DescriptionListDescription>
+                                    </DescriptionListGroup>
+                                    {r.podConfig.cpu && (
+                                      <DescriptionListGroup>
+                                        <DescriptionListTerm>CPU</DescriptionListTerm>
+                                        <DescriptionListDescription>{r.podConfig.cpu}</DescriptionListDescription>
+                                      </DescriptionListGroup>
+                                    )}
+                                    {r.podConfig.memory && (
+                                      <DescriptionListGroup>
+                                        <DescriptionListTerm>Memory</DescriptionListTerm>
+                                        <DescriptionListDescription>{r.podConfig.memory}</DescriptionListDescription>
+                                      </DescriptionListGroup>
+                                    )}
+                                    {r.podConfig.limits && (
+                                      <DescriptionListGroup>
+                                        <DescriptionListTerm>Limits</DescriptionListTerm>
+                                        <DescriptionListDescription>
+                                          {r.podConfig.limits.cpu || '-'} CPU, {r.podConfig.limits.memory || '-'} Memory
+                                        </DescriptionListDescription>
+                                      </DescriptionListGroup>
+                                    )}
+                                    {r.podConfig.requests && (
+                                      <DescriptionListGroup>
+                                        <DescriptionListTerm>Requests</DescriptionListTerm>
+                                        <DescriptionListDescription>
+                                          {r.podConfig.requests.cpu || '-'} CPU, {r.podConfig.requests.memory || '-'} Memory
+                                        </DescriptionListDescription>
+                                      </DescriptionListGroup>
+                                    )}
+                                  </DescriptionList>
+                                </Stack>
+                              )}
+                              <Stack hasGutter style={{ marginTop: 'var(--pf-t--global--spacer--md)' }}>
+                                <Title headingLevel="h6">Volumes</Title>
+                                <DescriptionList isHorizontal isCompact>
+                                  <DescriptionListGroup>
+                                    <DescriptionListTerm>Home volume</DescriptionListTerm>
+                                    <DescriptionListDescription>{r.homeVolume || '/home/user'}</DescriptionListDescription>
+                                  </DescriptionListGroup>
+                                  <DescriptionListGroup>
+                                    <DescriptionListTerm>Data volume</DescriptionListTerm>
+                                    <DescriptionListDescription>/data</DescriptionListDescription>
+                                  </DescriptionListGroup>
+                                  <DescriptionListGroup>
+                                    <DescriptionListTerm>Workspace volume</DescriptionListTerm>
+                                    <DescriptionListDescription>/workspace</DescriptionListDescription>
+                                  </DescriptionListGroup>
+                                </DescriptionList>
+                              </Stack>
+                                  <Flex spaceItems={{ default: 'spaceItemsMd' }}>
+                                    <FlexItem>
+                                      {r.status === 'Stopped' ? (
+                                        <Button
+                                          variant="primary"
+                                          size="sm"
+                                          onClick={() => {
+                                            setRecords(prevRecords => prevRecords.map(rec =>
+                                              rec.id === r.id ? { ...rec, status: 'Running' } : rec
+                                            ));
+                                          }}
+                                        >
+                                          Start
+                                        </Button>
+                                      ) : (
+                                        <Button
+                                          variant="secondary"
+                                          size="sm"
+                                          onClick={() => {
+                                            setRecords(prevRecords => prevRecords.map(rec =>
+                                              rec.id === r.id ? { ...rec, status: 'Stopped' } : rec
+                                            ));
+                                          }}
+                                        >
+                                          Stop
+                                        </Button>
+                                      )}
+                                    </FlexItem>
+                                  </Flex>
+                                </Stack>
+                              </CardBody>
+                            </Card>
                           </FlexItem>
                           <FlexItem flex={{ default: 'flex_1' }}>
-                            <div style={{ padding: '1rem', backgroundColor: '#e6f3ff', borderLeft: '3px solid #0066cc', marginLeft: '0.5rem' }}>
-                              <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }}>
-                                <FlexItem>
-                                  <Title headingLevel="h6" style={{ marginBottom: '0.75rem' }}>
-                                    Legacy Workbench (V1)
-                                  </Title>
-                                </FlexItem>
-                                <FlexItem>
-                                  <Dropdown
+                            <Card style={{ borderLeft: `3px solid var(--pf-t--global--text--color--link)`, marginLeft: 'var(--pf-t--global--spacer--sm)' }}>
+                              <CardBody>
+                                <Stack hasGutter>
+                                  <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }}>
+                                    <FlexItem>
+                                      <Title headingLevel="h6">
+                                        Legacy Workbench (V1)
+                                      </Title>
+                                    </FlexItem>
+                                    <FlexItem>
+                                      <Dropdown
                                     id={`expanded-v1-kebab-${r.id}`}
                                     isOpen={expandedPanelKebabOpenId === `${r.id}-v1`}
                                     onOpenChange={(isOpen) => setExpandedPanelKebabOpenId(isOpen ? `${r.id}-v1` : null)}
@@ -1963,6 +2594,7 @@ const Workbenches: React.FunctionComponent = () => {
                                         variant="plain"
                                         aria-label={`Actions for legacy workbench ${relatedWorkbench.name}`}
                                         isExpanded={expandedPanelKebabOpenId === `${r.id}-v1`}
+                                        onClick={() => setExpandedPanelKebabOpenId(expandedPanelKebabOpenId === `${r.id}-v1` ? null : `${r.id}-v1`)}
                                       >
                                         <EllipsisVIcon />
                                       </MenuToggle>
@@ -1976,19 +2608,87 @@ const Workbenches: React.FunctionComponent = () => {
                                           openWorkbenchDetailsDrawer(relatedWorkbench);
                                         }}
                                       >
-                                        View details
+                                        View Details
                                       </DropdownItem>
                                       <DropdownItem
-                                        id={`expanded-v1-delete-${r.id}`}
-                                        isDanger
+                                        id={`expanded-v1-edit-${r.id}`}
                                         onClick={() => {
                                           setExpandedPanelKebabOpenId(null);
                                           // eslint-disable-next-line no-console
-                                          console.log('Delete Legacy Workbench clicked for', relatedWorkbench.id);
+                                          console.log('Edit (V1) clicked for', relatedWorkbench.id);
                                         }}
                                       >
-                                        Delete legacy workbench
+                                        Edit
                                       </DropdownItem>
+                                      <DropdownItem
+                                        id={`expanded-v1-archive-${r.id}`}
+                                        onClick={() => {
+                                          setExpandedPanelKebabOpenId(null);
+                                          // Archive the legacy workbench
+                                          const workbenchToArchive = records.find(rec => rec.id === relatedWorkbench.id);
+                                          if (workbenchToArchive) {
+                                            const archived: ArchivedWorkbench = {
+                                              id: workbenchToArchive.id,
+                                              name: workbenchToArchive.name,
+                                              project: workbenchToArchive.project,
+                                              status: 'Archived',
+                                              isLegacyV1: workbenchToArchive.isLegacyV1,
+                                              image: workbenchToArchive.image,
+                                              createdBy: workbenchToArchive.createdBy,
+                                              archivedDate: new Date().toISOString()
+                                            };
+                                            setArchivedWorkbenches(prev => [...prev, archived]);
+                                            setRecords(prev => prev.filter(rec => rec.id !== relatedWorkbench.id));
+                                          }
+                                        }}
+                                      >
+                                        Archive
+                                      </DropdownItem>
+                                      <Divider component="li" />
+                                      {relatedWorkbench.status === 'Stopped' ? (
+                                        <DropdownItem
+                                          id={`expanded-v1-start-${r.id}`}
+                                          onClick={() => {
+                                            setExpandedPanelKebabOpenId(null);
+                                            setRecords(prevRecords => prevRecords.map(rec => 
+                                              rec.id === relatedWorkbench.id ? { ...rec, status: 'Running' } : rec
+                                            ));
+                                          }}
+                                        >
+                                          Start
+                                        </DropdownItem>
+                                      ) : (
+                                        <>
+                                          <DropdownItem
+                                            id={`expanded-v1-stop-${r.id}`}
+                                            onClick={() => {
+                                              setExpandedPanelKebabOpenId(null);
+                                              setRecords(prevRecords => prevRecords.map(rec => 
+                                                rec.id === relatedWorkbench.id ? { ...rec, status: 'Stopped' } : rec
+                                              ));
+                                            }}
+                                          >
+                                            Stop
+                                          </DropdownItem>
+                                          <DropdownItem
+                                            id={`expanded-v1-restart-${r.id}`}
+                                          onClick={() => {
+                                            setExpandedPanelKebabOpenId(null);
+                                            // Simulate restart: stop then start
+                                            setRecords(prevRecords => prevRecords.map(rec => (
+                                              rec.id === relatedWorkbench.id ? { ...rec, status: 'Stopped' } : rec
+                                            )));
+                                            setTimeout(() => {
+                                              setRecords(prevRecords => prevRecords.map(rec => (
+                                                rec.id === relatedWorkbench.id ? { ...rec, status: 'Running' } : rec
+                                              )));
+                                            }, 1000);
+                                          }}
+                                        >
+                                          Restart
+                                        </DropdownItem>
+                                        </>
+                                      )}
                                     </DropdownList>
                                   </Dropdown>
                                 </FlexItem>
@@ -1997,66 +2697,158 @@ const Workbenches: React.FunctionComponent = () => {
                                 <DescriptionListGroup>
                                   <DescriptionListTerm>Name</DescriptionListTerm>
                                   <DescriptionListDescription>{relatedWorkbench.name}</DescriptionListDescription>
-                                </DescriptionListGroup>
-                                <DescriptionListGroup>
-                                  <DescriptionListTerm>Status</DescriptionListTerm>
-                                  <DescriptionListDescription>{renderPrimaryStatusLabel(relatedWorkbench)}</DescriptionListDescription>
-                                </DescriptionListGroup>
-                                <DescriptionListGroup>
-                                  <DescriptionListTerm>Version</DescriptionListTerm>
-                                  <DescriptionListDescription>
-                                    <Label color="grey">Legacy V1</Label>
-                                  </DescriptionListDescription>
-                                </DescriptionListGroup>
-                                <DescriptionListGroup>
-                                  <DescriptionListTerm>Image</DescriptionListTerm>
-                                  <DescriptionListDescription>{relatedWorkbench.image}</DescriptionListDescription>
-                                </DescriptionListGroup>
-                                <DescriptionListGroup>
-                                  <DescriptionListTerm>Cluster storage</DescriptionListTerm>
-                                  <DescriptionListDescription>{relatedWorkbench.clusterStorage || '-'}</DescriptionListDescription>
-                                </DescriptionListGroup>
-                                <DescriptionListGroup>
-                                  <DescriptionListTerm>CPU / Memory</DescriptionListTerm>
-                                  <DescriptionListDescription>
-                                    {relatedWorkbench.cpu && relatedWorkbench.memory ? `${relatedWorkbench.cpu} / ${relatedWorkbench.memory}` : '-'}
-                                  </DescriptionListDescription>
-                                </DescriptionListGroup>
+                                    </DescriptionListGroup>
+                                    <DescriptionListGroup>
+                                      <DescriptionListTerm>Status</DescriptionListTerm>
+                                      <DescriptionListDescription>{renderPrimaryStatusLabel(relatedWorkbench)}</DescriptionListDescription>
+                                    </DescriptionListGroup>
+                                    <DescriptionListGroup>
+                                      <DescriptionListTerm>Version</DescriptionListTerm>
+                                      <DescriptionListDescription>
+                                        <Label color="grey" variant="outline">Legacy V1</Label>
+                                      </DescriptionListDescription>
+                                    </DescriptionListGroup>
+                                    <DescriptionListGroup>
+                                      <DescriptionListTerm>Image</DescriptionListTerm>
+                                      <DescriptionListDescription>{relatedWorkbench.image}</DescriptionListDescription>
+                                    </DescriptionListGroup>
+                                    <DescriptionListGroup>
+                                      <DescriptionListTerm>Cluster storage</DescriptionListTerm>
+                                      <DescriptionListDescription>{relatedWorkbench.clusterStorage || '-'}</DescriptionListDescription>
+                                    </DescriptionListGroup>
+                                    <DescriptionListGroup>
+                                      <DescriptionListTerm>CPU / Memory</DescriptionListTerm>
+                                      <DescriptionListDescription>
+                                        {relatedWorkbench.cpu && relatedWorkbench.memory ? `${relatedWorkbench.cpu} / ${relatedWorkbench.memory}` : '-'}
+                                      </DescriptionListDescription>
+                                    </DescriptionListGroup>
+                                    {relatedWorkbench.podConfig && relatedWorkbench.podConfig.limits && (
+                                      <DescriptionListGroup>
+                                        <DescriptionListTerm>Limits (CPU + Memory)</DescriptionListTerm>
+                                        <DescriptionListDescription>
+                                          {relatedWorkbench.podConfig.limits.cpu || '-'} CPU, {relatedWorkbench.podConfig.limits.memory || '-'} Memory
+                                        </DescriptionListDescription>
+                                      </DescriptionListGroup>
+                                    )}
+                                    {relatedWorkbench.podConfig && relatedWorkbench.podConfig.requests && (
+                                      <DescriptionListGroup>
+                                        <DescriptionListTerm>Requests (CPU + Memory)</DescriptionListTerm>
+                                        <DescriptionListDescription>
+                                          {relatedWorkbench.podConfig.requests.cpu || '-'} CPU, {relatedWorkbench.podConfig.requests.memory || '-'} Memory
+                                        </DescriptionListDescription>
+                                      </DescriptionListGroup>
+                                    )}
                               </DescriptionList>
-                              <Flex style={{ marginTop: '1rem' }} spaceItems={{ default: 'spaceItemsMd' }}>
-                                <FlexItem>
-                                  {relatedWorkbench.status === 'Stopped' ? (
-                                    <Button
-                                      variant="primary"
-                                      size="sm"
-                                      onClick={() => {
-                                        setRecords(prevRecords => prevRecords.map(rec =>
-                                          rec.id === relatedWorkbench.id ? { ...rec, status: 'Running' } : rec
-                                        ));
-                                      }}
-                                    >
-                                      Start
-                                    </Button>
-                                  ) : (
-                                    <Button
-                                      variant="secondary"
-                                      size="sm"
-                                      onClick={() => {
-                                        setRecords(prevRecords => prevRecords.map(rec =>
-                                          rec.id === relatedWorkbench.id ? { ...rec, status: 'Stopped' } : rec
-                                        ));
-                                      }}
-                                    >
-                                      Stop
-                                    </Button>
-                                  )}
-                                </FlexItem>
-                              </Flex>
-                            </div>
-                          </FlexItem>
-                        </Flex>
-                      </div>
-                    </Td>
+                              {relatedWorkbench.homeVolume && (
+                                <Stack hasGutter style={{ marginTop: 'var(--pf-t--global--spacer--md)' }}>
+                                  <Title headingLevel="h6">Home volume</Title>
+                                  <Content>{relatedWorkbench.homeVolume}</Content>
+                                </Stack>
+                              )}
+                              {relatedWorkbench.packages && relatedWorkbench.packages.length > 0 && (
+                                <Stack hasGutter style={{ marginTop: 'var(--pf-t--global--spacer--md)' }}>
+                                  <Title headingLevel="h6">Packages</Title>
+                                  <LabelGroup>
+                                    {relatedWorkbench.packages.map((pkg, idx) => (
+                                      <Label key={idx} variant="outline">
+                                        {pkg}
+                                      </Label>
+                                    ))}
+                                  </LabelGroup>
+                                </Stack>
+                              )}
+                              {relatedWorkbench.podConfig && (
+                                <Stack hasGutter style={{ marginTop: 'var(--pf-t--global--spacer--md)' }}>
+                                  <Title headingLevel="h6">Pod config</Title>
+                                  <DescriptionList isHorizontal isCompact>
+                                    <DescriptionListGroup>
+                                      <DescriptionListTerm>Name</DescriptionListTerm>
+                                      <DescriptionListDescription>{relatedWorkbench.podConfig.name}</DescriptionListDescription>
+                                    </DescriptionListGroup>
+                                    {relatedWorkbench.podConfig.cpu && (
+                                      <DescriptionListGroup>
+                                        <DescriptionListTerm>CPU</DescriptionListTerm>
+                                        <DescriptionListDescription>{relatedWorkbench.podConfig.cpu}</DescriptionListDescription>
+                                      </DescriptionListGroup>
+                                    )}
+                                    {relatedWorkbench.podConfig.memory && (
+                                      <DescriptionListGroup>
+                                        <DescriptionListTerm>Memory</DescriptionListTerm>
+                                        <DescriptionListDescription>{relatedWorkbench.podConfig.memory}</DescriptionListDescription>
+                                      </DescriptionListGroup>
+                                    )}
+                                    {relatedWorkbench.podConfig.limits && (
+                                      <DescriptionListGroup>
+                                        <DescriptionListTerm>Limits</DescriptionListTerm>
+                                        <DescriptionListDescription>
+                                          {relatedWorkbench.podConfig.limits.cpu || '-'} CPU, {relatedWorkbench.podConfig.limits.memory || '-'} Memory
+                                        </DescriptionListDescription>
+                                      </DescriptionListGroup>
+                                    )}
+                                    {relatedWorkbench.podConfig.requests && (
+                                      <DescriptionListGroup>
+                                        <DescriptionListTerm>Requests</DescriptionListTerm>
+                                        <DescriptionListDescription>
+                                          {relatedWorkbench.podConfig.requests.cpu || '-'} CPU, {relatedWorkbench.podConfig.requests.memory || '-'} Memory
+                                        </DescriptionListDescription>
+                                      </DescriptionListGroup>
+                                    )}
+                                  </DescriptionList>
+                                </Stack>
+                              )}
+                              <Stack hasGutter style={{ marginTop: 'var(--pf-t--global--spacer--md)' }}>
+                                <Title headingLevel="h6">Volumes</Title>
+                                <DescriptionList isHorizontal isCompact>
+                                  <DescriptionListGroup>
+                                    <DescriptionListTerm>Home volume</DescriptionListTerm>
+                                    <DescriptionListDescription>{relatedWorkbench.homeVolume || '/home/user'}</DescriptionListDescription>
+                                  </DescriptionListGroup>
+                                  <DescriptionListGroup>
+                                    <DescriptionListTerm>Data volume</DescriptionListTerm>
+                                    <DescriptionListDescription>/data</DescriptionListDescription>
+                                  </DescriptionListGroup>
+                                  <DescriptionListGroup>
+                                    <DescriptionListTerm>Workspace volume</DescriptionListTerm>
+                                    <DescriptionListDescription>/workspace</DescriptionListDescription>
+                                  </DescriptionListGroup>
+                                </DescriptionList>
+                              </Stack>
+                                  <Flex spaceItems={{ default: 'spaceItemsMd' }}>
+                                    <FlexItem>
+                                      {relatedWorkbench.status === 'Stopped' ? (
+                                        <Button
+                                          variant="primary"
+                                          size="sm"
+                                          onClick={() => {
+                                            setRecords(prevRecords => prevRecords.map(rec =>
+                                              rec.id === relatedWorkbench.id ? { ...rec, status: 'Running' } : rec
+                                            ));
+                                          }}
+                                        >
+                                          Start
+                                        </Button>
+                                      ) : (
+                                        <Button
+                                          variant="secondary"
+                                          size="sm"
+                                          onClick={() => {
+                                            setRecords(prevRecords => prevRecords.map(rec =>
+                                              rec.id === relatedWorkbench.id ? { ...rec, status: 'Stopped' } : rec
+                                            ));
+                                          }}
+                                        >
+                                          Stop
+                                        </Button>
+                                      )}
+                                    </FlexItem>
+                                  </Flex>
+                                </Stack>
+                              </CardBody>
+                              </Card>
+                            </FlexItem>
+                          </Flex>
+                        </PageSection>
+                      </Td>
                   </Tr>
                 )}
               </React.Fragment>
@@ -2074,7 +2866,7 @@ const Workbenches: React.FunctionComponent = () => {
             setPage(1);
           }}
           widgetId="workbenches-pagination"
-          style={{ marginTop: '8px' }}
+          style={{ marginTop: 'var(--pf-t--global--spacer--sm)' }}
         />
               </PageSection>
             </DrawerContentBody>
@@ -2099,7 +2891,194 @@ const Workbenches: React.FunctionComponent = () => {
       />
 
       {activeTab === 1 && (
-        <>
+        <Drawer id="workspace-kind-details-drawer" isExpanded={isWorkspaceKindDetailsDrawerExpanded} onExpand={onWorkspaceKindDrawerExpand} position="end">
+          <DrawerContent
+            panelContent={
+              <DrawerPanelContent 
+                id="workspace-kind-details-drawer-panel" 
+                isResizable 
+                onResize={onWorkspaceKindDrawerResize} 
+                defaultSize="500px" 
+                minSize="150px"
+              >
+                <DrawerHead>
+                  <Title headingLevel="h3" id="workspace-kind-details-title" tabIndex={isWorkspaceKindDetailsDrawerExpanded ? 0 : -1}>
+                    {workspaceKindDetailsRecord ? workspaceKindDetailsRecord.name : 'Workspace template details'}
+                  </Title>
+                  <DrawerActions>
+                    <DrawerCloseButton onClick={closeWorkspaceKindDetailsDrawer} />
+                  </DrawerActions>
+                </DrawerHead>
+                <DrawerPanelBody>
+                  <Tabs
+                    id="workspace-kind-details-tabs"
+                    activeKey={workspaceKindDetailsTab}
+                    onSelect={(_event, tabIndex) => setWorkspaceKindDetailsTab(tabIndex)}
+                    aria-label="Workspace Template details tabs"
+                    style={{ marginTop: 'var(--pf-t--global--spacer--md)' }}
+                  >
+                    <Tab eventKey={0} title={<TabTitleText>Overview</TabTitleText>} />
+                    <Tab eventKey={1} title={<TabTitleText>Images</TabTitleText>} />
+                    <Tab eventKey={2} title={<TabTitleText>Pod configs</TabTitleText>} />
+                    <Tab eventKey={3} title={<TabTitleText>Namespaces</TabTitleText>} />
+                  </Tabs>
+
+                  <div style={{ marginTop: 'var(--pf-t--global--spacer--md)' }}>
+                  {!workspaceKindDetailsRecord && (
+                    <Content component={ContentVariants.p} id="workspace-kind-details-empty">
+                      Select <strong>View details</strong> to see workspace template information.
+                    </Content>
+                  )}
+
+                  {workspaceKindDetailsRecord && workspaceKindDetailsTab === 0 && (
+                    <DescriptionList isHorizontal isCompact id="workspace-kind-details-overview">
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>Name</DescriptionListTerm>
+                        <DescriptionListDescription>{workspaceKindDetailsRecord.name}</DescriptionListDescription>
+                      </DescriptionListGroup>
+                      {workspaceKindDetailsRecord.description && (
+                        <DescriptionListGroup>
+                          <DescriptionListTerm>Description</DescriptionListTerm>
+                          <DescriptionListDescription>{workspaceKindDetailsRecord.description}</DescriptionListDescription>
+                        </DescriptionListGroup>
+                      )}
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>Hidden</DescriptionListTerm>
+                        <DescriptionListDescription>
+                          <Switch
+                            id="workspace-kind-hidden"
+                            label={workspaceKindDetailsRecord.hidden ? 'Hidden' : 'Visible'}
+                            isChecked={workspaceKindDetailsRecord.hidden || false}
+                            isDisabled
+                          />
+                        </DescriptionListDescription>
+                      </DescriptionListGroup>
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>Status</DescriptionListTerm>
+                        <DescriptionListDescription>
+                          <Switch
+                            id="workspace-kind-status"
+                            label={workspaceKindDetailsRecord.isActive ? 'Active' : 'Inactive'}
+                            isChecked={workspaceKindDetailsRecord.isActive}
+                            isDisabled
+                          />
+                        </DescriptionListDescription>
+                      </DescriptionListGroup>
+                      {workspaceKindDetailsRecord.iconUrl && (
+                        <DescriptionListGroup>
+                          <DescriptionListTerm>Icon URL</DescriptionListTerm>
+                          <DescriptionListDescription>
+                            <Link to={workspaceKindDetailsRecord.iconUrl} target="_blank" rel="noopener noreferrer">
+                              {workspaceKindDetailsRecord.iconUrl}
+                            </Link>
+                          </DescriptionListDescription>
+                        </DescriptionListGroup>
+                      )}
+                      {workspaceKindDetailsRecord.logoUrl && (
+                        <DescriptionListGroup>
+                          <DescriptionListTerm>Logo URL</DescriptionListTerm>
+                          <DescriptionListDescription>
+                            <Link to={workspaceKindDetailsRecord.logoUrl} target="_blank" rel="noopener noreferrer">
+                              {workspaceKindDetailsRecord.logoUrl}
+                            </Link>
+                          </DescriptionListDescription>
+                        </DescriptionListGroup>
+                      )}
+                    </DescriptionList>
+                  )}
+
+                  {workspaceKindDetailsRecord && workspaceKindDetailsTab === 1 && (
+                    <Table aria-label="Images table" id="workspace-kind-images-table" variant="compact">
+                      <Thead>
+                        <Tr>
+                          <Th>Name</Th>
+                          <Th>Workspaces</Th>
+                        </Tr>
+                      </Thead>
+                      <Tbody>
+                        {workspaceKindDetailsRecord.images && workspaceKindDetailsRecord.images.length > 0 ? (
+                          workspaceKindDetailsRecord.images.map((image, index) => (
+                            <Tr key={index}>
+                              <Td dataLabel="Name">
+                                <code>{image.name}</code>
+                              </Td>
+                              <Td dataLabel="Workspaces">{image.workspaces}</Td>
+                            </Tr>
+                          ))
+                        ) : (
+                          <Tr>
+                            <Td colSpan={2}>No images available</Td>
+                          </Tr>
+                        )}
+                      </Tbody>
+                    </Table>
+                  )}
+
+                  {workspaceKindDetailsRecord && workspaceKindDetailsTab === 2 && (
+                    <Table aria-label="Pod configs table" id="workspace-kind-pod-configs-table" variant="compact">
+                      <Thead>
+                        <Tr>
+                          <Th>Name</Th>
+                          <Th>Workspaces</Th>
+                        </Tr>
+                      </Thead>
+                      <Tbody>
+                        {workspaceKindDetailsRecord.podConfigs && workspaceKindDetailsRecord.podConfigs.length > 0 ? (
+                          workspaceKindDetailsRecord.podConfigs.map((config, index) => (
+                            <Tr key={index}>
+                              <Td dataLabel="Name">{config.name}</Td>
+                              <Td dataLabel="Workspaces">{config.workspaces}</Td>
+                            </Tr>
+                          ))
+                        ) : (
+                          <Tr>
+                            <Td colSpan={2}>No pod configs available</Td>
+                          </Tr>
+                        )}
+                      </Tbody>
+                    </Table>
+                  )}
+
+                  {workspaceKindDetailsRecord && workspaceKindDetailsTab === 3 && (
+                    <Table aria-label="Namespaces table" id="workspace-kind-namespaces-table" variant="compact">
+                      <Thead>
+                        <Tr>
+                          <Th>Name</Th>
+                          <Th>Workspaces</Th>
+                        </Tr>
+                      </Thead>
+                      <Tbody>
+                        {workspaceKindDetailsRecord.namespaces && workspaceKindDetailsRecord.namespaces.length > 0 ? (
+                          workspaceKindDetailsRecord.namespaces.map((namespace, index) => (
+                            <Tr key={index}>
+                              <Td dataLabel="Name">{namespace.name}</Td>
+                              <Td dataLabel="Workspaces">{namespace.workspaces}</Td>
+                            </Tr>
+                          ))
+                        ) : (
+                          <Tr>
+                            <Td colSpan={2}>No namespaces available</Td>
+                          </Tr>
+                        )}
+                      </Tbody>
+                    </Table>
+                  )}
+                  </div>
+                </DrawerPanelBody>
+              </DrawerPanelContent>
+            }
+          >
+            <DrawerContentBody id="workspace-kind-details-drawer-body">
+              <PageSection aria-label="Workspace Templates Header" id="workspace-templates-header">
+            <Stack hasGutter>
+              <Title headingLevel="h2" id="workspace-templates-title">
+                Workspace Templates
+              </Title>
+              <Content component={ContentVariants.p}>
+                Manage workspace templates that define governance policies for workbenches.
+              </Content>
+            </Stack>
+          </PageSection>
           <PageSection>
             <Toolbar
               id="workspace-kinds-toolbar"
@@ -2126,7 +3105,7 @@ const Workbenches: React.FunctionComponent = () => {
                                 minWidth: '140px'
                               }}
                             >
-                              <FilterIcon style={{ marginRight: '0.5rem' }} />
+                              <FilterIcon style={{ marginRight: 'var(--pf-t--global--spacer--sm)' }} />
                               {workspaceKindsFilterAttribute === 'name' ? 'Name' :
                                workspaceKindsFilterAttribute === 'compliance' ? 'Compliance' : 'Status'}
                             </MenuToggle>
@@ -2180,23 +3159,104 @@ const Workbenches: React.FunctionComponent = () => {
                   </ToolbarItem>
                   <ToolbarItem>
                     <Button
-                      id="delete-selected-workspace-kinds-button"
+                      id="archive-selected-workspace-kinds-button"
                       variant="plain"
                       icon={<TrashIcon />}
                       isDisabled={selectedWorkspaceKindIds.length === 0}
                       onClick={() => {
+                        // Archive selected workspace kinds (for now, just remove them - archive functionality can be added later if needed)
                         // eslint-disable-next-line no-console
-                        console.log('Delete selected workspace kinds:', selectedWorkspaceKindIds);
+                        console.log('Archive selected workspace kinds:', selectedWorkspaceKindIds);
                         setWorkspaceKinds(prevKinds => (prevKinds || []).filter(k => !selectedWorkspaceKindIds.includes(k.id)));
                         setSelectedWorkspaceKindIds([]);
                       }}
                       style={{
-                        color: selectedWorkspaceKindIds.length > 0 ? 'var(--pf-v5-global--danger-color--100)' : 'var(--pf-v5-global--disabled-color--100)'
+                        color: selectedWorkspaceKindIds.length > 0 ? 'var(--pf-t--global--text--color--link)' : 'var(--pf-t--global--text--color--disabled)'
                       }}
-                      aria-label={`Delete ${selectedWorkspaceKindIds.length} selected workspace kind${selectedWorkspaceKindIds.length !== 1 ? 's' : ''}`}
+                      aria-label={`Archive ${selectedWorkspaceKindIds.length} selected workspace kind${selectedWorkspaceKindIds.length !== 1 ? 's' : ''}`}
                     >
                       {selectedWorkspaceKindIds.length > 0 && `(${selectedWorkspaceKindIds.length})`}
                     </Button>
+                  </ToolbarItem>
+                </ToolbarGroup>
+                <ToolbarGroup>
+                  <ToolbarItem>
+                    <Select
+                      id="workspace-templates-column-selector"
+                      isOpen={isWorkspaceTemplatesColumnSelectorOpen}
+                      onOpenChange={(isOpen) => setIsWorkspaceTemplatesColumnSelectorOpen(isOpen)}
+                      toggle={(toggleRef) => (
+                        <MenuToggle
+                          ref={toggleRef}
+                          onClick={() => setIsWorkspaceTemplatesColumnSelectorOpen(!isWorkspaceTemplatesColumnSelectorOpen)}
+                          isExpanded={isWorkspaceTemplatesColumnSelectorOpen}
+                          variant="plain"
+                          aria-label="Column management"
+                          id="workspace-templates-column-selector-toggle"
+                          icon={<ThIcon />}
+                        >
+                        </MenuToggle>
+                      )}
+                    >
+                      <SelectList>
+                        <SelectOption
+                          hasCheckbox
+                          isSelected={workspaceTemplatesVisibleColumns.name}
+                          value="name"
+                          onClick={() => setWorkspaceTemplatesVisibleColumns({ ...workspaceTemplatesVisibleColumns, name: !workspaceTemplatesVisibleColumns.name })}
+                        >
+                          Name
+                        </SelectOption>
+                        <SelectOption
+                          hasCheckbox
+                          isSelected={workspaceTemplatesVisibleColumns.description}
+                          value="description"
+                          onClick={() => setWorkspaceTemplatesVisibleColumns({ ...workspaceTemplatesVisibleColumns, description: !workspaceTemplatesVisibleColumns.description })}
+                        >
+                          Description
+                        </SelectOption>
+                        <SelectOption
+                          hasCheckbox
+                          isSelected={workspaceTemplatesVisibleColumns.type}
+                          value="type"
+                          onClick={() => setWorkspaceTemplatesVisibleColumns({ ...workspaceTemplatesVisibleColumns, type: !workspaceTemplatesVisibleColumns.type })}
+                        >
+                          Type
+                        </SelectOption>
+                        <SelectOption
+                          hasCheckbox
+                          isSelected={workspaceTemplatesVisibleColumns.compliance}
+                          value="compliance"
+                          onClick={() => setWorkspaceTemplatesVisibleColumns({ ...workspaceTemplatesVisibleColumns, compliance: !workspaceTemplatesVisibleColumns.compliance })}
+                        >
+                          Compliance
+                        </SelectOption>
+                        <SelectOption
+                          hasCheckbox
+                          isSelected={workspaceTemplatesVisibleColumns.baseImage}
+                          value="baseImage"
+                          onClick={() => setWorkspaceTemplatesVisibleColumns({ ...workspaceTemplatesVisibleColumns, baseImage: !workspaceTemplatesVisibleColumns.baseImage })}
+                        >
+                          Base Image
+                        </SelectOption>
+                        <SelectOption
+                          hasCheckbox
+                          isSelected={workspaceTemplatesVisibleColumns.usageCount}
+                          value="usageCount"
+                          onClick={() => setWorkspaceTemplatesVisibleColumns({ ...workspaceTemplatesVisibleColumns, usageCount: !workspaceTemplatesVisibleColumns.usageCount })}
+                        >
+                          Usage Count
+                        </SelectOption>
+                        <SelectOption
+                          hasCheckbox
+                          isSelected={workspaceTemplatesVisibleColumns.status}
+                          value="status"
+                          onClick={() => setWorkspaceTemplatesVisibleColumns({ ...workspaceTemplatesVisibleColumns, status: !workspaceTemplatesVisibleColumns.status })}
+                        >
+                          Status
+                        </SelectOption>
+                      </SelectList>
+                    </Select>
                   </ToolbarItem>
                 </ToolbarGroup>
                 <ToolbarGroup>
@@ -2216,7 +3276,7 @@ const Workbenches: React.FunctionComponent = () => {
 
           {/* Active Filters */}
           {(workspaceKindsActiveFilters.name.length > 0 || workspaceKindsActiveFilters.compliance.length > 0 || workspaceKindsActiveFilters.status.length > 0) && (
-            <div style={{ marginBottom: '16px', marginTop: '0px' }}>
+            <div style={{ marginBottom: 'var(--pf-t--global--spacer--md)', marginTop: '0px' }}>
               <LabelGroup
                 categoryName="Active filters"
                 isClosable={false}
@@ -2253,7 +3313,7 @@ const Workbenches: React.FunctionComponent = () => {
               <Button 
                 variant="link" 
                 onClick={() => clearAllFilters('workspaceKinds')} 
-                style={{ marginTop: '0.5rem' }}
+                style={{ marginTop: 'var(--pf-t--global--spacer--sm)' }}
               >
                 Clear all filters
               </Button>
@@ -2310,12 +3370,13 @@ const Workbenches: React.FunctionComponent = () => {
                       isDisabled: false
                     }}
                   />
-                  <Th>Name</Th>
-                  <Th>Type</Th>
-                  <Th>Compliance</Th>
-                  <Th>Base Image</Th>
-                  <Th>Usage Count</Th>
-                  <Th>Status</Th>
+                  {workspaceTemplatesVisibleColumns.name && <Th>Name</Th>}
+                  {workspaceTemplatesVisibleColumns.description && <Th>Description</Th>}
+                  {workspaceTemplatesVisibleColumns.type && <Th>Type</Th>}
+                  {workspaceTemplatesVisibleColumns.compliance && <Th>Compliance</Th>}
+                  {workspaceTemplatesVisibleColumns.baseImage && <Th>Base Image</Th>}
+                  {workspaceTemplatesVisibleColumns.usageCount && <Th>Usage Count</Th>}
+                  {workspaceTemplatesVisibleColumns.status && <Th>Status</Th>}
                   <Th screenReaderText="Actions"></Th>
                 </Tr>
               </Thead>
@@ -2354,42 +3415,53 @@ const Workbenches: React.FunctionComponent = () => {
                         isDisabled: false
                       }}
                     />
-                    <Td dataLabel="Name">{kind.name}</Td>
-                    <Td dataLabel="Type">{kind.type}</Td>
-                    <Td dataLabel="Compliance">
-                      <Label color={kind.isLegacyV1 ? 'grey' : 'blue'}>
-                        {kind.isLegacyV1 ? 'Legacy V1' : 'NB 2.0 Compliant'}
-                      </Label>
-                    </Td>
-                    <Td dataLabel="Base Image">
-                      <code style={{ fontSize: '0.875rem' }}>{kind.baseImage}</code>
-                    </Td>
-                    <Td dataLabel="Usage Count">
-                      <Button
-                        variant="link"
-                        isInline
-                        onClick={() => {
-                          // Switch to Workbenches tab and filter by this workspace kind
-                          setActiveTab(0);
-                          addFilter('workbenches', 'workspaceKind', kind.id);
-                        }}
-                        style={{ padding: 0 }}
-                      >
-                        <Badge>{kind.usageCount}</Badge>
-                      </Button>
-                    </Td>
-                    <Td dataLabel="Status">
-                      <Switch
-                        id={`status-${kind.id}`}
-                        label={kind.isActive ? 'Active' : 'Inactive'}
-                        isChecked={kind.isActive}
-                        onChange={(_event, checked) => {
-                          setWorkspaceKinds(prevKinds =>
-                            (prevKinds || []).map(k => k.id === kind.id ? { ...k, isActive: checked } : k)
-                          );
-                        }}
-                      />
-                    </Td>
+                    {workspaceTemplatesVisibleColumns.name && <Td dataLabel="Name">{kind.name}</Td>}
+                    {workspaceTemplatesVisibleColumns.description && (
+                      <Td dataLabel="Description">{kind.description || '-'}</Td>
+                    )}
+                    {workspaceTemplatesVisibleColumns.type && <Td dataLabel="Type">{kind.type}</Td>}
+                    {workspaceTemplatesVisibleColumns.compliance && (
+                      <Td dataLabel="Compliance">
+                        <Label color={kind.isLegacyV1 ? 'grey' : 'blue'}>
+                          {kind.isLegacyV1 ? 'Legacy V1' : 'NB 2.0 Compliant'}
+                        </Label>
+                      </Td>
+                    )}
+                    {workspaceTemplatesVisibleColumns.baseImage && (
+                      <Td dataLabel="Base Image">
+                        <code style={{ fontSize: 'var(--pf-t--global--font--size--md)' }}>{kind.baseImage}</code>
+                      </Td>
+                    )}
+                    {workspaceTemplatesVisibleColumns.usageCount && (
+                      <Td dataLabel="Usage Count">
+                        <Button
+                          variant="link"
+                          isInline
+                          onClick={() => {
+                            // Switch to Workbenches tab and filter by this workspace kind
+                            setActiveTab(0);
+                            addFilter('workbenches', 'workspaceKind', kind.id);
+                          }}
+                          style={{ padding: 0 }}
+                        >
+                          <Badge>{kind.usageCount}</Badge>
+                        </Button>
+                      </Td>
+                    )}
+                    {workspaceTemplatesVisibleColumns.status && (
+                      <Td dataLabel="Status">
+                        <Switch
+                          id={`status-${kind.id}`}
+                          label={kind.isActive ? 'Active' : 'Inactive'}
+                          isChecked={kind.isActive}
+                          onChange={(_event, checked) => {
+                            setWorkspaceKinds(prevKinds =>
+                              (prevKinds || []).map(k => k.id === kind.id ? { ...k, isActive: checked } : k)
+                            );
+                          }}
+                        />
+                      </Td>
+                    )}
                     <Td isActionCell dataLabel="Actions">
                       <ActionsColumn
                         items={[
@@ -2403,16 +3475,15 @@ const Workbenches: React.FunctionComponent = () => {
                           {
                             title: 'View Details',
                             onClick: () => {
-                              // eslint-disable-next-line no-console
-                              console.log('View details:', kind.id);
+                              openWorkspaceKindDetailsDrawer(kind);
                             }
                           },
                           {
-                            title: 'Delete',
-                            isDanger: true,
+                            title: 'Archive',
                             onClick: () => {
+                              // Archive workspace kind (for now, just remove it - archive functionality can be added later if needed)
                               // eslint-disable-next-line no-console
-                              console.log('Delete kind:', kind.id);
+                              console.log('Archive kind:', kind.id);
                               setWorkspaceKinds(prevKinds => (prevKinds || []).filter(k => k.id !== kind.id));
                             }
                           }
@@ -2424,11 +3495,23 @@ const Workbenches: React.FunctionComponent = () => {
               </Tbody>
             </Table>
           </PageSection>
-        </>
+            </DrawerContentBody>
+          </DrawerContent>
+        </Drawer>
       )}
 
       {activeTab === 2 && (
         <>
+          <PageSection aria-label="Archive Header" id="archive-header">
+            <Stack hasGutter>
+              <Title headingLevel="h2" id="archive-title">
+                Archive
+              </Title>
+              <Content component={ContentVariants.p}>
+                View and manage archived workbenches.
+              </Content>
+            </Stack>
+          </PageSection>
           <PageSection>
             <Toolbar
               id="archive-toolbar"
@@ -2455,7 +3538,7 @@ const Workbenches: React.FunctionComponent = () => {
                                 minWidth: '140px'
                               }}
                             >
-                              <FilterIcon style={{ marginRight: '0.5rem' }} />
+                              <FilterIcon style={{ marginRight: 'var(--pf-t--global--spacer--sm)' }} />
                               {archiveFilterAttribute === 'name' ? 'Name' :
                                archiveFilterAttribute === 'status' ? 'Status' : 'Version'}
                             </MenuToggle>
@@ -2545,7 +3628,7 @@ const Workbenches: React.FunctionComponent = () => {
 
           {/* Active Filters */}
           {(archiveActiveFilters.name.length > 0 || archiveActiveFilters.status.length > 0 || archiveActiveFilters.version.length > 0) && (
-            <div style={{ marginBottom: '16px', marginTop: '0px' }}>
+            <div style={{ marginBottom: 'var(--pf-t--global--spacer--md)', marginTop: '0px' }}>
               <LabelGroup
                 categoryName="Active filters"
                 isClosable={false}
@@ -2582,7 +3665,7 @@ const Workbenches: React.FunctionComponent = () => {
               <Button 
                 variant="link" 
                 onClick={() => clearAllFilters('archive')} 
-                style={{ marginTop: '0.5rem' }}
+                style={{ marginTop: 'var(--pf-t--global--spacer--sm)' }}
               >
                 Clear all filters
               </Button>
@@ -2622,7 +3705,10 @@ const Workbenches: React.FunctionComponent = () => {
                           expand={{
                             rowIndex: rowIndex,
                             isExpanded: isExpanded,
-                            onToggle: () => toggleRowExpansion(archived.id),
+                            onToggle: (event) => {
+                              event?.stopPropagation();
+                              toggleRowExpansion(archived.id);
+                            },
                             expandId: `archive-expandable-${archived.id}`
                           }}
                         />
@@ -2644,13 +3730,13 @@ const Workbenches: React.FunctionComponent = () => {
                           <div>
                             <div>{archived.name}</div>
                             {archived.originalMigrationFrom && (
-                              <div style={{ marginTop: '4px' }}>
+                              <div style={{ marginTop: 'var(--pf-t--global--spacer--xs)' }}>
                                 <Badge isRead>
                                   Migrated from: {archived.originalMigrationFrom}
                                 </Badge>
                               </div>
                             )}
-                            <div style={{ marginTop: '4px' }}>
+                            <div style={{ marginTop: 'var(--pf-t--global--spacer--xs)' }}>
                               <Badge isRead color="orange">Archived</Badge>
                             </div>
                           </div>
@@ -2705,10 +3791,12 @@ const Workbenches: React.FunctionComponent = () => {
                           <Td />
                           <Td />
                           <Td colSpan={6}>
-                            <div style={{ padding: '1rem', backgroundColor: '#f0f0f0' }}>
-                              <Title headingLevel="h6" style={{ marginBottom: '0.5rem' }}>
-                                Historical Metadata
-                              </Title>
+                            <Card>
+                              <CardBody>
+                                <Stack hasGutter>
+                                  <Title headingLevel="h6">
+                                    Historical Metadata
+                                  </Title>
                               <DescriptionList isHorizontal>
                                 {Object.entries(archived.historicalMetadata).map(([key, value]) => (
                                   <DescriptionListGroup key={key}>
@@ -2717,7 +3805,9 @@ const Workbenches: React.FunctionComponent = () => {
                                   </DescriptionListGroup>
                                 ))}
                               </DescriptionList>
-                            </div>
+                                </Stack>
+                              </CardBody>
+                            </Card>
                           </Td>
                         </Tr>
                       )}
